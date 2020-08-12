@@ -1,0 +1,61 @@
+cogsy - a command line local discogs client
+
+prototyped in python, officially released in rust
+ capabilities:
+ saves a user's discogs collection into a local database
+ pulls new collection updates from discogs
+ random song functionality
+ track listens and show listening history using unicode braille
+ track money spent on record purchases and graph history using unicode braille
+ aims to be as independent of the internet as possible
+ - only connects to the internet to pull user data (i.e. when running update)
+ - everything else is handled offline (locally)
+ 
+ app flow:
+ running without any arguments enters interactive mode
+ else, when run with a command, executes command and exits
+ commands can also be executed in interactive mode
+
+ interactive mode layout:
+   |
+   |---main table of data (album title, artist, release year)
+   |   (user can change screen by pressing number keys and exit by pressing q)
+   |
+   |---command line (user can enter in commands with arguments and options)
+       (accessed with vim-like keybindings ":")
+
+   list of commands:
+   - update (when run without options, pulls updates from discogs collection and wantlist and updates local database)
+        -t, --token (updates the auth token stored locally)
+        -u, --username (updates the username stored locally)
+            username is stored with the database
+            (when running update, it checks if the username has changed
+            if changed, it purges the current database and repopulates it with entries from the new username's collection)
+   - random (selects a random album from the database for user to play and adds entry to listening log)
+        -n, --nolog (does not add to listening log)
+   - price [album] [price] (sets the amount paid for the album)
+        (defaults to amount pulled from discogs)
+   - listen [album] (when run without --time, logs the current time)
+        -t, --time [time] (logs the specified time)
+   - query [album] (queries the local database for album and displays release information)
+        (no plans to support API queries)
+   
+   list of modes:
+   1: collection (main)
+       - clicking enter on the entry brings up its release information
+   2: wantlist
+       - same as collection
+   3: profile
+       - displays user profile pulled from discogs
+   4: history (graphs the listening history of an album)
+       - side menu of each album in collection, search bar at top
+       (up/down to scroll, the graph of the highlighted album on the right)
+   5: money spent (graph built with unicode braille)
+   6: log (log of when albums were added)
+
+   dependencies
+   -cursive 0.15.0 (curses tui)
+   -reqwest 0.10.7 (api querying)
+   -serde 1.0.115 (json deserialization)
+   -rusqlite 0.23.1 (database interface)
+   -indicatif 0.15.0 (progressbar)
