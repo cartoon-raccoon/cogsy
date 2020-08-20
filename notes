@@ -54,8 +54,21 @@ prototyped in python, officially released in rust
    6: log (log of when albums were added)
 
    dependencies
-   -cursive 0.15.0 (curses tui)
+   -cursive 0.15.0 -> termion backend
    -reqwest 0.10.7 (api querying)
    -serde 1.0.115 (json deserialization)
    -rusqlite 0.23.1 (database interface)
    -indicatif 0.15.0 (progressbar)
+   -clap 2.33.2 (command parsing)
+
+   app structure:
+   commands.rs
+   app.rs
+   main.rs (main event handling loop)
+   screens (dir)
+    |_collection.rs
+    |_wantlist.rs
+    |_profile.rs
+    |_history.rs
+    |_money.rs
+    |_addlog.rs
