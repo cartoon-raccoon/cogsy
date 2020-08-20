@@ -1,5 +1,7 @@
 use cursive::views::*;
 use cursive::traits::*;
+use cursive::Cursive;
+use cursive::view::SizeConstraint;
 
 pub struct Collection {}
 
@@ -8,12 +10,14 @@ impl Collection {
     pub fn new() -> Self {
         Collection{}
     }
-    pub fn build(&self) -> StackView {
-        let mut album_list = LinearLayout::horizontal()
+    pub fn build(&self, s: &mut Cursive) -> StackView {
+        let mut album_list = ResizedView::new(
+            SizeConstraint::Full, 
+            SizeConstraint::Full, 
+            LinearLayout::horizontal()
             .child(SelectView::<String>::new()
-                .item("Hello", String::from("Hello"))
-                .item("World", String::from("World"))
-                .with_name("albumlist"));
+                .with_name("albumlist")));
+        
         let mut commandline = EditView::new();
         let mut layout = LinearLayout::vertical()
             .child(album_list)
@@ -22,4 +26,10 @@ impl Collection {
         screen.add_fullscreen_layer(layout);
         screen
     }
+}
+
+pub fn add_to_list(s: &mut Cursive, name: &str) {
+    s.call_on_name("albumlist", |view: &mut SelectView<String>| {
+        view.add_item_str(name);
+    });
 }
