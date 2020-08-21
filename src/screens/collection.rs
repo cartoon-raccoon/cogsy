@@ -10,16 +10,16 @@ impl Collection {
     pub fn new() -> Self {
         Collection{}
     }
-    pub fn build(&self, s: &mut Cursive) -> StackView {
-        let mut album_list = ResizedView::new(
+    pub fn build(&self) -> StackView {
+        let album_list = ResizedView::new(
             SizeConstraint::Full, 
             SizeConstraint::Full, 
             LinearLayout::horizontal()
             .child(SelectView::<String>::new()
                 .with_name("albumlist")));
         
-        let mut commandline = EditView::new();
-        let mut layout = LinearLayout::vertical()
+        let commandline = EditView::new();
+        let layout = LinearLayout::vertical()
             .child(album_list)
             .child(commandline);
         let mut screen = StackView::new();
