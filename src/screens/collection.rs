@@ -4,7 +4,7 @@ use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
 use crate::screens::traits::Screen;
-use crate::app::message::Message;
+use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Collection {}
@@ -16,18 +16,18 @@ impl Screen for Collection {
     }
     fn build(&self) -> StackView {
         let main_view = LinearLayout::horizontal()
-            .child(ResizedView::new(
-                SizeConstraint::Fixed(25), 
+            .child(Panel::new(ResizedView::new(
+                SizeConstraint::Fixed(35), 
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<String>::new()
-                        .with_name("folderlist"))))
-            .child(ResizedView::new(
+                        .with_name("folderlist")))))
+            .child(Panel::new(ResizedView::new(
                 SizeConstraint::Full,
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<String>::new()
-                    .with_name("albumlist"))))
+                    .with_name("albumlist")))))
             .with_name("main_view");
         
         let message = TextContent::new("Welcome to Cogsy!");
@@ -37,12 +37,14 @@ impl Screen for Collection {
             .on_submit( move |s: &mut Cursive, text| {
                 //placeholder code until i implement commands
                 add_to_list(s, "albumlist", text);
-                s.call_on_name("commandline", |view: &mut EditView| {
-                    view.set_content("");
-                });
                 message.set_content(&format!("Added '{}'", text));
                 s.focus_name("albumlist").unwrap();
+                s.call_on_name("commandline", |view: &mut EditView| {
+                    view.set_content("");
+                    view.disable();
+                });
             })
+            .disabled()
             .with_name("commandline");
         let layout = LinearLayout::vertical()
             .child(main_view)
