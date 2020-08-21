@@ -63,12 +63,20 @@ prototyped in python, officially released in rust
 
    app structure:
    commands.rs
-   app.rs
+   utils.rs (various helper functions)
    main.rs (main event handling loop)
-   screens (dir)
+   commands.rs (command parsing)
+   screens/ (screen layouts)
     |_collection.rs
     |_wantlist.rs
     |_profile.rs
     |_history.rs
     |_money.rs
     |_addlog.rs
+    |_traits.rs (Screen trait)
+   app/ (app logic)
+    |_mod.rs (declaration of app)
+    |_impl_app.rs (implementation block)
+    |_database (database handler functions)
+    |_query (api handler functions)
+    |_message.rs (message formatting)
