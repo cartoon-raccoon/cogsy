@@ -1,20 +1,20 @@
 cogsy - a command line local discogs client
 
 prototyped in python, officially released in rust
- capabilities:
- saves a user's discogs collection into a local database
- pulls new collection updates from discogs
- random song functionality
- track listens and show listening history using unicode braille
- track money spent on record purchases and graph history using unicode braille
- aims to be as independent of the internet as possible
+capabilities:
+saves a user's discogs collection into a local database
+pulls new collection updates from discogs
+random song functionality
+track listens and show listening history using unicode braille
+track money spent on record purchases and graph history using unicode braille
+aims to be as independent of the internet as possible
  - only connects to the internet to pull user data (i.e. when running update)
  - everything else is handled offline (locally)
  
- app flow:
- running without any arguments enters interactive mode
- else, when run with a command, executes command and exits
- commands can also be executed in interactive mode
+app flow:
+running without any arguments enters interactive mode
+else, when run with a command, executes command and exits
+commands can also be executed in interactive mode
 
  interactive mode layout:
    |
@@ -40,20 +40,20 @@ prototyped in python, officially released in rust
    - query [album] (queries the local database for album and displays release information)
         (no plans to support API queries)
    
-   list of modes:
-   1: collection (main)
-       - clicking enter on the entry brings up its release information
-   2: wantlist
-       - same as collection
-   3: profile
-       - displays user profile pulled from discogs
-   4: history (graphs the listening history of an album)
-       - side menu of each album in collection, search bar at top
-       (up/down to scroll, the graph of the highlighted album on the right)
-   5: money spent (graph built with unicode braille)
-   6: log (log of when albums were added)
+list of modes:
+1: collection (main)
+    - clicking enter on the entry brings up its release information
+2: wantlist
+   - same as collection
+3: profile
+   - displays user profile pulled from discogs
+4: history (graphs the listening history of an album)
+   - side menu of each album in collection, search bar at top
+    (up/down to scroll, the graph of the highlighted album on the right)
+5: money spent (graph built with unicode braille)
+6: log (log of when albums were added)
 
-   dependencies
+dependencies
    -cursive 0.15.0 -> termion backend
    -reqwest 0.10.7 (api querying)
    -serde 1.0.115 (json deserialization)
@@ -61,7 +61,7 @@ prototyped in python, officially released in rust
    -indicatif 0.15.0 (progressbar)
    -clap 2.33.2 (command parsing)
 
-   app structure:
+app structure:
    commands.rs
    utils.rs (various helper functions)
    main.rs (main event handling loop)
@@ -80,3 +80,9 @@ prototyped in python, officially released in rust
     |_database (database handler functions)
     |_query (api handler functions)
     |_message.rs (message formatting)
+
+TODO:
+  - Implement popup of release info
+    (abstract into separate file)
+  - Implement different colours for folder list
+  - Coloured text
