@@ -13,8 +13,8 @@ use crate::app::App;
 impl App {
     pub fn new() -> Self {
         App {
-            user_id: String::from("gay_fucker2000"),
-            token: String::from("your mum hella gay")
+            user_id: String::from("hello"),
+            token: String::from("welcome to cogsy")
         }
     }
 
