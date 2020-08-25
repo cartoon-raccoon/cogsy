@@ -1,8 +1,8 @@
 use cursive::Cursive;
 use cursive::traits::*;
 use cursive::views::*;
+use cursive::event::{Event, Key};
 
-use crate::screens::traits::Screen;
 use crate::screens::{
     collection::{self, Collection},
     wantlist::{self, Wantlist},
@@ -21,16 +21,13 @@ impl App {
     pub fn load(&self, s: &mut Cursive) {
         
         //initialize screen data
-        let collect = Collection::new();
-        let wantlist = Wantlist::new();
+        let collected = Collection::new();
+        let wants = Wantlist::new();
 
-        let mut main_screen = ScreensView::new();
 
         //initialize gui tree
-        let collection_id = main_screen.add_active_screen(collect.build());
-        let wantlist_id = main_screen.add_screen(wantlist.build());
-
-        let final_main = main_screen.with_name("mainscreen");
+        let collection = collected.build();
+        // let wantlist = wants.build();
 
         let message = TextContent::new("Welcome to Cogsy!");
         let messagebox = TextView::new_with_content(message.clone());
@@ -50,24 +47,25 @@ impl App {
             .with_name("commandline");
 
         let main_layout = LinearLayout::vertical()
-            .child(final_main)
+            .child(collection)
             .child(messagebox)
             .child(commandline);
-
+        
         s.add_fullscreen_layer(main_layout);
-        add_callbacks(s, wantlist_id);
+        add_global_callbacks(s);
+        s.add_global_callback('1', move |s| {
+            s.add_fullscreen_layer(wants.build());
+        });
         //placeholder code
         collection::add_to_list(s, "albumlist", &self.user_id);
         collection::add_to_list(s, "albumlist", &self.token);
-        collection::add_to_list(s, "albumlist", &wantlist_id.to_string());
-        collection::add_to_list(s, "albumlist", &collection_id.to_string());
         collection::add_to_list(s, "folderlist", "main folder");
-        wantlist::add_to_list(s, "wantlist", "hello this is the wantlist")
+
     }
 
 }
 
-fn add_callbacks(s: &mut Cursive, wantlist_id: usize) {
+fn add_global_callbacks(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(':', |s| {
         s.call_on_name("commandline", |view: &mut EditView| {
@@ -76,14 +74,11 @@ fn add_callbacks(s: &mut Cursive, wantlist_id: usize) {
         });
         s.focus_name("commandline").unwrap();
     });
+    s.add_global_callback(Event::Key(Key::Backspace), |s| {
+        if s.screen().len() > 1 {
+            s.pop_layer();
+        }
+    })
 
     //adding screen change callbacks
-    s.add_global_callback('2', move |s|
-        set_screen(s, wantlist_id)
-    );
-}
-
-fn set_screen(s: &mut Cursive, screen_id: usize) {
-    let mut view: ViewRef<ScreensView> = s.find_name("mainscreen").unwrap();
-    view.set_active_screen(screen_id);
 }

@@ -1,21 +1,21 @@
 use cursive::views::*;
 use cursive::traits::*;
+use cursive::event::{Event::*, Key::*, EventResult};
 use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
-use crate::screens::traits::Screen;
 use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Collection {}
 
 #[allow(dead_code)]
-impl Screen for Collection {
-    fn new() -> Self {
+impl Collection {
+    pub fn new() -> Self {
         Collection{}
     }
-    fn build(&self) -> StackView {
-        let main_view = LinearLayout::horizontal()
+    pub fn build(&self) -> Canvas<NamedView<LinearLayout>> {
+        let collection = Canvas::wrap(LinearLayout::horizontal()
             .child(Panel::new(ResizedView::new(
                 SizeConstraint::Fixed(35), 
                 SizeConstraint::Full,
@@ -28,12 +28,18 @@ impl Screen for Collection {
                 ScrollView::new(
                     SelectView::<String>::new()
                     .with_name("albumlist")))))
-            .with_name("main_view");
-        
-        let mut screen = StackView::new();
-        screen.add_fullscreen_layer(main_view);
-
-        screen
+            .with_name("main_view"));
+            // .with_on_event( |_view: &mut NamedView<LinearLayout>, event| {
+            //     match event {
+            //         Key(Backspace) => {
+            //             // s.pop_layer();
+            //             EventResult::Consumed(None) 
+            //         }
+            //         _ => EventResult::Ignored,
+            //     }
+            //});
+                    
+        collection
     }
 }
 

@@ -40,13 +40,18 @@ commands can also be executed in interactive mode
    - query [album] (queries the local database for album and displays release information)
         (no plans to support API queries)
    
-list of modes:
+list of screens:
 1: collection (main)
     - clicking enter on the entry brings up its release information
 2: wantlist
    - same as collection
 3: profile
-   - displays user profile pulled from discogs
+   - displays user profile pulled from discogs plus some additional info
+      - highest rated album
+      - most listened album in the past 30 days
+      - most listened album of all time
+      - most expensive album
+      - artist with the most albums in collection
 4: history (graphs the listening history of an album)
    - side menu of each album in collection, search bar at top
     (up/down to scroll, the graph of the highlighted album on the right)

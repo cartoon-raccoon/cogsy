@@ -3,6 +3,8 @@ use cursive::views::*;
 use cursive::view::SizeConstraint;
 use cursive::traits::*;
 
+use crate::app::message::{Message, MessageKind};
+
 pub struct Wantlist {
 
 }
@@ -11,18 +13,21 @@ impl Wantlist {
     pub fn new() -> Self {
         Wantlist{}
     }
-    pub fn build(&self) -> StackView {
+    pub fn build(&self) -> Panel<
+            ResizedView<
+            ScrollView<
+            NamedView<
+            SelectView>>>> {
         let main_screen = Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
                 SelectView::<String>::new()
+                .item_str("hello this is the wantlist")
                 .with_name("wantlist"))
         ));
-        let mut screen = StackView::new();
-        screen.add_fullscreen_layer(main_screen);
-
-        screen
+        
+        main_screen
     }
 }
 
