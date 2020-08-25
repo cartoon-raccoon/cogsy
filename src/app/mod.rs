@@ -1,6 +1,6 @@
 pub mod impl_app;
 pub mod database;
-pub mod query;
+pub mod request;
 pub mod message;
 
 pub struct App{
