@@ -1,6 +1,5 @@
-cogsy - a command line local discogs client
+Cogsy - a command line curses-based Discogs client written in Rust
 
-prototyped in python, officially released in rust
 capabilities:
 saves a user's discogs collection into a local database
 pulls new collection updates from discogs
@@ -40,7 +39,7 @@ commands can also be executed in interactive mode
    - query [album] (queries the local database for album and displays release information)
         (no plans to support API queries)
    
-list of screens:
+list of screens (accessed by typing their names in the commandline)
 1: collection (main)
     - clicking enter on the entry brings up its release information
 2: wantlist
@@ -78,7 +77,6 @@ app structure:
     |_history.rs
     |_money.rs
     |_addlog.rs
-    |_traits.rs (Screen trait)
    app/ (app logic)
     |_mod.rs (declaration of app)
     |_impl_app.rs (implementation block)
@@ -87,7 +85,8 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
+  - !!!commands!!!
   - Implement popup of release info
     (abstract into separate file)
   - Implement different colours for folder list
-  - Coloured text
+  - Coloured messages

@@ -1,6 +1,5 @@
 use cursive::views::*;
 use cursive::traits::*;
-use cursive::event::{Event::*, Key::*, EventResult};
 use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
@@ -14,8 +13,8 @@ impl Collection {
     pub fn new() -> Self {
         Collection{}
     }
-    pub fn build(&self) -> Canvas<NamedView<LinearLayout>> {
-        let collection = Canvas::wrap(LinearLayout::horizontal()
+    pub fn build(&self) -> NamedView<LinearLayout> {
+        let collection = LinearLayout::horizontal()
             .child(Panel::new(ResizedView::new(
                 SizeConstraint::Fixed(35), 
                 SizeConstraint::Full,
@@ -28,16 +27,7 @@ impl Collection {
                 ScrollView::new(
                     SelectView::<String>::new()
                     .with_name("albumlist")))))
-            .with_name("main_view"));
-            // .with_on_event( |_view: &mut NamedView<LinearLayout>, event| {
-            //     match event {
-            //         Key(Backspace) => {
-            //             // s.pop_layer();
-            //             EventResult::Consumed(None) 
-            //         }
-            //         _ => EventResult::Ignored,
-            //     }
-            //});
+            .with_name("main_view");
                     
         collection
     }

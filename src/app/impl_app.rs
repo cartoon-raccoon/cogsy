@@ -3,6 +3,8 @@ use cursive::traits::*;
 use cursive::views::*;
 use cursive::event::{Event, Key};
 
+use std::collections::HashMap;
+
 use crate::screens::{
     collection::{self, Collection},
     wantlist::{self, Wantlist},
@@ -74,11 +76,17 @@ fn add_global_callbacks(s: &mut Cursive) {
         });
         s.focus_name("commandline").unwrap();
     });
+    //* PLACEHOLDER CODE
+    //TODO: implement commands to handle opening of child screens
     s.add_global_callback(Event::Key(Key::Backspace), |s| {
         if s.screen().len() > 1 {
             s.pop_layer();
         }
     })
+}
 
-    //adding screen change callbacks
+fn format_columns<T, I> (list: HashMap<T, I>) -> Vec<T> {
+    //formats a hashmap of iterators of strings into an iterator of formatted strings
+    //might move this to a dedicated utils module if enough helper funcs are added
+    Vec::new() //returning an empty vector just so i can compile
 }

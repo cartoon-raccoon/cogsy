@@ -13,17 +13,22 @@ impl Wantlist {
     pub fn new() -> Self {
         Wantlist{}
     }
-    pub fn build(&self) -> Panel<
+    pub fn build(&self) -> Panel< //long-ass return type declaration
             ResizedView<
             ScrollView<
             NamedView<
             SelectView>>>> {
+        //placeholder vector (what's new)
+        //iterator members must be formatted into columns
+        let name_list = vec!["hello", "this", "is", "cogsy"];
+
         let main_screen = Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
                 SelectView::<String>::new()
-                .item_str("hello this is the wantlist")
+                //add an iterator to add all the entries
+                .with_all_str(name_list)
                 .with_name("wantlist"))
         ));
         

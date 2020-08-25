@@ -3,7 +3,6 @@ mod screens;
 mod theme;
 
 use app::App;
-use screens::collection::{self, Collection};
 
 fn main() {
     let mut siv = cursive::default();
