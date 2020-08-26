@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 cursive = "0.15.0"
 reqwest = "0.10.7"
-serde = "1.0.115"
+serde_json = "1.0.57"
+serde = {version = "1.0.115", features = ["derive"]}
 rusqlite = "0.23.1"
 clap = "2.33.2"
