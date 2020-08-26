@@ -6,12 +6,19 @@ use cursive::traits::*;
 use crate::app::message::{Message, MessageKind};
 
 pub struct Wantlist {
-
+    wantlist: Vec<String>
 }
 
 impl Wantlist {
     pub fn new() -> Self {
-        Wantlist{}
+        Wantlist{
+            wantlist: vec![
+                String::from("hello"), 
+                String::from("this"),
+                String::from("is"), 
+                String::from("cogsy")
+            ]
+        }
     }
     pub fn build(&self) -> Panel< //long-ass return type declaration
             ResizedView<
@@ -20,15 +27,13 @@ impl Wantlist {
             SelectView>>>> {
         //placeholder vector (what's new)
         //iterator members must be formatted into columns
-        let name_list = vec!["hello", "this", "is", "cogsy"];
-
         let main_screen = Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
                 SelectView::<String>::new()
                 //add an iterator to add all the entries
-                .with_all_str(name_list)
+                .with_all_str(&self.wantlist)
                 .with_name("wantlist"))
         ));
         
