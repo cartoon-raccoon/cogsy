@@ -6,12 +6,12 @@ use app::App;
 use app::request;
 
 fn main() {
-    // let mut siv = cursive::default();
-    // siv.set_theme(theme::theme_gen());
+    let mut siv = cursive::default();
+    siv.set_theme(theme::theme_gen());
 
-    // let app = App::new();
-    // app.load(&mut siv);
+    let app = App::new();
+    app.load(&mut siv);
 
-    // siv.run();
-    println!("{}", request::query());
+    siv.run();
+    //println!("{:?}", request::query("discogs_collection.json"));
 }

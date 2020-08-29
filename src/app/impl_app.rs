@@ -59,8 +59,6 @@ impl App {
             s.add_fullscreen_layer(wants.build());
         });
         //placeholder code
-        collection::add_to_list(s, "albumlist", &self.user_id);
-        collection::add_to_list(s, "albumlist", &self.token);
         collection::add_to_list(s, "folderlist", "main folder");
 
     }
@@ -76,17 +74,10 @@ fn add_global_callbacks(s: &mut Cursive) {
         });
         s.focus_name("commandline").unwrap();
     });
-    //* PLACEHOLDER CODE
     //TODO: implement commands to handle opening of child screens
     s.add_global_callback(Event::Key(Key::Backspace), |s| {
         if s.screen().len() > 1 {
             s.pop_layer();
         }
     })
-}
-
-fn format_columns<T, I> (list: HashMap<T, I>) -> Vec<T> {
-    //formats a hashmap of iterators of strings into an iterator of formatted strings
-    //might move this to a dedicated utils module if enough helper funcs are added
-    Vec::new() //returning an empty vector just so i can compile
 }
