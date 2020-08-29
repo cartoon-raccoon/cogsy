@@ -3,8 +3,8 @@ use cursive::traits::*;
 use cursive::views::*;
 use cursive::event::{Event, Key};
 
-use std::collections::HashMap;
-
+#[allow(unused_imports)]
+use crate::commands::{Command, CommandError};
 use crate::screens::{
     collection::{self, Collection},
     wantlist::{self, Wantlist},
@@ -60,6 +60,10 @@ impl App {
         });
         //placeholder code
         collection::add_to_list(s, "folderlist", "main folder");
+
+    }
+
+    pub fn parse_commands(&mut self, result: Result<Command, CommandError>) {
 
     }
 

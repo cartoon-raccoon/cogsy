@@ -1,9 +1,9 @@
 mod app;
 mod screens;
 mod theme;
+mod commands;
 
 use app::App;
-use app::request;
 
 fn main() {
     let mut siv = cursive::default();
@@ -13,5 +13,4 @@ fn main() {
     app.load(&mut siv);
 
     siv.run();
-    //println!("{:?}", request::query("discogs_collection.json"));
 }
