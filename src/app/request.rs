@@ -14,20 +14,20 @@ use crate::app::response::Response;
 
 #[derive(Debug, Clone)]
 pub struct Release {
-    id: u64,
-    title: String,
-    artist: String,
-    labels: Vec<String>,
-    date_added: String,
+    pub id: u64,
+    pub title: String,
+    pub artist: String,
+    pub labels: Vec<String>,
+    pub date_added: String,
 }
 
-pub fn query() -> Vec<Release> {
-    let result = deserialize("discogs_collection.json").unwrap();
+pub fn query(filename: &str) -> Vec<Release> {
+    let result = deserialize(filename).unwrap();
     result
 }
 
 fn request() {
-
+    //requests to the Discogs API made here
 }
 
 fn deserialize(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
@@ -70,13 +70,17 @@ fn deserialize(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
             let mut label_names = Vec::<String>::new();
             let labels = info["labels"].as_array().unwrap();
             for label in labels {
-                label_names.push(label["name"].to_string());
+                label_names.push(label["name"].as_str()
+                    .unwrap()
+                    .to_string());
             }
-            
+
             releases.push(Release {
                 id: id_no,
-                title: info["title"].to_string(),
-                artist: info["artists"][0]["name"].to_string(),
+                title: info["title"].as_str().unwrap().to_string(),
+                artist: info["artists"][0]["name"].as_str()
+                    .unwrap()
+                    .to_string(),
                 labels: label_names,
                 date_added: added_date
             });
