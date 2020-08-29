@@ -3,17 +3,19 @@ use cursive::traits::*;
 use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
-use crate::app::request;
-
+use crate::app::request::{self, Release, ParseType};
 use crate::app::message::{Message, MessageKind};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Collection {}
+#[derive(Debug, Clone)]
+pub struct Collection {
+    pub contents: Vec<Release>
+}
 
-#[allow(dead_code)]
 impl Collection {
     pub fn new() -> Self {
-        Collection{}
+        Collection{
+            contents: request::query(ParseType::Collection, "discogs_collection.json")
+        }
     }
     pub fn build(&self) -> NamedView<LinearLayout> {
         let collection = LinearLayout::horizontal()
@@ -28,11 +30,19 @@ impl Collection {
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<String>::new()
-                    .with_all_str(load_data())
+                    .with_all_str(self.load_data())
                     .with_name("albumlist")))))
             .with_name("main_view");
                     
         collection
+    }
+
+    fn load_data(&self) -> Vec<String> {
+        let mut titlelist = Vec::<String>::new();
+        for release in &self.contents {
+            titlelist.push(release.title.clone());
+        }
+        titlelist
     }
 }
 
@@ -45,15 +55,6 @@ pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
 pub fn format_columns (list: Vec<request::Release>) -> Vec<String> {
     //formats a vector of Release structs into an iterator of formatted strings
     //might move this to a dedicated utils module if enough helper funcs are added
-    
-    Vec::new() //returning an empty vector just so i can compile
-}
 
-fn load_data() -> Vec<String> {
-    let data = request::query("discogs_collection.json");
-    let mut titlelist = Vec::<String>::new();
-    for release in data {
-        titlelist.push(release.title);
-    }
-    titlelist
+    Vec::new() //returning an empty vector just so i can compile
 }

@@ -3,8 +3,6 @@ use serde_json::Value;
 use std::fs::read_to_string;
 use std::error::Error;
 
-use crate::app::response::Response;
-
 /*
 * This module handles Discogs API requests and JSON deserialization
 * The one main function exposed by this module is query();
@@ -21,8 +19,22 @@ pub struct Release {
     pub date_added: String,
 }
 
-pub fn query(filename: &str) -> Vec<Release> {
-    let result = deserialize(filename).unwrap();
+pub enum ParseType {
+    Collection,
+    Wantlist,
+}
+
+#[allow(unused_assignments)]
+pub fn query(parse: ParseType, filename: &str) -> Vec<Release> {
+    let mut result = Vec::<Release>::new();
+    match parse {
+        ParseType::Collection => {
+            result = parse_collection(filename).unwrap();
+        }
+        ParseType::Wantlist => {
+            result = parse_wantlist(filename).unwrap();
+        }
+    }
     result
 }
 
@@ -30,7 +42,8 @@ fn request() {
     //requests to the Discogs API made here
 }
 
-fn deserialize(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+#[allow(unused_assignments)]
+fn parse_collection(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
@@ -49,13 +62,13 @@ fn deserialize(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
     let response: Value = serde_json::from_str(&contents)?;
 
     let pagination = response.get("pagination").unwrap();
-    if let Value::Object(Map) = pagination {
+    if let Value::Object(_) = pagination {
         total = pagination.get("items").unwrap().as_u64().unwrap();
     } else { //change this to handle the error instead of panicking
         panic!("Could not read json file properly.");
     }
     let releases_raw = response.get("releases").unwrap();
-    if let Value::Array(Vec) = releases_raw {
+    if let Value::Array(_) = releases_raw {
         let releaselist = releases_raw.as_array().unwrap();
 
         //deserialization happens here
@@ -88,5 +101,10 @@ fn deserialize(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
     } else {
         panic!("Release list could not be read");
     }
+    Ok(releases)
+}
+
+fn parse_wantlist(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+    let releases = Vec::<Release>::new();
     Ok(releases)
 }
