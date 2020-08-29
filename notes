@@ -90,3 +90,10 @@ TODO:
     (abstract into separate file)
   - Implement different colours for folder list
   - Coloured messages
+  - Switching folders in collection screen
+  - Discogs API querying
+  - Database API
+  - Handling of various folders in collection database
+    and sorting their entries into the database
+    (i.e. Maintain one master table with a folders field
+     or maintain multiple tables for each folder?)
