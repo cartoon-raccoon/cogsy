@@ -29,7 +29,7 @@ pub enum Command {
     UpdateDB,               //switch and argument
     UpdateID(String),       //username
     UpdateToken(String),    //token
-    Random(bool),         //nolog
+    Random(bool),           //true = nolog
     Price(String, f64),     //album name, price
     Listen(String, String), //album name
     Query(String),          //album name
@@ -56,7 +56,7 @@ impl fmt::Display for CommandError {
             CommandError::InvalidArg(p) => write!(f, "Invalid argument at position {}", p),
             CommandError::InvalidAlbum(n) => write!(f, "Invalid album name given: {}", n),
             CommandError::InvalidSyntax(n, s) => {
-                write!(f, "Invalid syntax for command {}: Does not have switch {}", n, s)
+                write!(f, "Invalid syntax for command {}: Could not parse {}", n, s)
             },
             CommandError::NotEnoughArgs(s, n) => {
                 write!(f, "Command `{}` requires at least {} argument(s)!", s, n)
@@ -98,6 +98,7 @@ impl Command {
                 }
             }
         };
+
         let strings: Vec<&str> = input.trim().split(' ').collect();
         if strings.is_empty() {
             return Ok(Command::Empty);
@@ -138,35 +139,44 @@ impl Command {
                                 first,
                                 strings[1].to_string()));
                         }
-                    }
+                    } 
+                } else {
+                    return Ok(Command::Random(false));
                 }
             },
-            "price" => {
-                let mut argv = splitter(input);
-                if argv.len() > 3 {
+            "price" => { //TODO: Error handling for non-numbers
+                let mut argv = splitter(input.trim());
+                if argv.len() < 2 {
+                    return Err(CommandError::NotEnoughArgs(first, 2));
+                }
+                let extra_args: Vec<&str> = argv[1].trim().split(' ').collect();
+                if extra_args.len() > 1 {
                     return Err(CommandError::TooManyArgs(first, 2))
-                } else if argv.len() < 3 {
+                } else if argv[1] == "" {
                     return Err(CommandError::NotEnoughArgs(first, 2))
                 } else {
                     argv[1].retain(|c| c != ' ');
+                    //* This panics if not passed numbers
                     let price = argv[1].parse::<f64>().unwrap();
                     return Ok(Command::Price(argv[2].clone(), price));
                 }
             },
             "listen" => {
-                let mut argv = splitter(input);
-                if argv.len() > 3 {
+                let mut argv = splitter(input.trim());
+                if argv.len() < 2 {
+                    return Err(CommandError::NotEnoughArgs(first, 2));
+                }
+                let extra_args: Vec<&str> = argv[1].trim().split(' ').collect();
+                if extra_args.len() > 1 {
                     return Err(CommandError::TooManyArgs(first, 2));
-                } else if argv.len() < 2 {
-                    return Err(CommandError::NotEnoughArgs(first, 1));
                 } else {
                     argv[1].retain(|c| c != ' ');
                     return Ok(Command::Listen(argv[2].clone(), argv[1].clone()));
                 }
             },
             "query" => {
-                let argv = splitter(input);
-                if argv.len() > 3 {
+                let argv = splitter(input.trim());
+                if argv[1] != "" {
                     return Err(CommandError::TooManyArgs(first, 1));
                 } else if argv.len() < 3 {
                     return Err(CommandError::NotEnoughArgs(first, 1));
