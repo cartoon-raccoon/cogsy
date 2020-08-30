@@ -36,8 +36,6 @@ impl App {
         
         let commandline = EditView::new()
             .on_submit( move |s: &mut Cursive, text| {
-                //placeholder code until i implement commands
-                collection::add_to_list(s, "albumlist", text);
                 message.set_content(&format!("Added '{}'", text));
                 s.focus_name("albumlist").unwrap();
                 s.call_on_name("commandline", |view: &mut EditView| {
@@ -56,7 +54,9 @@ impl App {
         s.add_fullscreen_layer(main_layout);
         add_global_callbacks(s);
         s.add_global_callback('1', move |s| {
-            s.add_fullscreen_layer(wants.build());
+            if s.screen().len() == 1 {
+                s.add_fullscreen_layer(wants.build());
+            }
         });
         //placeholder code
         collection::add_to_list(s, "folderlist", "main folder");
