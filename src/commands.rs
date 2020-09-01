@@ -183,6 +183,9 @@ impl Command {
                 }
             },
             ":query" => {
+                if strings.len() == 1 {
+                    return Err(CommandError::NotEnoughArgs(first, 1));
+                }
                 let argv = splitter(input.trim());
                 if argv[1] != "" {
                     return Err(CommandError::TooManyArgs(first, 1));
