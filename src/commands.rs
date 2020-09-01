@@ -41,7 +41,7 @@ pub enum Command {
 pub enum CommandError {
     InvalidCommand(String),
     InvalidArg(u32),
-    InvalidAlbum(String),
+    InvalidAlbum,
     InvalidSyntax(String, String),
     NotEnoughArgs(String, u32),
     TooManyArgs(String, u32),
@@ -54,7 +54,9 @@ impl fmt::Display for CommandError {
         match self {
             CommandError::InvalidCommand(s) => write!(f, "Invalid command: `{}`", s),
             CommandError::InvalidArg(p) => write!(f, "Invalid argument at position {}", p),
-            CommandError::InvalidAlbum(n) => write!(f, "Invalid album name given: `{}`", n),
+            CommandError::InvalidAlbum => {
+                write!(f, "Error: Could not parse album name. Try enclosing it in double quotes.")
+            }
             CommandError::InvalidSyntax(n, s) => {
                 write!(f, "Invalid syntax for command `{}`: Could not parse `{}`", n, s)
             },
@@ -62,7 +64,7 @@ impl fmt::Display for CommandError {
                 write!(f, "Error: Command `{}` requires at least {} argument(s).", s, n)
             },
             CommandError::TooManyArgs(s, n) => {
-                write!(f, "Error Command `{}` only requires at most {} argument(s).", s, n)
+                write!(f, "Error: Command `{}` only requires at most {} argument(s).", s, n)
             },
         }
     }
@@ -77,7 +79,7 @@ impl Command {
     pub fn parse(input: &str) -> Result<Command, CommandError> {
 
         //closure to capture regexes and returns a Vec of command arguments
-        let splitter = |cmdtext: &str| -> Vec<String> {
+        let splitter = |cmdtext: &str| -> Option<Vec<String>> {
             let re = Regex::new("\".*\"").unwrap();
             let mut args: Vec<String> = re.split(cmdtext).map(|arg| arg.to_string()).collect();
             let target = re.captures(cmdtext);
@@ -88,14 +90,9 @@ impl Command {
                     for arg in &mut args {
                         arg.retain(|c| c != '"');
                     }
-                    args
+                    Some(args)
                 },
-                None => {
-                    for arg in &mut args {
-                        arg.retain(|c| c != '"');
-                    }
-                    args
-                }
+                None => None
             }
         };
 
@@ -145,41 +142,56 @@ impl Command {
                 }
             },
             ":price" => {
-                let mut argv = splitter(input.trim());
-                if argv.len() < 2 {
-                    return Err(CommandError::NotEnoughArgs(first, 2));
+                if strings.len() == 1 {
+                    return Err(CommandError::NotEnoughArgs(first, 1));
                 }
-                let extra_args: Vec<&str> = argv[1].trim().split(' ').collect();
-                if extra_args.len() > 1 {
-                    return Err(CommandError::TooManyArgs(first, 2))
-                } else if argv[1] == "" {
-                    return Err(CommandError::NotEnoughArgs(first, 2))
-                } else {
-                    argv[1].retain(|c| c != ' ');
-                    //* This panics if not passed numbers
-                    let price = argv[1].parse::<f64>();
-                    match price {
-                        Ok(price) => {
-                            return Ok(Command::Price(argv[2].clone(), price));},
-                        Err(_e) => {
-                            return Err(CommandError::InvalidSyntax(
-                                argv[0].clone(), 
-                                argv[1].clone()));
+                let argv = splitter(input.trim());
+                match argv {
+                    Some(mut args) => {
+                        if args.len() < 3 {
+                            return Err(CommandError::NotEnoughArgs(first, 2));
+                        }
+                        let extra_args: Vec<&str> = args[1].trim().split(' ').collect();
+                        if extra_args.len() > 1 {
+                            return Err(CommandError::TooManyArgs(first, 2))
+                        } else if args[1] == "" {
+                            return Err(CommandError::NotEnoughArgs(first, 2))
+                        } else {
+                            args[1].retain(|c| c != ' ');
+                            let price = args[1].parse::<f64>();
+                        match price {
+                            Ok(price) => {
+                                return Ok(Command::Price(args[2].clone(), price));},
+                            Err(_e) => {
+                                return Err(CommandError::InvalidSyntax(
+                                    args[0].clone(), 
+                                    args[1].clone()));
+                                }
                             }
+                        }
                     }
+                    None => Err(CommandError::InvalidAlbum)
                 }
             },
             ":listen" => {
-                let mut argv = splitter(input.trim());
-                if argv.len() < 2 {
-                    return Err(CommandError::NotEnoughArgs(first, 2));
+                if strings.len() == 1 {
+                    return Err(CommandError::NotEnoughArgs(first, 1));
                 }
-                let extra_args: Vec<&str> = argv[1].trim().split(' ').collect();
-                if extra_args.len() > 1 {
-                    return Err(CommandError::TooManyArgs(first, 2));
-                } else {
-                    argv[1].retain(|c| c != ' ');
-                    return Ok(Command::Listen(argv[2].clone(), argv[1].clone()));
+                let argv = splitter(input.trim());
+                match argv {
+                    Some(mut args) => {
+                        if args.len() < 2 {
+                            return Err(CommandError::NotEnoughArgs(first, 2));
+                        }
+                        let extra_args: Vec<&str> = args[1].trim().split(' ').collect();
+                        if extra_args.len() > 1 {
+                            return Err(CommandError::TooManyArgs(first, 2));
+                        } else {
+                            args[1].retain(|c| c != ' ');
+                            return Ok(Command::Listen(args[2].clone(), args[1].clone()));
+                        }
+                    }
+                    None => Err(CommandError::InvalidAlbum)
                 }
             },
             ":query" => {
@@ -187,12 +199,17 @@ impl Command {
                     return Err(CommandError::NotEnoughArgs(first, 1));
                 }
                 let argv = splitter(input.trim());
-                if argv[1] != "" {
-                    return Err(CommandError::TooManyArgs(first, 1));
-                } else if argv.len() < 3 {
-                    return Err(CommandError::NotEnoughArgs(first, 1));
-                } else {
-                    return Ok(Command::Query(argv[2].clone()));
+                match argv {
+                    Some(args) => {
+                        if args[1] != "" {
+                            return Err(CommandError::TooManyArgs(first, 1));
+                        } else if args.len() < 3 {
+                            return Err(CommandError::NotEnoughArgs(first, 1));
+                        } else {
+                            return Ok(Command::Query(args[2].clone()));
+                        }
+                    }
+                    None => Err(CommandError::InvalidAlbum)
                 }
             },
             _ => {
