@@ -3,14 +3,81 @@ mod screens;
 mod theme;
 mod commands;
 
+use cursive::Cursive;
+use cursive::traits::*;
+use cursive::views::*;
+use cursive::event::{Event, Key};
+
 use app::App;
+use commands::Command;
+use screens::{
+    collection::{self, Collection},
+    wantlist::{self, Wantlist},
+    //add other modules as implemented
+};
 
 fn main() {
     let mut siv = cursive::default();
     siv.set_theme(theme::theme_gen());
 
-    let app = App::new();
-    app.load(&mut siv);
+    let app = App::initialize();
+    //app.load(&mut siv);
+
+    //initialize screen data
+    let collected = Collection::new();
+    let wants = Wantlist::new();
+
+
+    //initialize gui data
+    let collection = collected.build();
+
+    //building gui tree
+    let message = TextContent::new(app.message.msg.clone());
+    let messagebox = TextView::new_with_content(message.clone())
+        .with_name("messagebox");
+    
+    let commandline = EditView::new()
+        .on_submit( move |s: &mut Cursive, text| {
+            s.focus_name("albumlist").unwrap();
+            s.call_on_name("commandline", |view: &mut EditView| {
+                view.set_content("");
+                view.disable();
+            });
+            let result = Command::parse(text);
+            app.execute(s, result);
+        })
+        .disabled()
+        .with_name("commandline");
+
+    let main_layout = LinearLayout::vertical()
+        .child(collection)
+        .child(messagebox)
+        .child(commandline);
+    
+    siv.add_fullscreen_layer(main_layout);
+
+    //adding callbacks
+    siv.add_global_callback('q', |s| s.quit());
+    siv.add_global_callback(':', |s| {
+        s.call_on_name("commandline", |view: &mut EditView| {
+            view.enable();
+            view.set_content(":");
+        });
+        s.focus_name("commandline").unwrap();
+    });
+    //TODO: implement commands to handle opening of child screens
+    siv.add_global_callback(Event::Key(Key::Backspace), |s| {
+        if s.screen().len() > 1 {
+            s.pop_layer();
+        }
+    });
+    siv.add_global_callback('1', move |s| {
+        if s.screen().len() == 1 {
+            s.add_fullscreen_layer(wants.build());
+        }
+    });
+    //placeholder code
+    collection::add_to_list(&mut siv, "folderlist", "main folder");
 
     siv.run();
 }

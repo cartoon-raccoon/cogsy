@@ -74,7 +74,7 @@ impl fmt::Display for CommandError {
 *Then the text following the matched pattern can be interpreted normally
 */
 impl Command {
-    pub fn parse_command(input: &str) -> Result<Command, CommandError> {
+    pub fn parse(input: &str) -> Result<Command, CommandError> {
 
         //closure to capture regexes and returns a Vec of command arguments
         let splitter = |cmdtext: &str| -> Vec<String> {
@@ -105,7 +105,7 @@ impl Command {
         }
         let first = strings.first().unwrap().to_string();
         match first.as_str() {
-            "update" => {
+            ":update" => {
                 if strings.len() > 3 {
                     return Err(CommandError::TooManyArgs(first, 2))
                 } else if strings.len() == 1 {
@@ -126,7 +126,7 @@ impl Command {
                     }
                 }
             },
-            "random" => {
+            ":random" => {
                 if strings.len() > 2 {
                     return Err(CommandError::TooManyArgs(first, 1))
                 } else if strings.len() == 2 {
@@ -144,7 +144,7 @@ impl Command {
                     return Ok(Command::Random(false));
                 }
             },
-            "price" => { //TODO: Error handling for non-numbers
+            ":price" => {
                 let mut argv = splitter(input.trim());
                 if argv.len() < 2 {
                     return Err(CommandError::NotEnoughArgs(first, 2));
@@ -157,11 +157,19 @@ impl Command {
                 } else {
                     argv[1].retain(|c| c != ' ');
                     //* This panics if not passed numbers
-                    let price = argv[1].parse::<f64>().unwrap();
-                    return Ok(Command::Price(argv[2].clone(), price));
+                    let price = argv[1].parse::<f64>();
+                    match price {
+                        Ok(price) => {
+                            return Ok(Command::Price(argv[2].clone(), price));},
+                        Err(_e) => {
+                            return Err(CommandError::InvalidSyntax(
+                                argv[0].clone(), 
+                                argv[1].clone()));
+                            }
+                    }
                 }
             },
-            "listen" => {
+            ":listen" => {
                 let mut argv = splitter(input.trim());
                 if argv.len() < 2 {
                     return Err(CommandError::NotEnoughArgs(first, 2));
@@ -174,7 +182,7 @@ impl Command {
                     return Ok(Command::Listen(argv[2].clone(), argv[1].clone()));
                 }
             },
-            "query" => {
+            ":query" => {
                 let argv = splitter(input.trim());
                 if argv[1] != "" {
                     return Err(CommandError::TooManyArgs(first, 1));
@@ -188,6 +196,5 @@ impl Command {
                 return Err(CommandError::InvalidCommand(first));
             },
         }
-        Ok(Command::Empty)
     }
 }

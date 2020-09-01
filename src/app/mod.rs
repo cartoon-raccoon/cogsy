@@ -4,7 +4,10 @@ pub mod request;
 pub mod message;
 pub mod response;
 
+use message::Message;
+
 pub struct App{
-    user_id: String,
-    token: String,
+    pub user_id: String,
+    pub token: String,
+    pub message: Message,
 }
