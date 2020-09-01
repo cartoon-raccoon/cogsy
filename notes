@@ -84,7 +84,6 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - !!!commands!!!
   - Implement popup of release info
     (abstract into separate file)
   - Implement different colours for folder list

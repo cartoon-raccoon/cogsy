@@ -54,15 +54,15 @@ impl fmt::Display for CommandError {
         match self {
             CommandError::InvalidCommand(s) => write!(f, "Invalid command: `{}`", s),
             CommandError::InvalidArg(p) => write!(f, "Invalid argument at position {}", p),
-            CommandError::InvalidAlbum(n) => write!(f, "Invalid album name given: {}", n),
+            CommandError::InvalidAlbum(n) => write!(f, "Invalid album name given: `{}`", n),
             CommandError::InvalidSyntax(n, s) => {
-                write!(f, "Invalid syntax for command {}: Could not parse {}", n, s)
+                write!(f, "Invalid syntax for command `{}`: Could not parse `{}`", n, s)
             },
             CommandError::NotEnoughArgs(s, n) => {
-                write!(f, "Command `{}` requires at least {} argument(s)!", s, n)
+                write!(f, "Error: Command `{}` requires at least {} argument(s).", s, n)
             },
             CommandError::TooManyArgs(s, n) => {
-                write!(f, "Command `{}` requires at most {} argument(s).", s, n)
+                write!(f, "Error Command `{}` only requires at most {} argument(s).", s, n)
             },
         }
     }

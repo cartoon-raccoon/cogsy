@@ -18,17 +18,47 @@ impl App {
         }
     }
 
-    //TODO: Implement this shit (PRIORITY)
     pub fn execute(&self, s: &mut Cursive, result: Result<Command, CommandError>) {
+        let mut view_content = String::from("");
         match result {
-            Ok(_r) => {
+            Ok(command) => {
+                match command {
+                    Command::UpdateDB => {
+                        view_content = "Updating database!".to_string();
+                    }
+                    Command::UpdateID(id) => {
+                        view_content = format!("Your id has been set to: {}", id);
+                    }
+                    Command::UpdateToken(tk) => {
+                        view_content = format!("Your token has been set to: {}", tk);
+                    }
+                    Command::Random(nolog) => {
+                        if nolog {
+                            view_content = "You should play: (No logging)".to_string();
+                        } else {
+                            view_content = "You should play: ".to_string();
+                        }
+                    }
+                    Command::Price(album, _price) => {
+                        view_content = format!("Setting the price of `{}`", album);
+                    }
+                    Command::Listen(album, _time) => {
+                        view_content = format!("Listening to: `{}`", album);
+                    }
+                    Command::Query(album) => {
+                        view_content = format!("Querying database for: `{}`", album);
+                    }
+                    Command::Empty => {
+                        view_content = "Empty command".to_string();
+                    }
+                }
                 s.call_on_name("messagebox", |view: &mut TextView| {
-                    view.set_content("command successfully parsed!");
+                    view.set_content(view_content);
                 });
             }
-            Err(_e) => {
+            Err(error) => {
                 s.call_on_name("messagebox", |view: &mut TextView| {
-                    view.set_content("there was an error parsing the command");
+                    view.set_content(error.to_string());
                 });
             }
         }
