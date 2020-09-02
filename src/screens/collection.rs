@@ -14,6 +14,7 @@ pub struct Collection {
 impl Collection {
     pub fn new() -> Self {
         Collection{
+            //placeholder code: this will call from database::query::get_from_db()
             contents: request::query(ParseType::Collection, "discogs_collection.json")
         }
     }
@@ -35,6 +36,13 @@ impl Collection {
             .with_name("main_view");
                     
         collection
+    }
+
+    pub fn refresh(&self, s: &mut Cursive) {
+        s.call_on_name("albumlist", |view: &mut SelectView<String>| {
+            view.clear();
+            view.add_all_str(self.load_data());
+        });
     }
 
     fn load_data(&self) -> Vec<String> {

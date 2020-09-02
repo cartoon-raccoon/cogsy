@@ -24,12 +24,8 @@ fn main() {
     //app.load(&mut siv);
 
     //initialize screen data
-    let collected = Collection::new();
-    let wants = Wantlist::new();
-
-
-    //initialize gui data
-    let collection = collected.build();
+    let collectscreen = app.collection.build();
+    let wantscreen = app.wantlist.clone();
 
     //building gui tree
     let message = TextContent::new(app.message.msg.clone());
@@ -50,7 +46,7 @@ fn main() {
         .with_name("commandline");
 
     let main_layout = LinearLayout::vertical()
-        .child(collection)
+        .child(collectscreen)
         .child(messagebox)
         .child(commandline);
     
@@ -73,7 +69,7 @@ fn main() {
     });
     siv.add_global_callback('1', move |s| {
         if s.screen().len() == 1 {
-            s.add_fullscreen_layer(wants.build());
+            s.add_fullscreen_layer(wantscreen.build());
         }
     });
     //placeholder code

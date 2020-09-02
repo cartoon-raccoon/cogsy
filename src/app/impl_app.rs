@@ -5,6 +5,8 @@ use cursive::views::*;
 use crate::commands::{Command, CommandError};
 use crate::app::App;
 use crate::app::message::{Message, MessageKind};
+use crate::collection::Collection;
+use crate::wantlist::Wantlist;
 
 impl App {
     pub fn initialize() -> Self {
@@ -12,12 +14,15 @@ impl App {
             user_id: String::from("hello"),
             token: String::from("welcome to cogsy"),
             message: Message {
-                msg: String::from("Welcome to Cogsy"),
+                msg: String::from("Cogsy v0.1.0"),
                 kind: MessageKind::Info
-            }
+            },
+            collection: Collection::new(),
+            wantlist: Wantlist::new(),
         }
     }
 
+    #[allow(unused_assignments)]
     pub fn execute(&self, s: &mut Cursive, result: Result<Command, CommandError>) {
         let mut view_content = String::from("");
         match result {
@@ -25,9 +30,15 @@ impl App {
                 match command {
                     Command::UpdateDB => {
                         view_content = "Updating database!".to_string();
+                        self.collection.refresh(s);
                     }
                     Command::UpdateID(id) => {
-                        view_content = format!("Your id has been set to: {}", id);
+                        view_content = format!(
+                            "Your id has been set to `{}`, restart the app for the changes.",
+                            id);
+                        //self.user_id = id;
+                        //Has to be written to file
+                        //Implement View for app for live updating
                     }
                     Command::UpdateToken(tk) => {
                         view_content = format!("Your token has been set to: {}", tk);

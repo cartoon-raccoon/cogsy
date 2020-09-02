@@ -5,6 +5,7 @@ use cursive::traits::*;
 
 use crate::app::message::{Message, MessageKind};
 
+#[derive(Debug, Clone)]
 pub struct Wantlist {
     wantlist: Vec<String>
 }
