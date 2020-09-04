@@ -23,11 +23,14 @@ impl App {
     }
 
     #[allow(unused_assignments)]
-    pub fn execute(&self, s: &mut Cursive, result: Result<Command, CommandError>) {
+    pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
         let mut view_content = String::from("");
         match result {
             Ok(command) => {
                 match command {
+                    //*for every command that updates some data, the app must:
+                    //*1: Update the internal state in memory
+                    //*2: Update the database
                     Command::UpdateDB => {
                         view_content = "Updating database!".to_string();
                         self.collection.refresh(s);
@@ -36,9 +39,8 @@ impl App {
                         view_content = format!(
                             "Your id has been set to `{}`, restart the app for the changes.",
                             id);
-                        //self.user_id = id;
-                        //Has to be written to file
-                        //Implement View for app for live updating
+                        self.user_id = id;
+                        //update user id in db
                     }
                     Command::UpdateToken(tk) => {
                         view_content = format!("Your token has been set to: {}", tk);
@@ -73,6 +75,10 @@ impl App {
                 });
             }
         }
+    }
+
+    pub fn update_id(app: &mut App, idstr: String) {
+        app.user_id = idstr;
     }
 
 }

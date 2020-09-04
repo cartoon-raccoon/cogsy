@@ -24,7 +24,7 @@ fn get_command_completion(prefix: &str) -> Option<String> {
 }
 
 #[derive(PartialEq, Debug)]
-#[allow(dead_code)]
+//#[allow(dead_code)]
 pub enum Command {
     UpdateDB,               //switch and argument
     UpdateID(String),       //username
@@ -37,10 +37,9 @@ pub enum Command {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
+//#[allow(dead_code)]
 pub enum CommandError {
     InvalidCommand(String),
-    InvalidArg(u32),
     InvalidAlbum,
     InvalidSyntax(String, String),
     NotEnoughArgs(String, u32),
@@ -53,7 +52,6 @@ impl fmt::Display for CommandError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CommandError::InvalidCommand(s) => write!(f, "Invalid command: `{}`", s),
-            CommandError::InvalidArg(p) => write!(f, "Invalid argument at position {}", p),
             CommandError::InvalidAlbum => {
                 write!(f, "Error: Could not parse album name. Try enclosing it in double quotes.")
             }

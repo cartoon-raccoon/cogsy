@@ -20,7 +20,7 @@ fn main() {
     let mut siv = cursive::default();
     siv.set_theme(theme::theme_gen());
 
-    let app = App::initialize();
+    let mut app = App::initialize();
     //app.load(&mut siv);
 
     //initialize screen data
@@ -33,7 +33,7 @@ fn main() {
         .with_name("messagebox");
     
     let commandline = EditView::new()
-        .on_submit( move |s: &mut Cursive, text| {
+        .on_submit_mut( move |s: &mut Cursive, text| {
             s.focus_name("albumlist").unwrap();
             s.call_on_name("commandline", |view: &mut EditView| {
                 view.set_content("");
