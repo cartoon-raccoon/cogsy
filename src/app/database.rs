@@ -3,8 +3,9 @@ use rusqlite;
 
 /*
 *the database API exposes two main modules:
-*   mod update: pulls Discogs API queries using the request module
+*   mod update: called by the request module query() to load in data
 *       fns: update_db, load_into_db
+*       also exposes functions that update userid and token
 *   mod query: queries from the local database
 *       IMPORTANT: due to the way data is added to the screens,
 *       every query must return an iterator or indexable set of iterators

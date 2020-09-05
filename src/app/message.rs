@@ -1,5 +1,5 @@
 use cursive::theme::{BaseColor, Color, ColorStyle, Style};
-use cursive::utils::markup::StyledString;
+use cursive::utils::span::SpannedString;
 
 /* 
 The idea is that this module processes a function that returns
@@ -60,29 +60,44 @@ impl From<MessageKind> for Color {
     }
 }
 
+impl<T> From<T> for Message
+where
+    T: AsRef<str>,
+{
+    fn from(item: T) -> Self {
+        return Message {
+            msg: item.as_ref().to_string(),
+            kind: MessageKind::Info,
+        };
+    }
+}
+
 #[allow(dead_code)]
 pub struct Message {
-    msg: StyledString,
-    kind: MessageKind,
+    pub msg: String,
+    pub kind: MessageKind,
 }
 
 #[allow(dead_code)]
 impl Message {
-    pub fn contents(&self) -> &StyledString {
+    pub fn contents(&self) -> &String {
         &self.msg
     }
     pub fn kind(&self) -> MessageKind {
         self.kind
     }
-    pub fn set(msg: &str, kind: MessageKind) {
-        StyledString::styled(msg, get_style(kind));
+    pub fn set(text: &str, kind: MessageKind) -> Self {
+        Message {
+            msg: text.to_string(),
+            kind: kind,
+        }
     }
 }
 
 impl std::default::Default for Message {
     fn default() -> Self {
         Message {
-            msg: StyledString::styled("", get_style(MessageKind::Info)),
+            msg: String::from("what"), //StyledString::styled("", get_style(MessageKind::Info)),
             kind: MessageKind::Info,
         }
     }

@@ -85,7 +85,7 @@ app structure:
 
 TODO:
   - Implement live updating of release info
-    (rn all updates require restarting the app)
+    (Implemented for collection)
   - Implement popup of release info
     (abstract into separate file)
   - Implement different colours for folder list
@@ -97,3 +97,13 @@ TODO:
     (i.e. Maintain one master table with a folders field
      or maintain multiple tables for each folder?)
   - Coloured messages (Not important)
+
+  Two options for loading in the popup screens:
+  1: Keep the screen data associated with the master app struct
+  Somehow find a way to handle multiple mutable ownership,
+  and have the closure edit the app struct fields
+
+  2: Dissociate the popup structs from the app
+  Instantiate the structs within the closure
+  i.e. Read from db, parse data, construct screen and display
+  Only instantiated when closure fires and is never loaded beforehand
