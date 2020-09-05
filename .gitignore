@@ -1,3 +1,5 @@
 /target
 .vscode
 discogs_collection.json
+discogs_wantlist.json
+discogs_token
