@@ -1,8 +1,10 @@
-use reqwest::blocking::{Client, ClientBuilder, Response};
+use reqwest::blocking::{Client, Response};
 use reqwest::header::{self, HeaderMap};
+use reqwest::StatusCode;
 use serde_json::Value;
 use std::fs::read_to_string;
 use std::error::Error;
+use std::fmt;
 
 /*
 * This module handles Discogs API requests and JSON deserialization
@@ -28,26 +30,86 @@ pub enum ParseType {
     Wantlist,
 }
 
-#[allow(unused_assignments)]
-pub fn query(parse: ParseType, filename: &str) -> Vec<Release> {
-    let url = build_url(parse, String::from("cartoon.raccoon"));
-    let requester = build_client();
-    let response = requester.get(&url).send();
-    let mut result = Vec::<Release>::new();
-    match parse {
-        ParseType::Collection => {
-            result = parse_collection(filename).unwrap();
-        }
-        ParseType::Wantlist => {
-            result = parse_wantlist(filename).unwrap();
+#[derive(Debug, Copy, Clone)]
+pub enum QueryError {
+    NetworkError,
+    ServerError,
+    NotFoundError,
+    AuthorizationError,
+    UnknownError,
+    ParseError,
+    DBWriteError,
+}
+
+impl std::error::Error for QueryError {}
+
+impl std::fmt::Display for QueryError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            QueryError::NetworkError => {
+                write!(f, "A network error occurred. Check your internet and try again.")
+            }
+            QueryError::ServerError => {
+                write!(f, "The Discogs server encountered an error. Try again later.")
+            }
+            QueryError::NotFoundError => {
+                write!(f, "Discogs returned a 404 error. Check your username.")
+            }
+            QueryError::AuthorizationError => {
+                write!(f, "Discogs could not authorize your request. Check your token.")
+            }
+            QueryError::UnknownError => {
+                write!(f, "An unknown error occurred. Check the logs for more info.")
+            }
+            QueryError::ParseError => {
+                write!(f, "Could not parse data from Discogs. Please try updating again.")
+            }
+            QueryError::DBWriteError => {
+                write!(f, "There was an error writing to the database. Try updating again.")
+            }
         }
     }
-    result
+}
+
+#[allow(unused_assignments)]
+//*I hate the stupid pyramid of doom here
+pub fn query(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryError> {
+    let url = build_url(parse, String::from("cartoon.raccoon"));
+    let requester = build_client();
+    match requester.get(&url).send() {
+        Ok(response) => {
+            match response.status() {
+                StatusCode::NOT_FOUND => {
+                    return Err(QueryError::NotFoundError)}
+                StatusCode::UNAUTHORIZED => {
+                    return Err(QueryError::AuthorizationError)}
+                StatusCode::INTERNAL_SERVER_ERROR => {
+                    return Err(QueryError::ServerError)}
+                StatusCode::OK => { //TODO: Business logic
+                    let mut result = Vec::<Release>::new();
+                    match parse {
+                        ParseType::Collection => {
+                            result = parse_collection(filename).unwrap();
+                        }
+                        ParseType::Wantlist => {
+                            result = parse_wantlist(filename).unwrap();
+                        }
+                    }
+                    return Ok(result)
+                }
+                _ => {return Err(QueryError::UnknownError)}
+            };
+        }
+        Err(_) => {
+            return Err(QueryError::NetworkError)
+        }
+    }
 }
 
 fn build_client() -> Client {
     let token = read_to_string("discogs_token").unwrap();
     let mut headers = HeaderMap::new();
+
     headers.insert(
         header::AUTHORIZATION,
         header::HeaderValue::from_str(&token).unwrap());
@@ -63,7 +125,7 @@ fn build_client() -> Client {
 fn build_url(parse: ParseType, uid: String) -> String {
     match parse {
         ParseType::Collection => {
-            format!("https://api.discogs.com/users/{}/collection/folder/0/releases", uid)
+            format!("https://api.discogs.com/users/{}/collection/folders/0/releases", uid)
         }
         ParseType::Wantlist => {
             format!("https://api.discogs.com/users/{}/wants", uid)
@@ -72,7 +134,8 @@ fn build_url(parse: ParseType, uid: String) -> String {
 }
 
 #[allow(unused_assignments)]
-fn parse_collection(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+//make this private once the database API is complete
+pub fn parse_collection(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array

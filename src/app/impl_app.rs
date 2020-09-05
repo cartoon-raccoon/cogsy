@@ -7,6 +7,7 @@ use crate::app::App;
 use crate::app::message::{Message, MessageKind};
 use crate::collection::Collection;
 use crate::wantlist::Wantlist;
+use crate::app::request::*;
 
 impl App {
     pub fn initialize() -> Self {
@@ -24,7 +25,7 @@ impl App {
 
     #[allow(unused_assignments)]
     pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
-        let mut view_content = String::from("");
+        let mut view_content = String::new();
         match result {
             Ok(command) => {
                 match command {
@@ -35,7 +36,15 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        view_content = "Database successfully updated.".to_string();
+                        let result = query(ParseType::Collection, "discogs_collection.json");
+                        match result {
+                            Ok(_) => {
+                                view_content = "Database successfully updated.".to_string();
+                            }
+                            Err(e) => {
+                                view_content = e.to_string();
+                            }
+                        }
                         self.collection.refresh(s);
                     }
                     Command::UpdateID(id) => {

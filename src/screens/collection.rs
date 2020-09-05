@@ -3,8 +3,8 @@ use cursive::traits::*;
 use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
-use crate::app::request::{self, Release, ParseType};
-use crate::app::message::{Message, MessageKind};
+use crate::app::request::{self, Release};
+//use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone)]
 pub struct Collection {
@@ -15,7 +15,7 @@ impl Collection {
     pub fn new() -> Self {
         Collection{
             //this will eventually call database::query::get_from_db()
-            contents: request::query(ParseType::Collection, "discogs_collection.json")
+            contents: request::parse_collection("discogs_collection.json").unwrap()
         }
     }
     pub fn build(&self) -> NamedView<LinearLayout> {
@@ -39,6 +39,7 @@ impl Collection {
                     }))
                     .on_submit(|s, item| {
                         //adds the popup as a cursive layer
+                        //TODO: Implement this
                     })
                     .with_name("albumlist")))))
             .with_name("main_view");
@@ -55,14 +56,6 @@ impl Collection {
                 (i.title.clone(), i)
             }))
         });
-    }
-
-    fn load_data(&self) -> Vec<String> {
-        let mut titlelist = Vec::<String>::new();
-        for release in &self.contents {
-            titlelist.push(release.title.clone());
-        }
-        titlelist
     }
 }
 
