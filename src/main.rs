@@ -10,11 +10,7 @@ use cursive::event::{Event, Key};
 
 use app::App;
 use commands::Command;
-use screens::{
-    collection::{self, Collection},
-    wantlist::{self, Wantlist},
-    //add other modules as implemented
-};
+use screens::{collection, wantlist};
 
 fn main() {
     let mut siv = cursive::default();
