@@ -32,7 +32,10 @@ impl App {
                     //*1: Update the internal state in memory
                     //*2: Update the database
                     Command::UpdateDB => {
-                        view_content = "Updating database!".to_string();
+                        s.call_on_name("messagebox", |view: &mut TextView| {
+                            view.set_content("Updating collection...");
+                        });
+                        view_content = "Database successfully updated.".to_string();
                         self.collection.refresh(s);
                     }
                     Command::UpdateID(id) => {
@@ -76,9 +79,4 @@ impl App {
             }
         }
     }
-
-    pub fn update_id(app: &mut App, idstr: String) {
-        app.user_id = idstr;
-    }
-
 }

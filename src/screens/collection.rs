@@ -14,7 +14,7 @@ pub struct Collection {
 impl Collection {
     pub fn new() -> Self {
         Collection{
-            //placeholder code: this will call from database::query::get_from_db()
+            //this will eventually call database::query::get_from_db()
             contents: request::query(ParseType::Collection, "discogs_collection.json")
         }
     }
@@ -25,23 +25,35 @@ impl Collection {
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<String>::new()
+                        // .on_submit(|s, text| {
+
+                        // })
                         .with_name("folderlist")))))
             .child(Panel::new(ResizedView::new(
                 SizeConstraint::Full,
                 SizeConstraint::Full,
                 ScrollView::new(
-                    SelectView::<String>::new()
-                    .with_all_str(self.load_data())
+                    SelectView::<Release>::new()
+                    .with_all(self.contents.clone().into_iter().map(|i| {
+                        (i.title.clone(), i)
+                    }))
+                    .on_submit(|s, item| {
+                        //adds the popup as a cursive layer
+                    })
                     .with_name("albumlist")))))
             .with_name("main_view");
                     
         collection
     }
 
-    pub fn refresh(&self, s: &mut Cursive) {
-        s.call_on_name("albumlist", |view: &mut SelectView<String>| {
+    pub fn refresh(&mut self, s: &mut Cursive) {
+        //update from database and reload its contents
+        //call database method here
+        s.call_on_name("albumlist", |view: &mut SelectView<Release>| {
             view.clear();
-            view.add_all_str(self.load_data());
+            view.add_all(self.contents.clone().into_iter().map(|i| {
+                (i.title.clone(), i)
+            }))
         });
     }
 
@@ -63,6 +75,20 @@ pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
 pub fn format_columns (list: Vec<request::Release>) -> Vec<String> {
     //formats a vector of Release structs into an iterator of formatted strings
     //might move this to a dedicated utils module if enough helper funcs are added
+
+    /*
+    Step 1: Iterate over the vec to find the entry with the longest title
+    Step 2: Get its length and append a buffer of 5 spaces long (global)
+            (This will be the position at which to place the artist name)
+    Step 3: For each title in vec:
+            Find the local buffer length to append:
+            localbuffer = global - length
+            Generate a whitespace string of that length and append it to the title
+            Append the artist name
+            Push the string to the new vec
+    Step 4: Return!
+    NOTE: This fn will consume the vector it is passed, so make sure you clone it!
+    */
 
     Vec::new() //returning an empty vector just so i can compile
 }
