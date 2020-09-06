@@ -4,6 +4,8 @@ pub mod request;
 pub mod message;
 pub mod response;
 
+use std::collections::HashMap;
+
 use message::Message;
 use crate::collection::Collection;
 use crate::wantlist::Wantlist;
@@ -26,4 +28,9 @@ pub struct Release {
     pub labels: Vec<String>,
     pub formats: Vec<String>,
     pub date_added: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Folders {
+    pub contents: HashMap<String, Vec<Release>>,
 }
