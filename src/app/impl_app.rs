@@ -3,10 +3,9 @@ use cursive::views::*;
 
 #[allow(unused_imports)]
 use crate::commands::{Command, CommandError};
-use crate::app::App;
+use crate::app::{App, Release, Folders};
 use crate::app::message::{Message, MessageKind};
 use crate::collection::Collection;
-use crate::wantlist::Wantlist;
 use crate::app::request::*;
 
 impl App {
@@ -19,7 +18,6 @@ impl App {
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
-            wantlist: Wantlist::new(),
         }
     }
 
@@ -88,5 +86,12 @@ impl App {
                 });
             }
         }
+    }
+}
+
+//? Place this in a separate file?
+impl Folders {
+    pub fn get(name: String) -> Vec<Release> {
+        Vec::new() //returning empty vector to compile
     }
 }

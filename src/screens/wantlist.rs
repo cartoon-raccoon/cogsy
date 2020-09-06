@@ -3,7 +3,7 @@ use cursive::views::*;
 use cursive::view::SizeConstraint;
 use cursive::traits::*;
 
-use crate::app::message::{Message, MessageKind};
+//use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone)]
 pub struct Wantlist {
@@ -11,7 +11,7 @@ pub struct Wantlist {
 }
 
 impl Wantlist {
-    pub fn new() -> Self {
+    pub fn init() -> Self {
         Wantlist{
             wantlist: vec![
                 String::from("hello"), 

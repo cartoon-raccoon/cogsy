@@ -10,7 +10,7 @@ use cursive::event::{Event, Key};
 
 use app::App;
 use commands::Command;
-use screens::{collection, wantlist};
+use screens::{collection, wantlist::Wantlist};
 
 fn main() {
     let mut siv = cursive::default();
@@ -20,7 +20,6 @@ fn main() {
 
     //initialize screen data
     let collectscreen = app.collection.build();
-    let wantscreen = app.wantlist.clone();
 
     //building gui tree
     let message = TextContent::new(app.message.msg.clone());
@@ -64,10 +63,10 @@ fn main() {
     });
     siv.add_global_callback('1', move |s| {
         if s.screen().len() == 1 {
-            s.add_fullscreen_layer(wantscreen.build());
+            s.add_fullscreen_layer(Wantlist::init().build());
         }
     });
-    //placeholder code
+    //placeholder code until folders are implemented
     collection::add_to_list(&mut siv, "folderlist", "main folder");
 
     siv.run();

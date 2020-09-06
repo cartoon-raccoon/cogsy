@@ -8,7 +8,6 @@ use std::collections::HashMap;
 
 use message::Message;
 use crate::collection::Collection;
-use crate::wantlist::Wantlist;
 
 //#[derive(Debug, Clone)]
 pub struct App{
@@ -16,7 +15,6 @@ pub struct App{
     pub token: String,
     pub message: Message,
     pub collection: Collection,
-    pub wantlist: Wantlist,
 }
 
 #[derive(Debug, Clone)]
