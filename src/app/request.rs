@@ -1,4 +1,4 @@
-use reqwest::blocking::{Client, Response};
+use reqwest::blocking::Client;
 use reqwest::header::{self, HeaderMap};
 use reqwest::StatusCode;
 use serde_json::Value;
@@ -64,7 +64,18 @@ impl std::fmt::Display for QueryError {
 }
 
 #[allow(unused_assignments)]
-//*I hate the stupid pyramid of doom here
+//I hate the stupid pyramid of doom here
+/*
+*Steps:
+*1. Enumerate the folders
+*   - Make a request to the folders endpoint and parse it into a vec of folder names
+*2. Iterate over the folders vector and make requests to each folder's contents
+*   - Check the HTTP header and match Option
+*   - Loop until the folder's contents are fully captured: while linkheader != None
+*3. Insert into Folders struct
+*4. Repeat until all folders have been requested
+*5. Return the Folders struct/read into database
+*/
 pub fn fullupdate(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryError> {
     let url = build_url(parse, String::from("cartoon.raccoon"));
     let requester = build_client();
