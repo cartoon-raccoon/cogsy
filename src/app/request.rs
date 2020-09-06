@@ -69,17 +69,56 @@ impl std::fmt::Display for QueryError {
 *Steps:
 *1. Enumerate the folders
 *   - Make a request to the folders endpoint and parse it into a vec of folder names
+
+*--------COMPLETE--------
 *2. Iterate over the folders vector and make requests to each folder's contents
-*   - Check the HTTP header and match Option
-*   - Loop until the folder's contents are fully captured: while linkheader != None
+*   - Query the folder's metadata and get its count
+*   - Set a tracking variable and initialize to 0
+*   - Loop until the folder's contents are fully captured: while tracker < total
+*--------COMPLETE--------
+*
 *3. Insert into Folders struct
 *4. Repeat until all folders have been requested
 *5. Return the Folders struct/read into database
 */
-pub fn fullupdate(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryError> {
-    let url = build_url(parse, String::from("cartoon.raccoon"));
+pub fn fullupdate(parse: ParseType) -> Result<Vec<Release>, QueryError> {
+    let mut url = build_url(parse, String::from("cartoon.raccoon"));
     let requester = build_client();
-    match requester.get(&url).send() {
+    let mut master_vec: Vec<Release> = Vec::new();
+
+    //* main update loop
+    //TODO: Make this nicer and handle the unwraps
+    loop {
+        match query(&requester, &url) {
+            Ok(text) => {
+                let mut total: u64 = 0;
+                let response: Value = serde_json::from_str(&text).unwrap();
+                let pagination = response.get("pagination").unwrap();
+                if let Value::Object(_) = pagination {
+                    total = pagination.get("items").unwrap().as_u64().unwrap();
+                } else { //change this to handle the error instead of panicking
+                    panic!("Could not read json file properly.");
+                }
+                match parse_releases(ParseType::Collection, &text, false) {
+                    Ok(mut releases) => {
+                        master_vec.append(&mut releases);
+                        if master_vec.len() as u64 == total {
+                            break;
+                        } else {
+                            url = pagination["urls"]["next"].as_str().unwrap().to_string();
+                        }
+                    }
+                    Err(_) => {return Err(QueryError::ParseError)}
+                }
+            }
+            Err(queryerror) => {return Err(queryerror)}
+        }
+    }
+    Ok(master_vec)
+}
+
+fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
+    match requester.get(url).send() {
         Ok(response) => {
             match response.status() {
                 StatusCode::NOT_FOUND => {
@@ -88,21 +127,8 @@ pub fn fullupdate(parse: ParseType, filename: &str) -> Result<Vec<Release>, Quer
                     return Err(QueryError::AuthorizationError)}
                 StatusCode::INTERNAL_SERVER_ERROR => {
                     return Err(QueryError::ServerError)}
-                StatusCode::OK => { //TODO: Business logic
-                    match parse {
-                        ParseType::Collection => {
-                            match parse_json(ParseType::Collection, &response.text().unwrap(), false) {
-                                Ok(releases) => {return Ok(releases)}
-                                Err(_) => {return Err(QueryError::ParseError)}
-                            }
-                        }
-                        ParseType::Wantlist => {
-                            match parse_wantlist(filename) {
-                                Ok(releases) => {return Ok(releases)}
-                                Err(_) => {return Err(QueryError::ParseError)}
-                            }
-                        }
-                    }
+                StatusCode::OK => {
+                    return Ok(response.text().unwrap())
                 }
                 _ => {return Err(QueryError::UnknownError)}
             };
@@ -132,7 +158,7 @@ fn build_client() -> Client {
 fn build_url(parse: ParseType, uid: String) -> String {
     match parse {
         ParseType::Collection => {
-            format!("https://api.discogs.com/users/{}/collection/folders/0/releases", uid)
+            format!("https://api.discogs.com/users/{}/collection/folders/0/releases?per_page=100", uid)
         }
         ParseType::Wantlist => {
             format!("https://api.discogs.com/users/{}/wants", uid)
@@ -142,13 +168,12 @@ fn build_url(parse: ParseType, uid: String) -> String {
 
 #[allow(unused_assignments)]
 //make this private once the database API is complete
-pub fn parse_json(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
+pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
     *Step 3: Iterate over the array and read each entry into a vec
     *Step 4: Return the vec
-    TODO: Implement recursive querying for results with multiple pages
     */
 
     //defining tracking variables

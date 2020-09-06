@@ -10,11 +10,23 @@ use message::Message;
 use crate::collection::Collection;
 
 //#[derive(Debug, Clone)]
-pub struct App{
+pub struct App {
     pub user_id: String,
     pub token: String,
     pub message: Message,
     pub collection: Collection,
+}
+
+#[derive(Debug, Clone)]
+pub struct Profile {
+    pub username: String,
+    pub real_name: String,
+    pub registered: String,
+    pub listings: u64,
+    pub collection: u64,
+    pub wantlist: u64,
+    pub rated: u64,
+    pub average_rating: u64,
 }
 
 #[derive(Debug, Clone)]

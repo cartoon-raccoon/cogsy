@@ -34,7 +34,7 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let updateres = fullupdate(ParseType::Collection, "discogs_collection.json");
+                        let updateres = fullupdate(ParseType::Collection);
                         match updateres {
                             Ok(releases) => {
                                 self.collection.contents = releases;
