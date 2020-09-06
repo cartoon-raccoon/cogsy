@@ -176,8 +176,6 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     *Step 4: Return the vec
     */
 
-    //defining tracking variables
-    let mut total = 0;
     let mut contents = String::new();
     let mut releases = Vec::new();
 
@@ -190,12 +188,6 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     let response: Value = serde_json::from_str(&contents)?;
 
     //TODO: Change all the unwraps to handle errors you lazy fuck
-    let pagination = response.get("pagination").unwrap();
-    if let Value::Object(_) = pagination {
-        total = pagination.get("items").unwrap().as_u64().unwrap();
-    } else { //change this to handle the error instead of panicking
-        panic!("Could not read json file properly.");
-    }
     let releases_raw = response.get("releases").unwrap();
     if let Value::Array(_) = releases_raw {
         let releaselist = releases_raw.as_array().unwrap();

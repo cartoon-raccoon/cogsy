@@ -1,6 +1,5 @@
 use std::fmt;
 
-use crate::app::App;
 use regex::Regex;
 
 /*
