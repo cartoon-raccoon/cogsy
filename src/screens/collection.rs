@@ -5,6 +5,7 @@ use cursive::view::SizeConstraint;
 
 use crate::app::request::{self, ParseType};
 use crate::app::Release;
+use crate::screens::popup;
 //use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone)]
@@ -16,7 +17,7 @@ impl Collection {
     pub fn new() -> Self {
         Collection{
             //this will eventually call database::query::get_from_db()
-            contents: request::parse_json(
+            contents: request::parse_releases(
                 ParseType::Collection,
                 "discogs_collection.json",
                 true).unwrap()
@@ -42,8 +43,9 @@ impl Collection {
                         (i.title.clone(), i)
                     }))
                     .on_submit(|s, item| {
-                        //adds the popup as a cursive layer
-                        //TODO: Implement this
+                        s.add_fullscreen_layer(
+                            popup::build(item.clone())
+                        );
                     })
                     .with_name("albumlist")))))
             .with_name("main_view");
