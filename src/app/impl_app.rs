@@ -36,16 +36,17 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let result = query(ParseType::Collection, "discogs_collection.json");
-                        match result {
-                            Ok(_) => {
+                        let updateres = fullupdate(ParseType::Collection, "discogs_collection.json");
+                        match updateres {
+                            Ok(releases) => {
+                                self.collection.contents = releases;
+                                self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
                             }
                             Err(e) => {
                                 view_content = e.to_string();
                             }
                         }
-                        self.collection.refresh(s);
                     }
                     Command::UpdateID(id) => {
                         view_content = format!(

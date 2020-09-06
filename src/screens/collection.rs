@@ -3,7 +3,8 @@ use cursive::traits::*;
 use cursive::Cursive;
 use cursive::view::SizeConstraint;
 
-use crate::app::request::{self, Release};
+use crate::app::request::{self, ParseType};
+use crate::app::Release;
 //use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone)]
@@ -15,7 +16,10 @@ impl Collection {
     pub fn new() -> Self {
         Collection{
             //this will eventually call database::query::get_from_db()
-            contents: request::parse_collection("discogs_collection.json").unwrap()
+            contents: request::parse_json(
+                ParseType::Collection,
+                "discogs_collection.json",
+                true).unwrap()
         }
     }
     pub fn build(&self) -> NamedView<LinearLayout> {
@@ -65,7 +69,7 @@ pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
     });
 }
 
-pub fn format_columns (list: Vec<request::Release>) -> Vec<String> {
+pub fn format_columns (list: Vec<Release>) -> Vec<String> {
     //formats a vector of Release structs into an iterator of formatted strings
     //might move this to a dedicated utils module if enough helper funcs are added
 

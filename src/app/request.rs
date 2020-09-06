@@ -2,9 +2,12 @@ use reqwest::blocking::{Client, Response};
 use reqwest::header::{self, HeaderMap};
 use reqwest::StatusCode;
 use serde_json::Value;
+
 use std::fs::read_to_string;
 use std::error::Error;
 use std::fmt;
+
+use crate::app::Release;
 
 /*
 * This module handles Discogs API requests and JSON deserialization
@@ -12,17 +15,6 @@ use std::fmt;
 * It returns a native Rust data structure that can be parsed without
 * any form of (de)serialization or conversion
 */
-
-#[derive(Debug, Clone)]
-pub struct Release {
-    pub id: u64,
-    pub title: String,
-    pub artist: String,
-    pub year: u64,
-    pub labels: Vec<String>,
-    pub formats: Vec<String>,
-    pub date_added: String,
-}
 
 #[derive(Debug, Copy, Clone)]
 pub enum ParseType {
@@ -73,7 +65,7 @@ impl std::fmt::Display for QueryError {
 
 #[allow(unused_assignments)]
 //*I hate the stupid pyramid of doom here
-pub fn query(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryError> {
+pub fn fullupdate(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryError> {
     let url = build_url(parse, String::from("cartoon.raccoon"));
     let requester = build_client();
     match requester.get(&url).send() {
@@ -86,16 +78,20 @@ pub fn query(parse: ParseType, filename: &str) -> Result<Vec<Release>, QueryErro
                 StatusCode::INTERNAL_SERVER_ERROR => {
                     return Err(QueryError::ServerError)}
                 StatusCode::OK => { //TODO: Business logic
-                    let mut result = Vec::<Release>::new();
                     match parse {
                         ParseType::Collection => {
-                            result = parse_collection(filename).unwrap();
+                            match parse_json(ParseType::Collection, &response.text().unwrap(), false) {
+                                Ok(releases) => {return Ok(releases)}
+                                Err(_) => {return Err(QueryError::ParseError)}
+                            }
                         }
                         ParseType::Wantlist => {
-                            result = parse_wantlist(filename).unwrap();
+                            match parse_wantlist(filename) {
+                                Ok(releases) => {return Ok(releases)}
+                                Err(_) => {return Err(QueryError::ParseError)}
+                            }
                         }
                     }
-                    return Ok(result)
                 }
                 _ => {return Err(QueryError::UnknownError)}
             };
@@ -135,24 +131,29 @@ fn build_url(parse: ParseType, uid: String) -> String {
 
 #[allow(unused_assignments)]
 //make this private once the database API is complete
-pub fn parse_collection(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+pub fn parse_json(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
     *Step 3: Iterate over the array and read each entry into a vec
     *Step 4: Return the vec
     TODO: Implement recursive querying for results with multiple pages
-    TODO: Add a closure to show an error message on the commandline
     */
 
     //defining tracking variables
     let mut total = 0;
+    let mut contents = String::new();
     let mut releases = Vec::new();
 
     //reading the json file
-    let contents = read_to_string(filepath)?;
+    if from_file {
+        contents = read_to_string(text)?;
+    } else {
+        contents = text.to_string();
+    }
     let response: Value = serde_json::from_str(&contents)?;
 
+    //TODO: Change all the unwraps to handle errors you lazy fuck
     let pagination = response.get("pagination").unwrap();
     if let Value::Object(_) = pagination {
         total = pagination.get("items").unwrap().as_u64().unwrap();
