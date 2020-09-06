@@ -84,19 +84,19 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Implement live updating of release info
-    (Implemented for collection)
   - Implement popup of release info
     (abstract into separate file)
-  - Implement different colours for folder list
   - Switching folders in collection screen
-  - Discogs API querying
+  - Discogs API querying (partially complete)
   - Database API
+  - Implement live updating of release info
+    (Implemented for collection and app)
   - Handling of various folders in collection database
     and sorting their entries into the database
     (i.e. Maintain one master table with a folders field
      or maintain multiple tables for each folder?)
   - Coloured messages (Not important)
+  - Implement different colours for folder list (not important)
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct

@@ -17,7 +17,6 @@ fn main() {
     siv.set_theme(theme::theme_gen());
 
     let mut app = App::initialize();
-    //app.load(&mut siv);
 
     //initialize screen data
     let collectscreen = app.collection.build();
