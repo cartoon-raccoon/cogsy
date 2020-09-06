@@ -44,7 +44,7 @@ impl Collection {
                     }))
                     .on_submit(|s, item| {
                         s.add_fullscreen_layer(
-                            popup::build(item.clone())
+                            popup::albuminfo(item)
                         );
                     })
                     .with_name("albumlist")))))
