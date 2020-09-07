@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use cursive::Cursive;
 use cursive::views::*;
 
@@ -89,9 +91,29 @@ impl App {
     }
 }
 
-//? Place this in a separate file?
 impl Folders {
-    pub fn get(name: String) -> Vec<Release> {
-        Vec::new() //returning empty vector to compile
+    pub fn new() -> Self {
+        let new_self: 
+            HashMap<String, Vec<Release>> = HashMap::new();
+        Folders {
+            contents: new_self,
+        }
+    }
+    pub fn get(&mut self, 
+        name: &String) -> Option<&Vec<Release>> {
+        
+        match self.contents.get_mut(name) {
+            None => None,
+            Some(releases) => Some(releases),
+        }
+    }
+    pub fn insert(&mut self, 
+        folder: String, 
+        contents: Vec<Release>) -> Option<Vec<Release>> {
+        
+        match self.contents.insert(folder, contents) {
+            None => None,
+            Some(old_val) => Some(old_val)
+        }
     }
 }
