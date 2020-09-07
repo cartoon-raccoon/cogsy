@@ -81,24 +81,3 @@ pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
         view.add_item_str(to_add);
     });
 }
-
-pub fn format_columns (list: Vec<Release>) -> Vec<String> {
-    //formats a vector of Release structs into an iterator of formatted strings
-    //might move this to a dedicated utils module if enough helper funcs are added
-
-    /*
-    Step 1: Iterate over the vec to find the entry with the longest title
-    Step 2: Get its length and append a buffer of 5 spaces long (global)
-            (This will be the position at which to place the artist name)
-    Step 3: For each title in vec:
-            Find the local buffer length to append:
-            localbuffer = global - length
-            Generate a whitespace string of that length and append it to the title
-            Append the artist name
-            Push the string to the new vec
-    Step 4: Return!
-    NOTE: This fn will consume the vector it is passed, so make sure you clone it!
-    */
-
-    Vec::new() //returning an empty vector just so i can compile
-}
