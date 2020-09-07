@@ -1,5 +1,9 @@
-use cursive::views::*;
-use cursive::view::SizeConstraint;
+use std::collections::HashSet;
+
+use cursive::{
+    views::{ResizedView, Dialog},
+    view::SizeConstraint
+};
 
 use crate::app::Release;
 
@@ -11,20 +15,26 @@ use crate::app::Release;
 
 pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     //TODO: Format the Label and Formats fields properly
+    let set: HashSet<_> = release.labels.clone().drain(..).collect();
+    let mut labels: Vec<String> = Vec::new();
+    labels.extend(set.into_iter());
+
+    let formats = release.formats.clone();
+
     let content = String::from(format!("
     Artist: {}
 
     Year Released: {}
 
-    Labels: {:?}
+    Labels: {}
 
-    Formats: {:?}
+    Formats: {}
 
     Date Added: {}",
     release.artist,
     release.year,
-    release.labels,
-    release.formats,
+    format_vec(labels),
+    format_vec(formats),
     release.date_added
     ));
 
@@ -35,4 +45,18 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             .title(release.title.clone())
     );
     screen
+}
+
+fn format_vec(list: Vec<String>) -> String {
+    let mut formatted_string = String::new();
+    if list.len() > 1 {
+        for item in &list[0..list.len()-1] {
+            formatted_string.push_str(item);
+            formatted_string.push_str(", ");
+        }
+        formatted_string.push_str(&list[list.len()-1]);
+    } else {
+        formatted_string.push_str(&list[0]);
+    }
+    formatted_string
 }
