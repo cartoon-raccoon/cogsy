@@ -3,6 +3,7 @@ use reqwest::header::{self, HeaderMap};
 use reqwest::StatusCode;
 use serde_json::Value;
 
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::error::Error;
 use std::fmt;
@@ -16,10 +17,12 @@ use crate::app::Release;
 * any form of (de)serialization or conversion
 */
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum ParseType {
+    Initial,
+    Folders(String),
     Collection,
-    Wantlist,
+    Wantlist(String),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -81,15 +84,39 @@ impl std::fmt::Display for QueryError {
 *4. Repeat until all folders have been requested
 *5. Return the Folders struct/read into database
 */
-pub fn fullupdate(parse: ParseType) -> Result<Vec<Release>, QueryError> {
-    let mut url = build_url(parse, String::from("cartoon.raccoon"));
+pub fn fullupdate(username: String, token: String) -> Result<Vec<Release>, QueryError> {
     let requester = build_client();
-    let mut master_vec: Vec<Release> = Vec::new();
-
+    let initial_url = build_url(ParseType::Initial, username.clone());
+    let mut folders_raw: String;
+    match query(&requester, &initial_url) {
+        Ok(response) => {
+            folders_raw = response;
+        }
+        Err(e) => {return Err(e)}
+    }
+    let mut folders = HashMap::<String, String>::new();
+    
+    let to_deserialize: Value = serde_json::from_str(&folders_raw).unwrap();
+    let folders_raw = to_deserialize.get("folders").unwrap();
+    if let Value::Array(_) = folders_raw {
+        let folderlist = folders_raw.as_array().unwrap();
+        for raw in folderlist.iter() {
+            let foldername = raw.get("name")
+                .unwrap().as_str()
+                .unwrap().to_string();
+            let folderurl = raw.get("resource_url")
+                .unwrap().as_str()
+                .unwrap().to_string();
+            folders.insert(foldername, folderurl);
+        } 
+    }
+    
     //* main update loop
     //TODO: Make this nicer and handle the unwraps
+    let mut collection_url = build_url(ParseType::Collection, username.clone());
+    let mut master_vec: Vec<Release> = Vec::new();
     loop {
-        match query(&requester, &url) {
+        match query(&requester, &collection_url) {
             Ok(text) => {
                 let mut total: u64 = 0;
                 let response: Value = serde_json::from_str(&text).unwrap();
@@ -105,7 +132,10 @@ pub fn fullupdate(parse: ParseType) -> Result<Vec<Release>, QueryError> {
                         if master_vec.len() as u64 == total {
                             break;
                         } else {
-                            url = pagination["urls"]["next"].as_str().unwrap().to_string();
+                            collection_url = pagination["urls"]["next"]
+                                                .as_str()
+                                                .unwrap()
+                                                .to_string();
                         }
                     }
                     Err(_) => {return Err(QueryError::ParseError)}
@@ -155,12 +185,19 @@ fn build_client() -> Client {
 }
 
 //builds a url based on its parsetype and user id
-fn build_url(parse: ParseType, uid: String) -> String {
+fn build_url(parse: ParseType, username: String) -> String {
     match parse {
-        ParseType::Collection => {
-            format!("https://api.discogs.com/users/{}/collection/folders/0/releases?per_page=100", uid)
+        ParseType::Initial => {
+            format!("https://api.discogs.com/users/{}/collection/folders", username)
         }
-        ParseType::Wantlist => {
+        //* Only use after Initial is called
+        ParseType::Folders(url) => {
+            format!("{}/releases?per_page=100", url)
+        }
+        ParseType::Collection => {
+            format!("https://api.discogs.com/users/{}/collection/folders/0/releases?per_page=100", username)
+        }
+        ParseType::Wantlist(uid) => {
             format!("https://api.discogs.com/users/{}/wants", uid)
         }
     }
@@ -237,10 +274,5 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     } else {
         panic!("Release list could not be read");
     }
-    Ok(releases)
-}
-
-fn parse_wantlist(filepath: &str) -> Result<Vec<Release>, Box<dyn Error>> {
-    let releases = Vec::<Release>::new();
     Ok(releases)
 }
