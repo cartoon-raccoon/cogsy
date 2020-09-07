@@ -1,10 +1,21 @@
-use cursive::views::*;
-use cursive::traits::*;
-use cursive::Cursive;
-use cursive::view::SizeConstraint;
+use cursive::{
+    Cursive,
+    views::{
+        NamedView, 
+        LinearLayout,
+        Panel,
+        ResizedView,
+        SelectView,
+        ScrollView,
+    },
+    view::SizeConstraint,
+    traits::*
+};
 
-use crate::app::request::{self, ParseType};
-use crate::app::Release;
+use crate::app::{
+    request::{self, ParseType},
+    Release,
+};
 use crate::screens::popup;
 //use crate::app::message::{Message, MessageKind};
 

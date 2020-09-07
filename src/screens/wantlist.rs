@@ -1,7 +1,7 @@
-use cursive::Cursive;
-use cursive::views::*;
-use cursive::view::SizeConstraint;
-use cursive::traits::*;
+use cursive::{
+    views::*,
+    view::SizeConstraint,
+    traits::*};
 
 //use crate::app::message::{Message, MessageKind};
 
@@ -40,10 +40,4 @@ impl Wantlist {
         
         main_screen
     }
-}
-
-pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
-    s.call_on_name(name, |view: &mut SelectView<String>| {
-        view.add_item_str(to_add);
-    });
 }
