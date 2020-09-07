@@ -1,14 +1,16 @@
-use reqwest::blocking::Client;
-use reqwest::header::{self, HeaderMap};
-use reqwest::StatusCode;
+use std::{
+    collections::HashMap,
+    fs::read_to_string,
+    error::Error,
+    fmt
+};
+use reqwest::{
+    blocking::Client,
+    header::{self, HeaderMap},
+    StatusCode,
+};
 use serde_json::Value;
-
-use std::collections::HashMap;
-use std::fs::read_to_string;
-use std::error::Error;
-use std::fmt;
-
-use crate::app::Release;
+use crate::app::{Release, Folders};
 
 /*
 * This module handles Discogs API requests and JSON deserialization
@@ -67,27 +69,11 @@ impl std::fmt::Display for QueryError {
 }
 
 #[allow(unused_assignments)]
-//I hate the stupid pyramid of doom here
-/*
-*Steps:
-*1. Enumerate the folders
-*   - Make a request to the folders endpoint and parse it into a vec of folder names
-
-*--------COMPLETE--------
-*2. Iterate over the folders vector and make requests to each folder's contents
-*   - Query the folder's metadata and get its count
-*   - Set a tracking variable and initialize to 0
-*   - Loop until the folder's contents are fully captured: while tracker < total
-*--------COMPLETE--------
-*
-*3. Insert into Folders struct
-*4. Repeat until all folders have been requested
-*5. Return the Folders struct/read into database
-*/
-pub fn fullupdate(username: String, token: String) -> Result<Vec<Release>, QueryError> {
+//TODO: Handle the fucking unwraps
+pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError> {
     let requester = build_client();
     let initial_url = build_url(ParseType::Initial, username.clone());
-    let mut folders_raw: String;
+    let folders_raw: String;
     match query(&requester, &initial_url) {
         Ok(response) => {
             folders_raw = response;
@@ -95,7 +81,7 @@ pub fn fullupdate(username: String, token: String) -> Result<Vec<Release>, Query
         Err(e) => {return Err(e)}
     }
     let mut folders = HashMap::<String, String>::new();
-    
+
     let to_deserialize: Value = serde_json::from_str(&folders_raw).unwrap();
     let folders_raw = to_deserialize.get("folders").unwrap();
     if let Value::Array(_) = folders_raw {
@@ -110,41 +96,47 @@ pub fn fullupdate(username: String, token: String) -> Result<Vec<Release>, Query
             folders.insert(foldername, folderurl);
         } 
     }
-    
-    //* main update loop
-    //TODO: Make this nicer and handle the unwraps
-    let mut collection_url = build_url(ParseType::Collection, username.clone());
-    let mut master_vec: Vec<Release> = Vec::new();
-    loop {
-        match query(&requester, &collection_url) {
-            Ok(text) => {
-                let mut total: u64 = 0;
-                let response: Value = serde_json::from_str(&text).unwrap();
-                let pagination = response.get("pagination").unwrap();
-                if let Value::Object(_) = pagination {
-                    total = pagination.get("items").unwrap().as_u64().unwrap();
-                } else { //change this to handle the error instead of panicking
-                    panic!("Could not read json file properly.");
-                }
-                match parse_releases(ParseType::Collection, &text, false) {
-                    Ok(mut releases) => {
-                        master_vec.append(&mut releases);
-                        if master_vec.len() as u64 == total {
-                            break;
-                        } else {
-                            collection_url = pagination["urls"]["next"]
-                                                .as_str()
-                                                .unwrap()
-                                                .to_string();
-                        }
+
+    let mut master_folders: Folders = Folders::new();
+
+    for (name, folderurl) in folders.iter() {
+        let mut collection_url = build_url(ParseType::Folders(folderurl.clone()), username.clone());
+        let mut master_vec: Vec<Release> = Vec::new();
+
+        //* main update loop
+        //TODO: Make this nicer and handle the unwraps
+        loop { //I hate the stupid pyramid of doom here
+            match query(&requester, &collection_url) {
+                Ok(text) => {
+                    let mut total: u64 = 0;
+                    let response: Value = serde_json::from_str(&text).unwrap();
+                    let pagination = response.get("pagination").unwrap();
+                    if let Value::Object(_) = pagination {
+                        total = pagination.get("items").unwrap().as_u64().unwrap();
+                    } else { //change this to handle the error instead of panicking
+                        panic!("Could not read json file properly.");
                     }
-                    Err(_) => {return Err(QueryError::ParseError)}
+                    match parse_releases(ParseType::Collection, &text, false) {
+                        Ok(mut releases) => {
+                            master_vec.append(&mut releases);
+                            if master_vec.len() as u64 == total {
+                                break;
+                            } else {
+                                collection_url = pagination["urls"]["next"]
+                                                    .as_str()
+                                                    .unwrap()
+                                                    .to_string();
+                            }
+                        }
+                        Err(_) => {return Err(QueryError::ParseError)}
+                    }
                 }
+                Err(queryerror) => {return Err(queryerror)}
             }
-            Err(queryerror) => {return Err(queryerror)}
         }
+        master_folders.push(name.clone(), master_vec);
     }
-    Ok(master_vec)
+    Ok(master_folders)
 }
 
 fn query(requester: &Client, url: &String) -> Result<String, QueryError> {

@@ -1,19 +1,21 @@
 use std::collections::HashMap;
 
-use cursive::Cursive;
-use cursive::views::*;
-
-#[allow(unused_imports)]
-use crate::commands::{Command, CommandError};
-use crate::app::{App, Release, Folders};
-use crate::app::message::{Message, MessageKind};
+use cursive::{
+    Cursive,
+    views::*,
+};
+use crate::app::{
+    {App, Release, Folders},
+    message::{Message, MessageKind},
+    request::*
+};
 use crate::collection::Collection;
-use crate::app::request::*;
+use crate::commands::{Command, CommandError};
 
 impl App {
     pub fn initialize() -> Self {
         App {
-            user_id: String::from("hello"),
+            user_id: String::from("cartoon.raccoon"),
             token: String::from("welcome to cogsy"),
             message: Message {
                 msg: String::from("Cogsy v0.1.0"),
@@ -23,9 +25,8 @@ impl App {
         }
     }
 
-    #[allow(unused_assignments)]
     pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
-        let mut view_content = String::new();
+        let view_content: String;
         match result {
             Ok(command) => {
                 match command {
@@ -36,10 +37,11 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let updateres = fullupdate(ParseType::Collection);
+                        let updateres = fullupdate(self.user_id.clone(), self.token.clone());
                         match updateres {
-                            Ok(releases) => {
-                                self.collection.contents = releases;
+                            Ok(mut releases) => {
+                                //*Placeholder code (again)
+                                self.collection.contents = releases.pull("All").unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
                             }
@@ -91,7 +93,7 @@ impl App {
     }
 }
 
-impl Folders {
+impl Folders { //wrapper around a HashMap<String, Vec<Release>>
     pub fn new() -> Self {
         let new_self: 
             HashMap<String, Vec<Release>> = HashMap::new();
@@ -100,14 +102,24 @@ impl Folders {
         }
     }
     pub fn get(&mut self, 
-        name: &String) -> Option<&Vec<Release>> {
+        name: &str) -> Option<&Vec<Release>> {
         
         match self.contents.get_mut(name) {
             None => None,
             Some(releases) => Some(releases),
         }
     }
-    pub fn insert(&mut self, 
+
+    pub fn pull(&mut self,
+        name: &str) -> Option<Vec<Release>> {
+        
+        match self.contents.remove(name) {
+            None => None,
+            Some(releases) => Some(releases),
+        }
+    }
+
+    pub fn push(&mut self, 
         folder: String, 
         contents: Vec<Release>) -> Option<Vec<Release>> {
         
