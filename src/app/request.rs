@@ -216,8 +216,21 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     }
     let response: Value = serde_json::from_str(&contents)?;
 
+    let to_index: String;
+    match parse {
+        ParseType::Collection => {
+            to_index = String::from("releases");
+        }
+        ParseType::Wantlist(_) => {
+            to_index = String::from("wants");
+        }
+        _ => {
+            to_index = String::from("releases");
+        }
+    }
+
     //TODO: Change all the unwraps to handle errors you lazy fuck
-    let releases_raw = response.get("releases").unwrap();
+    let releases_raw = response.get(&to_index).unwrap();
     if let Value::Array(_) = releases_raw {
         let releaselist = releases_raw.as_array().unwrap();
 
