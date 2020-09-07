@@ -84,11 +84,8 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Implement popup of release info
-    (abstract into separate file)
-  - Switching folders in collection screen
-  - Discogs API querying (partially complete)
   - Database API
+  - Switching folders in collection screen
   - Implement live updating of release info
     (Implemented for collection and app)
   - Handling of various folders in collection database
