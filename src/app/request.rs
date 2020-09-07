@@ -14,7 +14,7 @@ use crate::app::{Release, Folders};
 
 /*
 * This module handles Discogs API requests and JSON deserialization
-* The one main function exposed by this module is query();
+* The one main function exposed by this module is fullupdate();
 * It returns a native Rust data structure that can be parsed without
 * any form of (de)serialization or conversion
 */
@@ -68,10 +68,9 @@ impl std::fmt::Display for QueryError {
     }
 }
 
-#[allow(unused_assignments)]
 //TODO: Handle the fucking unwraps
 pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError> {
-    let requester = build_client();
+    let requester = build_client(token);
     let initial_url = build_url(ParseType::Initial, username.clone());
     let folders_raw: String;
     match query(&requester, &initial_url) {
@@ -108,7 +107,7 @@ pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError
         loop { //I hate the stupid pyramid of doom here
             match query(&requester, &collection_url) {
                 Ok(text) => {
-                    let mut total: u64 = 0;
+                    let total: u64;
                     let response: Value = serde_json::from_str(&text).unwrap();
                     let pagination = response.get("pagination").unwrap();
                     if let Value::Object(_) = pagination {
@@ -161,8 +160,7 @@ fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
     }
 }
 
-fn build_client() -> Client {
-    let token = read_to_string("discogs_token").unwrap();
+fn build_client(token: String) -> Client {
     let mut headers = HeaderMap::new();
 
     headers.insert(
@@ -195,7 +193,7 @@ fn build_url(parse: ParseType, username: String) -> String {
     }
 }
 
-#[allow(unused_assignments)]
+//#[allow(unused_assignments)]
 //make this private once the database API is complete
 pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
@@ -205,7 +203,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     *Step 4: Return the vec
     */
 
-    let mut contents = String::new();
+    let contents: String;
     let mut releases = Vec::new();
 
     //reading the json file

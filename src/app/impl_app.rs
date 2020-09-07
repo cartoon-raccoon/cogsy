@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs::read_to_string;
 
 use cursive::{
     Cursive,
@@ -16,7 +17,7 @@ impl App {
     pub fn initialize() -> Self {
         App {
             user_id: String::from("cartoon.raccoon"),
-            token: String::from("welcome to cogsy"),
+            token: read_to_string("discogs_token").unwrap(),
             message: Message {
                 msg: String::from("Cogsy v0.1.0"),
                 kind: MessageKind::Info
@@ -93,6 +94,7 @@ impl App {
     }
 }
 
+#[allow(dead_code)]
 impl Folders { //wrapper around a HashMap<String, Vec<Release>>
     pub fn new() -> Self {
         let new_self: 
