@@ -72,7 +72,8 @@ fn main() {
         }
     });
     //placeholder code until folders are implemented
-    collection::add_to_list(&mut siv, "folderlist", "main folder");
+    collection::add_to_list(&mut siv, "folderlist", "All");
+    collection::add_to_list(&mut siv, "folderlist", "Uncategorized");
 
     siv.run();
 }
