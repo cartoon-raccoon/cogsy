@@ -3,14 +3,19 @@ mod screens;
 mod theme;
 mod commands;
 
-use cursive::Cursive;
-use cursive::traits::*;
-use cursive::views::*;
-use cursive::event::{Event, Key};
+use cursive::{
+    Cursive,
+    traits::*,
+    views::*,
+    event::{Event, Key}
+};
 
 use app::App;
-use commands::Command;
-use screens::{collection, wantlist::Wantlist};
+use commands::{Command};
+use screens::{
+    collection, 
+    wantlist::Wantlist
+};
 
 fn main() {
     let mut siv = cursive::default();

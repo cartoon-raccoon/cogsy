@@ -17,13 +17,7 @@ static COMMANDS: &'static [&'static str] = &[
     "query",
 ];
 
-fn get_command_completion(prefix: &str) -> Option<String> {
-    let first_match = COMMANDS.iter().filter(|&x| x.starts_with(prefix)).next();
-    return first_match.map(|&x| x.into());
-}
-
 #[derive(PartialEq, Debug)]
-//#[allow(dead_code)]
 pub enum Command {
     UpdateDB,               //switch and argument
     UpdateID(String),       //username
@@ -36,7 +30,6 @@ pub enum Command {
 }
 
 #[derive(Debug)]
-//#[allow(dead_code)]
 pub enum CommandError {
     InvalidCommand(String),
     InvalidAlbum,
