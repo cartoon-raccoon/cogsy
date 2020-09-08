@@ -85,6 +85,9 @@ app structure:
 
 TODO:
   - Database API
+  - Date-parsing for database insertion and retrieval
+  - Struct for storing listening history
+  - Functions for inserting and querying history
   - Switching folders in collection screen
   - Implement live updating of release info
     (Implemented for collection and app)
