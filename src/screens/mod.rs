@@ -5,3 +5,6 @@ pub mod money;
 pub mod profile;
 pub mod wantlist;
 pub mod popup;
+
+pub use wantlist::Wantlist;
+pub use collection::Collection;
