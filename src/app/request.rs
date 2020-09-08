@@ -23,7 +23,7 @@ pub enum ParseType {
     Initial,
     Folders(String),
     Collection,
-    Wantlist(String),
+    Wantlist,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -67,7 +67,7 @@ impl std::fmt::Display for QueryError {
     }
 }
 
-pub fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
+pub fn query_discogs(requester: &Client, url: &String) -> Result<String, QueryError> {
     match requester.get(url).send() {
         Ok(response) => {
             match response.status() {
@@ -116,8 +116,8 @@ pub fn build_url(parse: ParseType, username: String) -> String {
         ParseType::Collection => {
             format!("https://api.discogs.com/users/{}/collection/folders/0/releases?per_page=100", username)
         }
-        ParseType::Wantlist(uid) => {
-            format!("https://api.discogs.com/users/{}/wants", uid)
+        ParseType::Wantlist => {
+            format!("https://api.discogs.com/users/{}/wants", username)
         }
     }
 }
@@ -148,7 +148,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
         ParseType::Collection => {
             to_index = String::from("releases");
         }
-        ParseType::Wantlist(_) => {
+        ParseType::Wantlist => {
             to_index = String::from("wants");
         }
         _ => {
@@ -203,8 +203,6 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 date_added: added_date
             });
         }
-    } else {
-        return Err(Box::new(QueryError::ParseError));
-    }
+    } else {return Err(Box::new(QueryError::ParseError));}
     Ok(releases)
 }

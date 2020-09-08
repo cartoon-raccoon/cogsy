@@ -20,7 +20,7 @@ impl Wantlist {
     pub fn init() -> Self {
         Wantlist{ //placeholder: will read from database
             wantlist: request::parse_releases(
-                ParseType::Wantlist(String::from("hi")), 
+                ParseType::Wantlist, 
                 "discogs_wantlist.json", true).unwrap()
         }
     }
