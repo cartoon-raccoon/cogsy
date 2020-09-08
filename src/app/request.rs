@@ -21,6 +21,7 @@ use crate::app::Release;
 #[derive(Debug, Clone)]
 pub enum ParseType {
     Initial,
+    Profile,
     Folders(String),
     Collection,
     Wantlist,
@@ -108,6 +109,9 @@ pub fn build_url(parse: ParseType, username: String) -> String {
     match parse {
         ParseType::Initial => {
             format!("https://api.discogs.com/users/{}/collection/folders", username)
+        }
+        ParseType::Profile => {
+            format!("https://api.discogs.com/users/{}", username)
         }
         //* Only use after Initial is called
         ParseType::Folders(url) => {

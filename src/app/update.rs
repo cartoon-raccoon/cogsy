@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 use reqwest::blocking::Client;
 use crate::app::{
-    {Release, Folders},
+    {Release, Folders, Profile},
     request::*,
     database::update,
 };
@@ -61,6 +61,34 @@ pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError
     match get_full(&requester, ParseType::Wantlist, wantlist_url) {
         Ok(releases) => {master_wants = releases;}
         Err(e) => {return Err(e)}
+    }
+
+    let profile_url = build_url(ParseType::Profile, username.clone());
+    let master_prof: Profile;
+    match query_discogs(&requester, &profile_url) {
+        Ok(text) => {
+            let profile_raw: Value = serde_json::from_str(&text)
+                .unwrap_or(Value::Null);
+            if let Value::Null = profile_raw {
+                return Err(QueryError::ParseError)
+            }
+            master_prof = Profile {
+                username: profile_raw["username"].as_str().unwrap().to_string(),
+                real_name: profile_raw["name"].as_str().unwrap().to_string(),
+                registered: profile_raw["registered"].as_str().unwrap().to_string(),
+                listings: profile_raw["num_for_sale"].as_u64().unwrap(),
+                collection: profile_raw["num_collection"].as_u64().unwrap(),
+                wantlist: profile_raw["num_wantlist"].as_u64().unwrap(),
+                rated: profile_raw["releases_rated"].as_u64().unwrap(),
+                average_rating: profile_raw["rating_avg"].as_f64().unwrap(),
+            }
+        }
+        Err(err) => {return Err(err)}
+    }
+
+    match update::profile(master_prof) {
+        Ok(_) => {}
+        Err(_) => {return Err(QueryError::DBWriteError)}
     }
 
     match update::wantlist(master_wants) {

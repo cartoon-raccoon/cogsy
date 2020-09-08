@@ -27,7 +27,7 @@ pub struct Profile {
     pub collection: u64,
     pub wantlist: u64,
     pub rated: u64,
-    pub average_rating: u64,
+    pub average_rating: f64,
 }
 
 #[derive(Debug, Clone)]
