@@ -3,6 +3,7 @@ pub mod database;
 pub mod request;
 pub mod message;
 pub mod response;
+pub mod update;
 
 use std::collections::HashMap;
 

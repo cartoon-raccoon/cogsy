@@ -8,7 +8,7 @@ use cursive::{
 use crate::app::{
     {App, Release, Folders},
     message::{Message, MessageKind},
-    request::*
+    update::fullupdate
 };
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};

@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     fs::read_to_string,
     error::Error,
     fmt
@@ -10,7 +9,7 @@ use reqwest::{
     StatusCode,
 };
 use serde_json::Value;
-use crate::app::{Release, Folders};
+use crate::app::Release;
 
 /*
 * This module handles Discogs API requests and JSON deserialization
@@ -68,77 +67,7 @@ impl std::fmt::Display for QueryError {
     }
 }
 
-//TODO: Handle the fucking unwraps
-pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError> {
-    let requester = build_client(token);
-    let initial_url = build_url(ParseType::Initial, username.clone());
-    let folders_raw: String;
-    match query(&requester, &initial_url) {
-        Ok(response) => {
-            folders_raw = response;
-        }
-        Err(e) => {return Err(e)}
-    }
-    let mut folders = HashMap::<String, String>::new();
-
-    let to_deserialize: Value = serde_json::from_str(&folders_raw).unwrap();
-    let folders_raw = to_deserialize.get("folders").unwrap();
-    if let Value::Array(_) = folders_raw {
-        let folderlist = folders_raw.as_array().unwrap();
-        for raw in folderlist.iter() {
-            let foldername = raw.get("name")
-                .unwrap().as_str()
-                .unwrap().to_string();
-            let folderurl = raw.get("resource_url")
-                .unwrap().as_str()
-                .unwrap().to_string();
-            folders.insert(foldername, folderurl);
-        } 
-    }
-
-    let mut master_folders: Folders = Folders::new();
-
-    for (name, folderurl) in folders.iter() {
-        let mut collection_url = build_url(ParseType::Folders(folderurl.clone()), username.clone());
-        let mut master_vec: Vec<Release> = Vec::new();
-
-        //* main update loop
-        //TODO: Make this nicer and handle the unwraps
-        loop { //I hate the stupid pyramid of doom here
-            match query(&requester, &collection_url) {
-                Ok(text) => {
-                    let total: u64;
-                    let response: Value = serde_json::from_str(&text).unwrap();
-                    let pagination = response.get("pagination").unwrap();
-                    if let Value::Object(_) = pagination {
-                        total = pagination.get("items").unwrap().as_u64().unwrap();
-                    } else { //change this to handle the error instead of panicking
-                        panic!("Could not read json file properly.");
-                    }
-                    match parse_releases(ParseType::Collection, &text, false) {
-                        Ok(mut releases) => {
-                            master_vec.append(&mut releases);
-                            if master_vec.len() as u64 == total {
-                                break;
-                            } else {
-                                collection_url = pagination["urls"]["next"]
-                                                    .as_str()
-                                                    .unwrap()
-                                                    .to_string();
-                            }
-                        }
-                        Err(_) => {return Err(QueryError::ParseError)}
-                    }
-                }
-                Err(queryerror) => {return Err(queryerror)}
-            }
-        }
-        master_folders.push(name.clone(), master_vec);
-    }
-    Ok(master_folders)
-}
-
-fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
+pub fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
     match requester.get(url).send() {
         Ok(response) => {
             match response.status() {
@@ -160,7 +89,7 @@ fn query(requester: &Client, url: &String) -> Result<String, QueryError> {
     }
 }
 
-fn build_client(token: String) -> Client {
+pub fn build_client(token: String) -> Client {
     let mut headers = HeaderMap::new();
 
     headers.insert(
@@ -175,7 +104,7 @@ fn build_client(token: String) -> Client {
 }
 
 //builds a url based on its parsetype and user id
-fn build_url(parse: ParseType, username: String) -> String {
+pub fn build_url(parse: ParseType, username: String) -> String {
     match parse {
         ParseType::Initial => {
             format!("https://api.discogs.com/users/{}/collection/folders", username)
@@ -229,8 +158,8 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
 
     //TODO: Change all the unwraps to handle errors you lazy fuck
     let releases_raw = response.get(&to_index).unwrap();
-    if let Value::Array(_) = releases_raw {
-        let releaselist = releases_raw.as_array().unwrap();
+    if let Value::Array(result) = releases_raw {
+        let releaselist = result;
 
         //deserialization happens here
         for entry in releaselist {
@@ -275,7 +204,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             });
         }
     } else {
-        panic!("Release list could not be read");
+        return Err(Box::new(QueryError::ParseError));
     }
     Ok(releases)
 }
