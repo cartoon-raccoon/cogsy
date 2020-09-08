@@ -8,15 +8,6 @@ github.com/NerdyPepper/dijo/blob/master/src/command.rs and modified to fit my ap
 Just giving credit where it's due.
 */
 
-#[allow(dead_code)]
-static COMMANDS: &'static [&'static str] = &[
-    "update",
-    "random",
-    "price",
-    "listen",
-    "query",
-];
-
 #[derive(PartialEq, Debug)]
 pub enum Command {
     UpdateDB,               //switch and argument
@@ -90,9 +81,10 @@ impl Command {
         if strings.is_empty() {
             return Ok(Command::Empty);
         }
-        let first = strings.first().unwrap().to_string();
+        let mut first = strings.first().unwrap().to_string();
+        first.retain(|c| c != ':');
         match first.as_str() {
-            ":update" => {
+            "update" => {
                 if strings.len() > 3 {
                     return Err(CommandError::TooManyArgs(first, 2))
                 } else if strings.len() == 1 {
@@ -113,7 +105,7 @@ impl Command {
                     }
                 }
             },
-            ":random" => {
+            "random" => {
                 if strings.len() > 2 {
                     return Err(CommandError::TooManyArgs(first, 1))
                 } else if strings.len() == 2 {
@@ -131,9 +123,9 @@ impl Command {
                     return Ok(Command::Random(false));
                 }
             },
-            ":price" => {
+            "price" => {
                 if strings.len() == 1 {
-                    return Err(CommandError::NotEnoughArgs(first, 1));
+                    return Err(CommandError::NotEnoughArgs(first, 2));
                 }
                 let argv = splitter(input.trim());
                 match argv {
@@ -163,7 +155,7 @@ impl Command {
                     None => Err(CommandError::InvalidAlbum)
                 }
             },
-            ":listen" => {
+            "listen" => {
                 if strings.len() == 1 {
                     return Err(CommandError::NotEnoughArgs(first, 1));
                 }
@@ -184,7 +176,7 @@ impl Command {
                     None => Err(CommandError::InvalidAlbum)
                 }
             },
-            ":query" => {
+            "query" => {
                 if strings.len() == 1 {
                     return Err(CommandError::NotEnoughArgs(first, 1));
                 }
