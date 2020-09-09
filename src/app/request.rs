@@ -19,6 +19,7 @@ use crate::app::Release;
 */
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum ParseType {
     Initial,
     Profile,
@@ -27,7 +28,7 @@ pub enum ParseType {
     Wantlist,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum QueryError {
     NetworkError,
     ServerError,
@@ -35,7 +36,7 @@ pub enum QueryError {
     AuthorizationError,
     UnknownError,
     ParseError,
-    DBWriteError,
+    DBWriteError(String),
 }
 
 impl std::error::Error for QueryError {}
@@ -61,8 +62,8 @@ impl std::fmt::Display for QueryError {
             QueryError::ParseError => {
                 write!(f, "Could not parse data from Discogs. Please try updating again.")
             }
-            QueryError::DBWriteError => {
-                write!(f, "There was an error writing to the database. Try updating again.")
+            QueryError::DBWriteError(e) => {
+                write!(f, "Database write error: {}", e.to_string())
             }
         }
     }

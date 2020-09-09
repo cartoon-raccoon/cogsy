@@ -8,7 +8,7 @@ use cursive::{
 use crate::app::{
     {App, Release, Folders},
     message::{Message, MessageKind},
-    update::fullupdate
+    update,
 };
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
@@ -38,7 +38,8 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let updateres = fullupdate(self.user_id.clone(), self.token.clone());
+                        //* REMEMBER TO CHANGE THIS TO CALL FULLUPDATE
+                        let updateres = update::collection(self.user_id.clone(), self.token.clone());
                         match updateres {
                             Ok(mut releases) => {
                                 //*Placeholder code (again)

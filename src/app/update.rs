@@ -8,18 +8,70 @@ use crate::app::{
 };
 
 //TODO: Add in profile and wantlist parsing
-pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError> {
-    let requester = build_client(token);
+pub fn fullupdate(username: String, token: String) -> Result<(), QueryError> {
+    match profile(username.clone(), token.clone()) {
+        Ok(_) => {},
+        Err(e) => {return Err(e);}
+    }
+    match wantlist(username.clone(), token.clone()) {
+        Ok(_) => {},
+        Err(e) => {return Err(e);}
+    }
+    match collection(username, token) {
+        Ok(_) => {},
+        Err(e) => {return Err(e);}
+    }
+    Ok(())
+}
 
+pub fn profile(username: String, token: String) -> Result<(), QueryError> {
+    let requester = build_client(token);
+    let profile_url = build_url(ParseType::Profile, username.clone());
+    let master_prof: Profile;
+
+    //pulling profile and deserialization
+    let response = query_discogs(&requester, &profile_url)?;
+    let profile_raw: Value = serde_json::from_str(&response)
+                .unwrap_or(Value::Null);
+    if let Value::Null = profile_raw {
+        return Err(QueryError::ParseError)
+    }
+    master_prof = Profile {
+        username: profile_raw["username"].as_str().unwrap().to_string(),
+        real_name: profile_raw["name"].as_str().unwrap().to_string(),
+        registered: profile_raw["registered"].as_str().unwrap().to_string(),
+        listings: profile_raw["num_for_sale"].as_u64().unwrap(),
+        collection: profile_raw["num_collection"].as_u64().unwrap(),
+        wantlist: profile_raw["num_wantlist"].as_u64().unwrap(),
+        rated: profile_raw["releases_rated"].as_u64().unwrap(),
+        average_rating: profile_raw["rating_avg"].as_f64().unwrap(),
+    };
+    //committing to db
+    match update::profile(master_prof) {
+        Ok(_) => Ok(()),
+        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+    }
+
+}
+
+pub fn wantlist(username: String, token: String) -> Result<(), QueryError> {
+    let requester = build_client(token);
+    let wantlist_url = build_url(ParseType::Wantlist, username.clone());
+    let master_wants = get_full(&requester, ParseType::Wantlist, wantlist_url)?;
+
+    //committing to db
+    match update::wantlist(master_wants) {
+        Ok(_) => Ok(()),
+        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()));}
+    }
+}
+
+//* This should eventually return nothing, and completely write to the db
+pub fn collection(username: String, token: String) -> Result<Folders, QueryError> {
+    let requester = build_client(token);
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.clone());
-    let folders_raw: String;
-    match query_discogs(&requester, &initial_url) {
-        Ok(response) => {
-            folders_raw = response;
-        }
-        Err(e) => {return Err(e)}
-    }
+    let folders_raw = query_discogs(&requester, &initial_url)?;
     let mut folders = HashMap::<String, String>::new();
 
     let to_deserialize: Value = serde_json::from_str(&folders_raw)
@@ -49,56 +101,12 @@ pub fn fullupdate(username: String, token: String) -> Result<Folders, QueryError
     //*1b: Pulling each folder
     for (name, folderurl) in folders.iter() {
         let collection_url = build_url(ParseType::Folders(folderurl.clone()), username.clone());
-        match get_full(&requester, ParseType::Collection, collection_url) {
-            Ok(releases) => {master_folders.push(name.clone(), releases);}
-            Err(e) => {return Err(e)}
-        }
+        let releases = get_full(&requester, ParseType::Collection, collection_url)?;
+        master_folders.push(name.clone(), releases);
     }
-
-    //*2: Pulling wantlist
-    let wantlist_url = build_url(ParseType::Wantlist, username.clone());
-    let master_wants: Vec<Release>;
-    match get_full(&requester, ParseType::Wantlist, wantlist_url) {
-        Ok(releases) => {master_wants = releases;}
-        Err(e) => {return Err(e)}
-    }
-
-    let profile_url = build_url(ParseType::Profile, username.clone());
-    let master_prof: Profile;
-    match query_discogs(&requester, &profile_url) {
-        Ok(text) => {
-            let profile_raw: Value = serde_json::from_str(&text)
-                .unwrap_or(Value::Null);
-            if let Value::Null = profile_raw {
-                return Err(QueryError::ParseError)
-            }
-            master_prof = Profile {
-                username: profile_raw["username"].as_str().unwrap().to_string(),
-                real_name: profile_raw["name"].as_str().unwrap().to_string(),
-                registered: profile_raw["registered"].as_str().unwrap().to_string(),
-                listings: profile_raw["num_for_sale"].as_u64().unwrap(),
-                collection: profile_raw["num_collection"].as_u64().unwrap(),
-                wantlist: profile_raw["num_wantlist"].as_u64().unwrap(),
-                rated: profile_raw["releases_rated"].as_u64().unwrap(),
-                average_rating: profile_raw["rating_avg"].as_f64().unwrap(),
-            }
-        }
-        Err(err) => {return Err(err)}
-    }
-
-    match update::profile(master_prof) {
-        Ok(_) => {}
-        Err(_) => {return Err(QueryError::DBWriteError)}
-    }
-
-    match update::wantlist(master_wants) {
-        Ok(_) => {}
-        Err(_) => {return Err(QueryError::DBWriteError);}
-    }
-    //in the future this should not clone Folders, it should consume
     match update::collection(master_folders.clone()) {
         Ok(_) => {return Ok(master_folders)},
-        Err(_) => {return Err(QueryError::DBWriteError)},
+        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))},
     }
 }
 
