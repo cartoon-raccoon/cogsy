@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use message::Message;
 use crate::collection::Collection;
 
-//#[derive(Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct App {
     pub user_id: String,
     pub token: String,

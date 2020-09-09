@@ -1,5 +1,5 @@
 use cursive::theme::{BaseColor, Color, ColorStyle, Style};
-use cursive::utils::span::SpannedString;
+//use cursive::utils::span::SpannedString;
 
 /* 
 The idea is that this module processes a function that returns
@@ -16,6 +16,7 @@ pub enum MessageKind {
     Hint,
 }
 
+#[allow(dead_code)]
 fn get_style(item: MessageKind) -> Style {
     match item {
         MessageKind::Error => {
@@ -73,6 +74,7 @@ where
 }
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct Message {
     pub msg: String,
     pub kind: MessageKind,
