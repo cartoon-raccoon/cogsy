@@ -84,19 +84,23 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Database API
+  - Database query module
+  - Function integration into main code
   - Date-parsing for database insertion and retrieval
   - Struct for storing listening history
-  - Functions for inserting and querying history
   - Switching folders in collection screen
+  - Formatting artist and album name for wantlist
+  - Sparkview drawing for history and money screens
+  - Config file parsing
+    - Matching config file username and database username
+    (Purge and refresh database if they don't match)
   - Implement live updating of release info
     (Implemented for collection and app)
-  - Handling of various folders in collection database
-    and sorting their entries into the database
-    (i.e. Maintain one master table with a folders field
-     or maintain multiple tables for each folder?)
   - Coloured messages (Not important)
   - Implement different colours for folder list (not important)
+
+Future additions:
+  - Turning update into a non-blocking, async function
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct
