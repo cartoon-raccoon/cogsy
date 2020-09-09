@@ -4,11 +4,17 @@ use reqwest::blocking::Client;
 use crate::app::{
     {Release, Folders, Profile},
     request::*,
-    database::update,
+    database::{admin, update},
 };
 
 //TODO: Add in profile and wantlist parsing
 pub fn fullupdate(username: String, token: String) -> Result<(), QueryError> {
+    if !admin::check_integrity() {
+        match admin::init_db() {
+            Ok(_) => {},
+            Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+        }
+    }
     match profile(username.clone(), token.clone()) {
         Ok(_) => {},
         Err(e) => {return Err(e);}

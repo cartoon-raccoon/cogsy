@@ -1,11 +1,18 @@
 /*
-*the database API exposes two main modules:
+*the database API exposes four main modules:
+*   mod admin: contains functions that administer the database
+*       check_integrity(), init_db(), init_folders()
 *   mod update: called by the request module query() to load in data
 *       also exposes functions that update userid and token
 *       and log listening history
 *   mod query: queries from the local database
 *       every query returns an iterator or indexable set of iterators
 *       wrapped in a custom type (Folders, Release)
+*   mod purge: deleting stuff from the database
+*       folders(): systematically deleting collection folders
+*       table(): clears a specified folder
+*       complete(): yeets the entire fucking database
+*       (think sudo rm -rf)
 */
 pub mod admin {
     use std::error::Error;
@@ -53,6 +60,15 @@ pub mod admin {
             NO_PARAMS
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS listenlog (
+                album_id INTEGER PRIMARY KEY,
+                title TEXT,
+                datetime TEXT 
+            )",
+            NO_PARAMS
+        )?;
+
         Ok(())
     }
 
@@ -72,6 +88,11 @@ pub mod admin {
         conn.execute(&sqlcommand, NO_PARAMS)?;
         Ok(())
     }
+
+    //? Should this return error codes instead?
+    pub fn check_integrity() -> bool {
+        true
+    }
 }
 
 pub mod update {
@@ -85,11 +106,14 @@ pub mod update {
         Folders, 
         Profile
     };
-    use crate::app::database::admin;
+    use crate::app::database::{
+        admin,
+        purge,
+    };
 
     pub fn profile(profile: Profile) -> Result<(), Box<dyn Error>> {
         let conn = Connection::open("cogsy_data.db")?;
-        conn.execute("DELETE FROM profile;", NO_PARAMS)?;
+        purge::table("profile")?;
         conn.execute("INSERT INTO profile 
         (username, 
         real_name, 
@@ -119,19 +143,23 @@ pub mod update {
             let mut sanitized_name = name.clone();
             sanitized_name.push_str("_");
             admin::init_folder(sanitized_name.clone(), &conn)?;
-            add_release(&conn, &sanitized_name, folder)?;
+            add_releases(&conn, &sanitized_name, folder)?;
         }
         Ok(())
     }
 
     pub fn wantlist(mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
         let conn = Connection::open("cogsy_data.db")?;
-        conn.execute("DELETE FROM wantlist;", NO_PARAMS)?;
-        add_release(&conn, "wantlist", &mut wantlist)?;
+        purge::table("wantlist")?;
+        add_releases(&conn, "wantlist", &mut wantlist)?;
         Ok(())
     }
 
-    fn add_release(conn: &Connection, foldername: &str, folder: &mut Vec<Release>)
+    pub fn listenlog() -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
+
+    fn add_releases(conn: &Connection, foldername: &str, folder: &mut Vec<Release>)
         -> Result<(), Box<dyn Error>> {
         for release in folder {
             let mut stringified_labels = String::new();
@@ -189,6 +217,7 @@ pub mod query {
     /*
     profile(), collection() and wantlist() are called when the app starts
     they must not fail, so they don't have to return a result
+    and will panic if they do fail
     ideally, admin::check() should properly ensure database integrity before starting the app.
     however, it cannot protect against the contents of the table itself.
     */
@@ -208,5 +237,29 @@ pub mod query {
     //returns a vec of releases to support multiple results
     pub fn release(title: String) -> Result<Vec<Release>, Box<dyn Error>> {
         Ok(Vec::new())
+    }
+}
+
+pub mod purge {
+    use std::error::Error;
+    use rusqlite::{
+        Connection,
+        NO_PARAMS
+    };
+
+    pub fn folders() -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
+
+    pub fn table(tablename: &str) -> Result<(), Box<dyn Error>> {
+        let conn = Connection::open("cogsy_data.db")?;
+        let sqlcmd = format!("DELETE FROM {}", tablename);
+
+        conn.execute(&sqlcmd, NO_PARAMS)?;
+        Ok(())
+    }
+
+    pub fn complete() -> Result<(), Box<dyn Error>> {
+        Ok(()) //You just deleted your entire database. Congrats.
     }
 }
