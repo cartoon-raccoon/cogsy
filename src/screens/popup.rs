@@ -30,19 +30,24 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
 
     Formats: {}
 
-    Date Added: {}",
+    Date Added: {}
+    
+    Discogs ID: {}",
     release.artist,
     release.year,
     format_vec(labels),
     format_vec(formats),
-    release.date_added
+    release.date_added,
+    release.id,
     ));
 
     let screen = ResizedView::new(
         SizeConstraint::Full,
         SizeConstraint::Full,
         Dialog::text(content)
-            .title(release.title.clone())
+            .title(format!("{} - {}", 
+            release.artist.clone(), 
+            release.title.clone()))
     );
     screen
 }
