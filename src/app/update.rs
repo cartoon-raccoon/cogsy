@@ -8,12 +8,10 @@ use crate::app::{
 };
 
 //TODO: Add in profile and wantlist parsing
-pub fn fullupdate(username: String, token: String) -> Result<(), QueryError> {
-    if !admin::check_integrity() {
-        match admin::init_db() {
-            Ok(_) => {},
-            Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
-        }
+pub fn full(username: String, token: String) -> Result<(), QueryError> {
+    match admin::init_db() {
+        Ok(_) => {},
+        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
     }
     match profile(username.clone(), token.clone()) {
         Ok(_) => {},
@@ -46,10 +44,10 @@ pub fn profile(username: String, token: String) -> Result<(), QueryError> {
         username: profile_raw["username"].as_str().unwrap().to_string(),
         real_name: profile_raw["name"].as_str().unwrap().to_string(),
         registered: profile_raw["registered"].as_str().unwrap().to_string(),
-        listings: profile_raw["num_for_sale"].as_u64().unwrap(),
-        collection: profile_raw["num_collection"].as_u64().unwrap(),
-        wantlist: profile_raw["num_wantlist"].as_u64().unwrap(),
-        rated: profile_raw["releases_rated"].as_u64().unwrap(),
+        listings: profile_raw["num_for_sale"].as_u64().unwrap() as u32,
+        collection: profile_raw["num_collection"].as_u64().unwrap() as u32,
+        wantlist: profile_raw["num_wantlist"].as_u64().unwrap() as u32,
+        rated: profile_raw["releases_rated"].as_u64().unwrap() as u32,
         average_rating: profile_raw["rating_avg"].as_f64().unwrap(),
     };
     //committing to db
