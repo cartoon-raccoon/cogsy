@@ -3,14 +3,17 @@ mod screens;
 mod theme;
 mod commands;
 
+use std::process::exit;
 use cursive::{
     Cursive,
     traits::*,
     views::*,
     event::{Event, Key}
 };
-
-use app::App;
+use app::{
+    App,
+    database::*,
+};
 use commands::{Command};
 use screens::{
     collection, 
@@ -18,10 +21,15 @@ use screens::{
 };
 
 fn main() {
+    let mut app = App::initialize();
+
+    if !admin::check_integrity() {
+        println!("Database integrity check failed, exiting.");
+        exit(1);
+    } //TODO: add db-config username matching
+    
     let mut siv = cursive::default();
     siv.set_theme(theme::theme_gen());
-
-    let mut app = App::initialize();
 
     //initialize screen data
     let collectscreen = app.collection.build();
@@ -52,7 +60,10 @@ fn main() {
     siv.add_fullscreen_layer(main_layout);
 
     //adding callbacks
-    siv.add_global_callback('q', |s| s.quit());
+    siv.add_global_callback('q', |s| {
+        //TODO: check app modified state and write to file
+        s.quit();
+    });
     siv.add_global_callback(':', |s| {
         s.call_on_name("commandline", |view: &mut EditView| {
             view.enable();
