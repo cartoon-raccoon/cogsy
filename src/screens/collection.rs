@@ -13,7 +13,7 @@ use cursive::{
 };
 
 use crate::app::{
-    request::{self, ParseType},
+    database::*,
     Release,
 };
 use crate::screens::popup;
@@ -27,11 +27,8 @@ pub struct Collection {
 impl Collection {
     pub fn new() -> Self {
         Collection{
-            //this will eventually call database::query::get_from_db()
-            contents: request::parse_releases(
-                ParseType::Collection,
-                "discogs_collection.json",
-                true).unwrap()
+            contents: query::collection().unwrap()
+                            .pull("All_").unwrap()
         }
     }
     pub fn build(&self) -> NamedView<LinearLayout> {

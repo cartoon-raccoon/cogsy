@@ -7,6 +7,7 @@ use cursive::{
 };
 use crate::app::{
     {App, Release, Folders},
+    database::*,
     message::{Message, MessageKind},
     update,
 };
@@ -38,12 +39,12 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        //* REMEMBER TO CHANGE THIS TO CALL FULLUPDATE
-                        let updateres = update::collection(self.user_id.clone(), self.token.clone());
+                        let updateres = update::full(self.user_id.clone(), self.token.clone(), false);
                         match updateres {
-                            Ok(mut releases) => {
+                            Ok(()) => {
                                 //*Placeholder code (again)
-                                self.collection.contents = releases.pull("All").unwrap();
+                                self.collection.contents = query::collection().unwrap()
+                                                                 .pull("All_").unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
                             }
@@ -57,7 +58,6 @@ impl App {
                             "Your id has been set to `{}`, restart the app for the changes.",
                             id);
                         self.user_id = id;
-                        //update user id in db
                     }
                     Command::UpdateToken(tk) => {
                         view_content = format!("Your token has been set to: {}", tk);

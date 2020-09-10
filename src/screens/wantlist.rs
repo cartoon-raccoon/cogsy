@@ -5,7 +5,7 @@ use cursive::{
 };
 use crate::app::{
     {Release},
-    request::{self, ParseType},
+    database::*,
 };
 use crate::screens::popup;
 
@@ -19,9 +19,7 @@ pub struct Wantlist {
 impl Wantlist {
     pub fn init() -> Self {
         Wantlist{ //placeholder: will read from database
-            wantlist: request::parse_releases(
-                ParseType::Wantlist, 
-                "discogs_wantlist.json", true).unwrap()
+            wantlist: query::wantlist().unwrap()
         }
     }
     pub fn build(&self) -> Panel< //long-ass return type declaration
