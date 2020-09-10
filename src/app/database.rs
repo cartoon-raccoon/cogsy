@@ -102,6 +102,10 @@ pub mod admin {
                     Ok(_) => {},
                     Err(_) => return false
                 }
+                match conn.prepare("SELECT * FROM listenlog;") {
+                    Ok(_) => {},
+                    Err(_) => return false
+                }
                 match conn.prepare("SELECT * FROM folders;") {
                     Ok(mut stmt) => {
                         let collection_check = stmt.query_map(
