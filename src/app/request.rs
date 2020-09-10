@@ -197,12 +197,12 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             }
 
             releases.push(Release {
-                id: id_no,
+                id: id_no as i64,
                 title: info["title"].as_str().unwrap().to_string(),
                 artist: info["artists"][0]["name"].as_str()
                     .unwrap()
                     .to_string(),
-                year: info["year"].as_u64().unwrap(),
+                year: info["year"].as_u64().unwrap() as u32,
                 labels: label_names,
                 formats: formats,
                 date_added: added_date

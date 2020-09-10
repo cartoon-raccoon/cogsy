@@ -23,19 +23,19 @@ pub struct Profile {
     pub username: String,
     pub real_name: String,
     pub registered: String,
-    pub listings: u64,
-    pub collection: u64,
-    pub wantlist: u64,
-    pub rated: u64,
+    pub listings: u32,
+    pub collection: u32,
+    pub wantlist: u32,
+    pub rated: u32,
     pub average_rating: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct Release {
-    pub id: u64,
+    pub id: i64,
     pub title: String,
     pub artist: String,
-    pub year: u64,
+    pub year: u32,
     pub labels: Vec<String>,
     pub formats: Vec<String>,
     pub date_added: String,
