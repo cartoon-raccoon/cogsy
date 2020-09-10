@@ -4,11 +4,15 @@ use reqwest::blocking::Client;
 use crate::app::{
     {Release, Folders, Profile},
     request::*,
-    database::{admin, update},
+    database::{admin, update, purge},
 };
 
 //TODO: Add in profile and wantlist parsing
 pub fn full(username: String, token: String) -> Result<(), QueryError> {
+    // match purge::complete() {
+    //     Ok(()) => {},
+    //     Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+    // }
     match admin::init_db() {
         Ok(_) => {},
         Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
@@ -24,6 +28,13 @@ pub fn full(username: String, token: String) -> Result<(), QueryError> {
     match collection(username, token) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
+    }
+    match admin::check_integrity() {
+        true => {},
+        false => {
+            let errormsg = String::from("Integrity check failed");
+            return Err(QueryError::DBWriteError(errormsg))
+        }
     }
     Ok(())
 }

@@ -2,6 +2,7 @@
 *the database API exposes four main modules:
 *   mod admin: contains functions that administer the database
 *       check_integrity(), init_db(), init_folders()
+*       WARNING: ORPHAN TABLES ARE A DEFINITE POSSIBILITY.
 *   mod update: called by the request module query() to load in data
 *       also exposes functions that update userid and token
 *       and log listening history
@@ -89,9 +90,41 @@ pub mod admin {
         Ok(())
     }
 
-    //? Should this return error codes instead?
+    //TODO: Account for orphan folder tables
     pub fn check_integrity() -> bool {
-        true
+        match Connection::open("cogsy_data.db") {
+            Ok(conn) => {
+                match conn.prepare("SELECT * FROM profile;") {
+                    Ok(_) => {},
+                    Err(_) => return false
+                }
+                match conn.prepare("SELECT * FROM wantlist;") {
+                    Ok(_) => {},
+                    Err(_) => return false
+                }
+                match conn.prepare("SELECT * FROM folders;") {
+                    Ok(mut stmt) => {
+                        let collection_check = stmt.query_map(
+                            NO_PARAMS, 
+                            |row| row.get(0)).unwrap();
+                        let mut folder_names: Vec<String> = Vec::new();
+                        for folder in collection_check {
+                            folder_names.push(folder.unwrap());
+                        }
+                        for folder in folder_names {
+                            let sqlcommand = format!("SELECT * FROM {}", folder);
+                            match conn.query_row(&sqlcommand, NO_PARAMS, |_row| Ok(0)) {
+                                Ok(_) => {},
+                                Err(_) => return false
+                            }
+                        }
+                    }
+                    Err(_) => return false
+                }
+                true
+            },
+            Err(_) => return false
+        }
     }
 }
 
@@ -99,7 +132,6 @@ pub mod update {
     use std::error::Error;
     use rusqlite::{
         Connection,
-        NO_PARAMS
     };
     use crate::app::{
         Release, 
@@ -112,8 +144,8 @@ pub mod update {
     };
 
     pub fn profile(profile: Profile) -> Result<(), Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
         purge::table("profile")?;
+        let conn = Connection::open("cogsy_data.db")?;
         conn.execute("INSERT INTO profile 
         (username, 
         real_name, 
@@ -138,10 +170,13 @@ pub mod update {
     }
 
     pub fn collection(mut collection: Folders) -> Result<(), Box<dyn Error>> {
+        purge::folders()?;
         let conn = Connection::open("cogsy_data.db")?;
         for (name, folder) in collection.contents.iter_mut() {
             let mut sanitized_name = name.clone();
             sanitized_name.push_str("_");
+            conn.execute("INSERT INTO folders (name) VALUES (?1)",
+                &[&sanitized_name])?;
             admin::init_folder(sanitized_name.clone(), &conn)?;
             add_releases(&conn, &sanitized_name, folder)?;
         }
@@ -149,8 +184,8 @@ pub mod update {
     }
 
     pub fn wantlist(mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
         purge::table("wantlist")?;
+        let conn = Connection::open("cogsy_data.db")?;
         add_releases(&conn, "wantlist", &mut wantlist)?;
         Ok(())
     }
@@ -207,7 +242,11 @@ pub mod update {
 
 pub mod query {
     use std::error::Error;
-    use rusqlite;
+    use rusqlite::{
+        Connection,
+        NO_PARAMS,
+
+    };
     use crate::app::{
         Release, 
         Folders, 
@@ -226,40 +265,114 @@ pub mod query {
 
     }
 
-    pub fn collection() -> Folders {
-        Folders::new()
+    pub fn collection() -> Result<Folders, Box<dyn Error>> {
+        let conn = Connection::open("cogsy_data.db")?;
+
+        let mut folder_names: Vec<String> = Vec::new();
+        let mut stmt = conn.prepare("SELECT name FROM folders;")?;
+        let folderquery = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
+        for folder in folderquery {
+            folder_names.push(folder?);
+        }
+
+        let mut folders = Folders::new();
+
+        for name in folder_names {
+            let folder = get_releases(&conn, &name)?;
+            folders.push(name, folder);
+        }
+        Ok(folders)
     }
 
-    pub fn wantlist() -> Vec<Release> {
-        Vec::new()
+    pub fn wantlist() -> Result<Vec<Release>, Box<dyn Error>> {
+        let conn = Connection::open("cogsy_data.db")?;
+        let wantlist = get_releases(&conn, "wantlist")?;
+        Ok(wantlist)
     }
 
     //returns a vec of releases to support multiple results
     pub fn release(title: String) -> Result<Vec<Release>, Box<dyn Error>> {
         Ok(Vec::new())
     }
+
+    fn get_releases(conn: &Connection, name: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+        let mut folder: Vec<Release> = Vec::new();
+
+            let mut stmt = conn.prepare(&format!("SELECT * FROM {}", name))?;
+            let contents = stmt.query_map(NO_PARAMS, |row| {
+                let labels_raw: String = row.get(4)?;
+                let formats_raw: String = row.get(5)?;
+
+                let labels = labels_raw.as_str()
+                    .split(':')
+                    .map(|s| s.to_string())
+                    .collect();
+                let formats = formats_raw.as_str()
+                    .split(':')
+                    .map(|s| s.to_string())
+                    .collect();
+                
+                Ok(Release {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    year: row.get(3)?,
+                    labels: labels,
+                    formats: formats,
+                    date_added: row.get(6)?,
+                })
+            })?;
+            for release in contents {
+                folder.push(release?);
+            }
+            Ok(folder)
+    }
 }
 
 pub mod purge {
     use std::error::Error;
+    use std::fs;
     use rusqlite::{
         Connection,
         NO_PARAMS
     };
 
     pub fn folders() -> Result<(), Box<dyn Error>> {
+        let conn = Connection::open("cogsy_data.db")?;
+
+        let mut folder_names: Vec<String> = Vec::new();
+        let mut stmt = conn.prepare("SELECT name FROM folders;")?;
+        let folderquery = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
+        for folder in folderquery {
+            folder_names.push(folder?);
+        }
+        for name in folder_names {
+            let sqlcommand = format!("DROP TABLE {}", name);
+            match conn.execute(&sqlcommand, NO_PARAMS) {
+                Ok(_) => {},
+                Err(_) => {}
+            }
+        }
+        table("folders")?;
         Ok(())
     }
 
+    //* DO NOT CALL THIS ON THE FOLDERS TABLE OUTSIDE OF PURGE::FOLDERS
+    //* YOU **WILL** GET ORPHAN TABLES
     pub fn table(tablename: &str) -> Result<(), Box<dyn Error>> {
         let conn = Connection::open("cogsy_data.db")?;
-        let sqlcmd = format!("DELETE FROM {}", tablename);
+        let sqlcommand = format!("DELETE FROM {}", tablename);
 
-        conn.execute(&sqlcmd, NO_PARAMS)?;
-        Ok(())
+        match conn.execute(&sqlcommand, NO_PARAMS) {
+            Ok(_) => Ok(()),
+            Err(_) => Ok(())
+        }
     }
 
+    //* This will have to be called if orphan folders are detected.
     pub fn complete() -> Result<(), Box<dyn Error>> {
+        //i'd rather systematically drop tables in the folder, but this will do for now
+        fs::remove_file("cogsy_data.db")?;
         Ok(()) //You just deleted your entire database. Congrats.
     }
 }
