@@ -84,8 +84,8 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Database query module
-  - Function integration into main code
+  - Database query module (almost done!)
+  - Final integration into main code
   - Date-parsing for database insertion and retrieval
   - Struct for storing listening history
   - Switching folders in collection screen
@@ -94,13 +94,13 @@ TODO:
   - Config file parsing
     - Matching config file username and database username
     (Purge and refresh database if they don't match)
-  - Implement live updating of release info
-    (Implemented for collection and app)
   - Coloured messages (Not important)
   - Implement different colours for folder list (not important)
 
 Future additions:
   - Turning update into a non-blocking, async function
+  - Option to read from csv instead of pulling from web
+    (for larger collections and wantlists)
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct
