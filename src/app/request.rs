@@ -51,19 +51,19 @@ impl std::fmt::Display for QueryError {
                 write!(f, "The Discogs server encountered an error. Try again later.")
             }
             QueryError::NotFoundError => {
-                write!(f, "Discogs returned a 404 error. Check your username.")
+                write!(f, "Error: Discogs returned a 404. Check your username.")
             }
             QueryError::AuthorizationError => {
-                write!(f, "Discogs could not authorize your request. Check your token.")
+                write!(f, "Error: Discogs could not authorize your request. Check your token.")
             }
             QueryError::UnknownError => {
                 write!(f, "An unknown error occurred. Check the logs for more info.")
             }
             QueryError::ParseError => {
-                write!(f, "Could not parse data from Discogs. Please try updating again.")
+                write!(f, "Error: Could not parse data from Discogs. Please try updating again.")
             }
             QueryError::DBWriteError(e) => {
-                write!(f, "Database write error: {}", e.to_string())
+                write!(f, "Database error: {}", e.to_string())
             }
         }
     }

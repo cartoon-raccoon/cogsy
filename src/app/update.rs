@@ -8,27 +8,39 @@ use crate::app::{
 };
 
 //TODO: Add in profile and wantlist parsing
-pub fn full(username: String, token: String) -> Result<(), QueryError> {
-    // match purge::complete() {
-    //     Ok(()) => {},
-    //     Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
-    // }
+pub fn full(username: String, token: String, from_cmd: bool) -> Result<(), QueryError> {
+    match admin::check_integrity() {
+        true => {},
+        false => {
+            if from_cmd {println!("Integrity check failed. Purging and refreshing database.")}
+            match purge::complete() {
+                Ok(()) => {},
+                Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+            }
+        }
+    }
     match admin::init_db() {
         Ok(_) => {},
         Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
     }
+    if from_cmd {print!("Updating profile...")}
     match profile(username.clone(), token.clone()) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
     }
+    if from_cmd {print!("    Success!\n")}
+    if from_cmd {print!("Updating wantlist...")}
     match wantlist(username.clone(), token.clone()) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
     }
+    if from_cmd {print!("   Success!\n")}
+    if from_cmd {print!("Updating collection...")}
     match collection(username, token) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
     }
+    if from_cmd {print!(" Success!\n")}
     match admin::check_integrity() {
         true => {},
         false => {
@@ -36,6 +48,7 @@ pub fn full(username: String, token: String) -> Result<(), QueryError> {
             return Err(QueryError::DBWriteError(errormsg))
         }
     }
+    if from_cmd {println!("Database update successful.")}
     Ok(())
 }
 
