@@ -265,8 +265,24 @@ pub mod query {
     however, it cannot protect against the contents of the table itself.
     */
 
-    pub fn profile() {
+    pub fn profile() -> Result<Profile, Box<dyn Error>> {
+        let conn = Connection::open("cogsy_data.db")?;
 
+        let profile = conn.query_row(
+            "SELECT * FROM profile", NO_PARAMS, |row| {
+                Ok(Profile {
+                    username: row.get(0)?,
+                    real_name: row.get(1)?,
+                    registered: row.get(2)?,
+                    listings: row.get(3)?,
+                    collection: row.get(4)?,
+                    wantlist: row.get(5)?,
+                    rated: row.get(6)?,
+                    average_rating: row.get(7)?,
+                })
+            })?;
+        
+        Ok(profile)
     }
 
     pub fn collection() -> Result<Folders, Box<dyn Error>> {
