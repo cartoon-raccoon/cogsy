@@ -16,6 +16,7 @@ pub struct App {
     pub token: String,
     pub message: Message,
     pub collection: Collection,
+    pub modified: bool,
 }
 
 #[derive(Debug, Clone)]

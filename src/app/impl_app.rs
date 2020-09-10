@@ -24,6 +24,7 @@ impl App {
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
+            modified: false
         }
     }
 
@@ -58,9 +59,12 @@ impl App {
                             "Your id has been set to `{}`, restart the app for the changes.",
                             id);
                         self.user_id = id;
+                        self.modified = true;
                     }
                     Command::UpdateToken(tk) => {
                         view_content = format!("Your token has been set to: {}", tk);
+                        self.token = format!("Discogs token={}", tk);
+                        self.modified = true;
                     }
                     Command::Random(nolog) => {
                         if nolog {
