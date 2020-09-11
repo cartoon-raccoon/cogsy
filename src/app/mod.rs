@@ -19,7 +19,7 @@ pub struct App {
     pub modified: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Profile {
     pub username: String,
     pub real_name: String,
@@ -31,7 +31,7 @@ pub struct Profile {
     pub average_rating: f64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Release {
     pub id: i64,
     pub title: String,

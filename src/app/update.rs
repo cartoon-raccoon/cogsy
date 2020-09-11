@@ -66,14 +66,22 @@ pub fn profile(username: String, token: String) -> Result<(), QueryError> {
         return Err(QueryError::ParseError)
     }
     master_prof = Profile {
-        username: profile_raw["username"].as_str().unwrap().to_string(),
-        real_name: profile_raw["name"].as_str().unwrap().to_string(),
-        registered: profile_raw["registered"].as_str().unwrap().to_string(),
-        listings: profile_raw["num_for_sale"].as_u64().unwrap() as u32,
-        collection: profile_raw["num_collection"].as_u64().unwrap() as u32,
-        wantlist: profile_raw["num_wantlist"].as_u64().unwrap() as u32,
-        rated: profile_raw["releases_rated"].as_u64().unwrap() as u32,
-        average_rating: profile_raw["rating_avg"].as_f64().unwrap(),
+        username: profile_raw["username"]
+            .as_str().unwrap_or("undefined").to_string(),
+        real_name: profile_raw["name"]
+            .as_str().unwrap_or("undefined").to_string(),
+        registered: profile_raw["registered"]
+            .as_str().unwrap_or("undefined").to_string(),
+        listings: profile_raw["num_for_sale"]
+            .as_u64().unwrap_or(0) as u32,
+        collection: profile_raw["num_collection"]
+            .as_u64().unwrap_or(0) as u32,
+        wantlist: profile_raw["num_wantlist"]
+            .as_u64().unwrap_or(0) as u32,
+        rated: profile_raw["releases_rated"]
+            .as_u64().unwrap_or(0) as u32,
+        average_rating: profile_raw["rating_avg"]
+            .as_f64().unwrap_or(0.0),
     };
     //committing to db
     match update::profile(master_prof) {
