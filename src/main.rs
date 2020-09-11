@@ -3,7 +3,6 @@ mod screens;
 mod theme;
 mod commands;
 
-use std::process::exit;
 use cursive::{
     Cursive,
     traits::*,
@@ -12,7 +11,6 @@ use cursive::{
 };
 use app::{
     App,
-    database::*,
 };
 use commands::{Command};
 use screens::{
@@ -22,11 +20,6 @@ use screens::{
 
 fn main() {
     let mut app = App::initialize();
-
-    if !admin::check_integrity() {
-        println!("Database integrity check failed, exiting.");
-        exit(1);
-    } //TODO: add db-config username matching
     
     let mut siv = cursive::default();
     siv.set_theme(theme::theme_gen());

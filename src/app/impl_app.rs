@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 use std::fs::read_to_string;
+use std::io;
+use std::path::Path;
+use std::process::exit;
 
 use cursive::{
     Cursive,
@@ -14,11 +17,48 @@ use crate::app::{
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
 
+const DB_NOT_INIT_MSG: &str =
+"Database not initialized. Would you like to initialize it now? [Y/n]";
+
+const DB_INTEGRITY_FAIL_MSG: &str =
+"Database integrity check failed, would you like to re-initialize it now? [Y/n]";
+
+fn on_init_fail(username: String, token: String) {
+    let mut answer = String::new();
+    io::stdin().read_line(&mut answer)
+        .expect("Oops, could not read line.");
+    match answer.as_str() {
+        "Y\n" | "y\n" | "yes\n" | "Yes\n" => {
+            println!("Beginning database initialization.");
+            match update::full(username, token, true) {
+                Ok(()) => {}
+                Err(e) => {println!("{}", e)}
+            }
+        },
+        "N\n" | "n\n" | "no\n" | "No\n" => {exit(1);},
+        _ => {println!("Please choose Y/N."); exit(1);}
+    }
+}
+
 impl App {
     pub fn initialize() -> Self {
+        //TODO: Load this from config
+        let user = String::from("cartoon.raccoon");
+        let token = read_to_string("discogs_token").unwrap();
+        let dbfilepath = "cogsy_data.db";
+
+        if !Path::new(dbfilepath).exists() {
+            println!("{}", DB_NOT_INIT_MSG);
+            on_init_fail(user.clone(), token.clone());
+        }
+        if !admin::check_integrity() {
+            println!("{}", DB_INTEGRITY_FAIL_MSG);
+            on_init_fail(user.clone(), token.clone());
+        } //TODO: add db-config username matching
+
         App {
-            user_id: String::from("cartoon.raccoon"),
-            token: read_to_string("discogs_token").unwrap(),
+            user_id: user,
+            token: token,
             message: Message {
                 msg: String::from("Cogsy v0.1.0"),
                 kind: MessageKind::Info
@@ -40,7 +80,9 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let updateres = update::full(self.user_id.clone(), self.token.clone(), false);
+                        let updateres = update::full(self.user_id.clone(), 
+                                                     self.token.clone(), 
+                                                     false);
                         match updateres {
                             Ok(()) => {
                                 //*Placeholder code (again)

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 use serde_json::Value;
 use reqwest::blocking::Client;
 use crate::app::{
@@ -9,13 +10,15 @@ use crate::app::{
 
 //TODO: Add in profile and wantlist parsing
 pub fn full(username: String, token: String, from_cmd: bool) -> Result<(), QueryError> {
-    match admin::check_integrity() {
-        true => {},
-        false => {
-            if from_cmd {println!("Integrity check failed. Purging and refreshing database.")}
-            match purge::complete() {
-                Ok(()) => {},
-                Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+    let dbfilepath = "cogsy_data.db";
+    if Path::new(dbfilepath).exists() {
+        match admin::check_integrity() {
+            true => {},
+            false => {
+                match purge::complete() {
+                    Ok(()) => {},
+                    Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+                }
             }
         }
     }
@@ -28,14 +31,12 @@ pub fn full(username: String, token: String, from_cmd: bool) -> Result<(), Query
         Ok(_) => {},
         Err(e) => {return Err(e);}
     }
-    if from_cmd {print!("    Success!\n")}
-    if from_cmd {print!("Updating wantlist...")}
+    if from_cmd {print!("    Success!\nUpdating wantlist...")}
     match wantlist(username.clone(), token.clone()) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
     }
-    if from_cmd {print!("   Success!\n")}
-    if from_cmd {print!("Updating collection...")}
+    if from_cmd {print!("   Success!\nUpdating collection...")}
     match collection(username, token) {
         Ok(_) => {},
         Err(e) => {return Err(e);}
