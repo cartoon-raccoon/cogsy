@@ -95,7 +95,7 @@ pub fn wantlist(username: String, token: String) -> Result<(), QueryError> {
 }
 
 //* This should eventually return nothing, and completely write to the db
-pub fn collection(username: String, token: String) -> Result<Folders, QueryError> {
+pub fn collection(username: String, token: String) -> Result<(), QueryError> {
     let requester = build_client(token);
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.clone());
@@ -133,7 +133,7 @@ pub fn collection(username: String, token: String) -> Result<Folders, QueryError
         master_folders.push(name.clone(), releases);
     }
     match update::collection(master_folders.clone()) {
-        Ok(_) => {return Ok(master_folders)},
+        Ok(_) => {return Ok(())},
         Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))},
     }
 }
