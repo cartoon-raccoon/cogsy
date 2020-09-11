@@ -15,7 +15,8 @@ use app::{
 use commands::{Command};
 use screens::{
     collection, 
-    wantlist::Wantlist
+    wantlist::Wantlist,
+    profile,
 };
 
 fn main() {
@@ -80,6 +81,12 @@ fn main() {
     siv.add_global_callback('2', move |s| {
         if s.screen().len() == 1 {
             s.add_fullscreen_layer(Wantlist::init().build());
+        }
+    });
+    //profile screen
+    siv.add_global_callback('3', move |s| {
+        if s.screen().len() == 1 {
+            s.add_fullscreen_layer(profile::build());
         }
     });
 
