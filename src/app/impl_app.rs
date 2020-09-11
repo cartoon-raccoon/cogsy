@@ -44,8 +44,7 @@ impl App {
                         match updateres {
                             Ok(()) => {
                                 //*Placeholder code (again)
-                                self.collection.contents = query::collection().unwrap()
-                                                                 .pull("All_").unwrap();
+                                self.collection.folders = query::collection().unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
                             }
@@ -108,13 +107,8 @@ impl Folders { //wrapper around a HashMap<String, Vec<Release>>
             contents: new_self,
         }
     }
-    pub fn get(&mut self, 
-        name: &str) -> Option<&Vec<Release>> {
-        
-        match self.contents.get_mut(name) {
-            None => None,
-            Some(releases) => Some(releases),
-        }
+    pub fn contents(&mut self) -> HashMap<String, Vec<Release>> {
+        self.contents.clone()
     }
 
     pub fn pull(&mut self,

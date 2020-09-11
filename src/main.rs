@@ -77,14 +77,18 @@ fn main() {
             s.pop_layer();
         }
     });
+    //collection screen
     siv.add_global_callback('1', move |s| {
+        while s.screen().len() > 1 {
+            s.pop_layer();
+        }
+    });
+    //wantlist screen
+    siv.add_global_callback('2', move |s| {
         if s.screen().len() == 1 {
             s.add_fullscreen_layer(Wantlist::init().build());
         }
     });
-    //placeholder code until folders are implemented
-    collection::add_to_list(&mut siv, "folderlist", "All");
-    collection::add_to_list(&mut siv, "folderlist", "Uncategorized");
 
     siv.run();
 }

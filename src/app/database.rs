@@ -297,8 +297,9 @@ pub mod query {
 
         let mut folders = Folders::new();
 
-        for name in folder_names {
+        for mut name in folder_names {
             let folder = get_releases(&conn, &name)?;
+            name.pop().unwrap();
             folders.push(name, folder);
         }
         Ok(folders)

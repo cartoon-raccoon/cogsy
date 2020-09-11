@@ -15,20 +15,20 @@ use cursive::{
 use crate::app::{
     database::*,
     Release,
+    Folders,
 };
 use crate::screens::popup;
-//use crate::app::message::{Message, MessageKind};
 
 #[derive(Debug, Clone)]
 pub struct Collection {
-    pub contents: Vec<Release>
+    pub folders: Folders
 }
 
 impl Collection {
     pub fn new() -> Self {
-        Collection{
-            contents: query::collection().unwrap()
-                            .pull("All_").unwrap()
+        Collection {
+            folders: query::collection()
+                .unwrap_or(Folders::new())
         }
     }
     pub fn build(&self) -> NamedView<LinearLayout> {
@@ -37,17 +37,31 @@ impl Collection {
                 SizeConstraint::Fixed(35), 
                 SizeConstraint::Full,
                 ScrollView::new(
-                    SelectView::<String>::new()
-                        // .on_submit(|s, text| {
-
-                        // })
-                        .with_name("folderlist")))))
+                    SelectView::<Vec<Release>>::new()
+                    .with_all(self.folders.contents
+                        .clone().into_iter())
+                    .on_select(|s, item| {
+                        s.call_on_name("albumlist",
+                        |view: &mut SelectView<Release>| {
+                            view.clear();
+                            view.add_all(item.clone().into_iter()
+                                .map(|i| {
+                                    (i.title.clone(), i)
+                                })
+                            )   
+                        });
+                    })
+                )
+                .with_name("folderlist")))
+            )
             .child(Panel::new(ResizedView::new(
                 SizeConstraint::Full,
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<Release>::new()
-                    .with_all(self.contents.clone().into_iter().map(|i| {
+                    .with_all(self.folders.contents
+                        .values().next().unwrap_or(&Vec::new())
+                        .clone().into_iter().map(|i| {
                         (i.title.clone(), i)
                     }))
                     .on_submit(|s, item| {
@@ -55,7 +69,8 @@ impl Collection {
                             popup::albuminfo(item)
                         );
                     })
-                    .with_name("albumlist")))))
+                    .with_name("albumlist"))))
+                )
             .with_name("main_view");
                     
         collection
@@ -64,17 +79,9 @@ impl Collection {
     pub fn refresh(&mut self, s: &mut Cursive) {
         //update from database and reload its contents
         //call database method here
-        s.call_on_name("albumlist", |view: &mut SelectView<Release>| {
+        s.call_on_name("folderlist", |view: &mut SelectView<Vec<Release>>| {
             view.clear();
-            view.add_all(self.contents.clone().into_iter().map(|i| {
-                (i.title.clone(), i)
-            }))
+            view.add_all(self.folders.contents().into_iter())
         });
     }
-}
-
-pub fn add_to_list(s: &mut Cursive, name: &str, to_add: &str) {
-    s.call_on_name(name, |view: &mut SelectView<String>| {
-        view.add_item_str(to_add);
-    });
 }
