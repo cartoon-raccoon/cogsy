@@ -194,6 +194,7 @@ pub mod update {
         Ok(())
     }
 
+    #[allow(dead_code)] //suppressing warnings for now
     pub fn listenlog() -> Result<(), Box<dyn Error>> {
         Ok(())
     }
@@ -312,6 +313,7 @@ pub mod query {
     }
 
     //returns a vec of releases to support multiple results
+    #[allow(dead_code, unused_variables)]
     pub fn release(title: String) -> Result<Vec<Release>, Box<dyn Error>> {
         Ok(Vec::new())
     }
