@@ -105,6 +105,13 @@ Future additions:
 Issues:
   - :update freezes the app while it runs
   - order that folders appear is different everytime cause HashMap is used
+  - Query terms with apostrophes ' in them throw sqlite3 syntax errors
+
+Configuration:
+  Theme
+  Database filepath
+  Username
+  Token
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct
