@@ -10,10 +10,11 @@ use cursive::{
 };
 use crate::app::{
     {App, Release, Folders},
-    database::*,
+    database::{*, query::QueryType},
     message::{Message, MessageKind},
     update,
 };
+use crate::screens::popup;
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
 
@@ -30,7 +31,7 @@ fn on_init_fail(username: String, token: String) {
     match answer.as_str() {
         "Y\n" | "y\n" | "yes\n" | "Yes\n" => {
             println!("Beginning database initialization.");
-            match update::full(username, token, true) {
+            match update::full(username, token, true, false) {
                 Ok(()) => {}
                 Err(e) => {println!("{}", e)}
             }
@@ -69,7 +70,7 @@ impl App {
     }
 
     pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
-        let view_content: String;
+        let mut view_content: String;
         match result {
             Ok(command) => {
                 match command {
@@ -82,7 +83,7 @@ impl App {
                         });
                         let updateres = update::full(self.user_id.clone(), 
                                                      self.token.clone(), 
-                                                     false);
+                                                     false, false);
                         match updateres {
                             Ok(()) => {
                                 //*Placeholder code (again)
@@ -121,7 +122,42 @@ impl App {
                         view_content = format!("Listening to: `{}`", album);
                     }
                     Command::Query(album) => {
-                        view_content = format!("Querying database for: `{}`", album);
+                        match query::release(album.clone(), QueryType::Collection) {
+                            Ok(results) => {
+                                view_content = format!("Querying collection for `{}`", album);
+                                if results.len() > 1 {
+                                    s.add_fullscreen_layer(
+                                        popup::multiple_results(results)
+                                    );
+                                } else if results.len() == 1 {
+                                    s.add_fullscreen_layer(
+                                        popup::albuminfo(&results[0])
+                                    );
+                                } else {
+                                    view_content = format!("Unable to find results for `{}`", album);
+                                }
+                            }
+                            Err(e) => {view_content = format!("{}", e);}
+                        }
+                    }
+                    Command::QueryWantlist(album) => {
+                        match query::release(album.clone(), QueryType::Wantlist) {
+                            Ok(results) => {
+                                view_content = format!("Querying wantlist for `{}`", album);
+                                if results.len() > 1 {
+                                    s.add_fullscreen_layer(
+                                        popup::multiple_results(results)
+                                    );
+                                } else if results.len() == 1 {
+                                    s.add_fullscreen_layer(
+                                        popup::albuminfo(&results[0])
+                                    );
+                                } else {
+                                    view_content = format!("Unable to find results for `{}`", album);
+                                }
+                            }
+                            Err(e) => {view_content = format!("{}", e);}
+                        }
                     }
                     Command::Empty => {
                         view_content = "Empty command".to_string();

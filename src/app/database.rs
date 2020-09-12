@@ -249,6 +249,7 @@ pub mod query {
     use std::error::Error;
     use rusqlite::{
         Connection,
+        Statement,
         NO_PARAMS,
 
     };
@@ -265,6 +266,10 @@ pub mod query {
     ideally, admin::check() should properly ensure database integrity before starting the app.
     however, it cannot protect against the contents of the table itself.
     */
+    pub enum QueryType {
+        Collection,
+        Wantlist,
+    }
 
     pub fn profile() -> Result<Profile, Box<dyn Error>> {
         let conn = Connection::open("cogsy_data.db")?;
@@ -299,7 +304,8 @@ pub mod query {
         let mut folders = Folders::new();
 
         for mut name in folder_names {
-            let folder = get_releases(&conn, &name)?;
+            let mut stmt = conn.prepare(&format!("SELECT * FROM {}", name))?;
+            let folder = get_releases(&mut stmt)?;
             name.pop().unwrap();
             folders.push(name, folder);
         }
@@ -308,20 +314,36 @@ pub mod query {
 
     pub fn wantlist() -> Result<Vec<Release>, Box<dyn Error>> {
         let conn = Connection::open("cogsy_data.db")?;
-        let wantlist = get_releases(&conn, "wantlist")?;
+        let mut stmt = conn.prepare("SELECT * FROM wantlist;")?;
+        let wantlist = get_releases(&mut stmt)?;
         Ok(wantlist)
     }
 
     //returns a vec of releases to support multiple results
     #[allow(dead_code, unused_variables)]
-    pub fn release(title: String) -> Result<Vec<Release>, Box<dyn Error>> {
-        Ok(Vec::new())
+    pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
+        let table_to_query: String;
+        match querytype {
+            QueryType::Collection => {
+                table_to_query = "All_".to_string();
+            }
+            QueryType::Wantlist => {
+                table_to_query = "wantlist".to_string();
+            }
+        }
+        let conn = Connection::open("cogsy_data.db")?;
+        let mut stmt = conn.prepare(&format!(
+            "SELECT * FROM {} WHERE title LIKE '%{}%'",
+            table_to_query, query
+        ))?;
+        let results = get_releases(&mut stmt)?;
+        
+        Ok(results)
     }
 
-    fn get_releases(conn: &Connection, name: &str) -> Result<Vec<Release>, Box<dyn Error>> {
+    fn get_releases(stmt: &mut Statement) -> Result<Vec<Release>, Box<dyn Error>> {
         let mut folder: Vec<Release> = Vec::new();
 
-            let mut stmt = conn.prepare(&format!("SELECT * FROM {}", name))?;
             let contents = stmt.query_map(NO_PARAMS, |row| {
                 let labels_raw: String = row.get(4)?;
                 let formats_raw: String = row.get(5)?;

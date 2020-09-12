@@ -9,12 +9,12 @@ use crate::app::{
 };
 
 //TODO: Add in profile and wantlist parsing
-pub fn full(username: String, token: String, from_cmd: bool) -> Result<(), QueryError> {
-    let dbfilepath = "cogsy_data.db";
-    if Path::new(dbfilepath).exists() {
+pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
+    if Path::new("cogsy_data.db").exists() {
         match admin::check_integrity() {
             true => {},
             false => {
+                if debug {println!("Database integrity check failed, purging and refreshing now.")}
                 match purge::complete() {
                     Ok(()) => {},
                     Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}

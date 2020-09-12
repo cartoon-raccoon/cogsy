@@ -1,7 +1,11 @@
 use std::collections::HashSet;
 
 use cursive::{
-    views::{ResizedView, Dialog},
+    views::{
+        ResizedView, 
+        Dialog,
+        SelectView,
+    },
     view::SizeConstraint
 };
 
@@ -48,6 +52,28 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             .title(format!("{} - {}", 
             release.artist.clone(), 
             release.title.clone()))
+    );
+    screen
+}
+
+pub fn multiple_results(results: Vec<Release>) -> ResizedView<Dialog> {
+    let screen = ResizedView::new(
+        SizeConstraint::Full,
+        SizeConstraint::Full,
+        Dialog::around(
+            SelectView::<Release>::new()
+            .with_all(
+                results.into_iter().map(|i| {
+                    (format!("{} ({})", i.title.clone(), i.formats[0]), i)
+                })
+            )
+            .on_submit(|s, item| {
+                s.pop_layer();
+                s.add_fullscreen_layer(
+                    albuminfo(item)
+                );
+            })
+        ).title("Multiple results for query")
     );
     screen
 }

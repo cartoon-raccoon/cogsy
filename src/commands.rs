@@ -10,13 +10,14 @@ Just giving credit where it's due.
 
 #[derive(PartialEq, Debug)]
 pub enum Command {
-    UpdateDB,               //switch and argument
+    UpdateDB,
     UpdateID(String),       //username
     UpdateToken(String),    //token
     Random(bool),           //true = nolog
     Price(String, f64),     //album name, price
-    Listen(String, String), //album name
+    Listen(String, String), //album name, time
     Query(String),          //album name
+    QueryWantlist(String),
     Empty,
 }
 
@@ -180,6 +181,10 @@ impl Command {
                 if strings.len() == 1 {
                     return Err(CommandError::NotEnoughArgs(first, 1));
                 }
+                let mut from_wantlist = false;
+                if strings[1] == "-w" {
+                    from_wantlist = true;
+                }
                 let argv = splitter(input.trim());
                 match argv {
                     Some(args) => {
@@ -187,6 +192,8 @@ impl Command {
                             return Err(CommandError::TooManyArgs(first, 1));
                         } else if args.len() < 3 {
                             return Err(CommandError::NotEnoughArgs(first, 1));
+                        } else if from_wantlist {
+                            return Ok(Command::QueryWantlist(args[2].clone()));
                         } else {
                             return Ok(Command::Query(args[2].clone()));
                         }
