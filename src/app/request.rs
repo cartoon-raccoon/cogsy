@@ -127,8 +127,6 @@ pub fn build_url(parse: ParseType, username: String) -> String {
     }
 }
 
-//#[allow(unused_assignments)]
-//make this private once the database API is complete
 pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
     /*
     *Step 1: Obtain the total item count
