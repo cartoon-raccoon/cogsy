@@ -181,11 +181,15 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             for format in formatlist {
                 let mut name = format["name"].as_str().unwrap().to_string();
                 let mut qty = format["qty"].as_str().unwrap().to_string();
+                let text = format["text"].as_str().unwrap_or("").to_string();
                 if name == "Vinyl" {
                     qty.push_str("LP");
                 }
                 name.push_str(" ");
                 name.push_str(&qty);
+                if text.len() > 0 {
+                    name.push_str(&format!(" ({})", text));
+                }
                 formats.push(name);
             }
 
