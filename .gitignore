@@ -4,3 +4,4 @@ discogs_collection.json
 discogs_wantlist.json
 discogs_token
 cogsy_data.db
+config.toml
