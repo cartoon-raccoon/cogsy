@@ -1,6 +1,6 @@
 mod app;
 mod screens;
-mod theme;
+mod utils;
 mod commands;
 
 use cursive::{
@@ -20,10 +20,11 @@ use screens::{
 };
 
 fn main() {
+    
     let mut app = App::initialize();
     
     let mut siv = cursive::default();
-    siv.set_theme(theme::theme_gen());
+    siv.set_theme(utils::theme_gen());
 
     //initialize screen data
     let collectscreen = app.collection.build();

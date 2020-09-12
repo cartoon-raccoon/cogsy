@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::fs::read_to_string;
+use std::fs;
 use std::io;
 use std::path::Path;
 use std::process::exit;
 
+use std::collections::HashMap;
 use cursive::{
     Cursive,
     views::*,
@@ -14,6 +14,7 @@ use crate::app::{
     message::{Message, MessageKind},
     update,
 };
+use crate::utils::{self, Config};
 use crate::screens::popup;
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
@@ -33,7 +34,11 @@ fn on_init_fail(username: String, token: String) {
             println!("Beginning database initialization.");
             match update::full(username, token, true, false) {
                 Ok(()) => {}
-                Err(e) => {println!("{}", e)}
+                Err(e) => {
+                    println!("\n{}", e);
+                    fs::remove_file(utils::database_file()).unwrap();
+                    exit(1);
+                }
             }
         },
         "N\n" | "n\n" | "no\n" | "No\n" => {exit(1);},
@@ -44,21 +49,27 @@ fn on_init_fail(username: String, token: String) {
 impl App {
     pub fn initialize() -> Self {
         //TODO: Load this from config
-        let user = String::from("cartoon.raccoon");
-        let token = read_to_string("discogs_token").unwrap();
-        let dbfilepath = "cogsy_data.db";
+        if !Path::new(&utils::config_file()).exists() {
+            Config::first_init();
+        }
+        let config = Config::load();
+        let token = format!(
+            "Discogs token={}",
+            config.token
+        );
+        let dbfilepath = utils::database_file();
 
-        if !Path::new(dbfilepath).exists() {
+        if !Path::new(&dbfilepath).exists() {
             println!("{}", DB_NOT_INIT_MSG);
-            on_init_fail(user.clone(), token.clone());
+            on_init_fail(config.username.clone(), token.clone());
         }
         if !admin::check_integrity() {
             println!("{}", DB_INTEGRITY_FAIL_MSG);
-            on_init_fail(user.clone(), token.clone());
+            on_init_fail(config.username.clone(), token.clone());
         } //TODO: add db-config username matching
 
         App {
-            user_id: user,
+            user_id: config.username,
             token: token,
             message: Message {
                 msg: String::from("Cogsy v0.1.0"),

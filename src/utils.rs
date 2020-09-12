@@ -1,0 +1,137 @@
+use std::fs::{self, read_to_string, OpenOptions};
+use std::io::{self, Write};
+use std::path::PathBuf;
+use serde::{Deserialize, Serialize};
+
+use toml;
+use directories::ProjectDirs;
+
+use cursive::theme::{
+    Color::*,
+    BaseColor,
+    PaletteColor::*,
+    {BorderStyle, Palette, Theme}
+};
+
+#[derive(Deserialize, Serialize)]
+pub struct Config {
+    pub username: String,
+    pub token: String,
+    //colours: ColourScheme,
+}
+
+impl Config {
+    pub fn load() -> Config {
+        toml::from_str(
+            &read_to_string(config_file()).unwrap_or_default()
+        ).unwrap()
+    }
+    pub fn first_init() {
+        println!("User information not initialized.");
+        println!("Username:");
+        let mut username = String::new();
+        io::stdin().read_line(&mut username)
+            .expect("Oops, could not read line.");
+        println!("Token:");
+        let mut token = String::new();
+        io::stdin().read_line(&mut token)
+            .expect("Oops, could not read line.");
+        let config = Config {
+            username: username.trim().to_string(),
+            token: token.trim().to_string(),
+        };
+        if let Ok(new_config) = toml::to_string(&config) {
+            match OpenOptions::new().create(true).write(true).open(&config_file()) {
+                Ok(ref mut file) => {file.write(new_config.as_bytes()).unwrap();},
+                Err(_) => {panic!("Could not create config file!");}
+            }
+        }
+    }
+}
+
+fn project_dirs() -> ProjectDirs {
+    ProjectDirs::from("rs", "cartoon-raccoon", "cogsy")
+        .unwrap_or_else(|| panic!("Invalid home directory."))
+}
+
+pub fn config_file() -> PathBuf {
+    let dirs = project_dirs();
+    let mut cfgfile = PathBuf::from(dirs.config_dir());
+    fs::create_dir_all(&cfgfile)
+        .unwrap_or_else(|_s| panic!("Could not create config file directory"));
+    cfgfile.push("config.toml");
+    cfgfile
+}
+
+pub fn database_file() -> PathBuf {
+    let dirs = project_dirs();
+    let mut datafile = PathBuf::from(dirs.data_dir());
+    fs::create_dir_all(&datafile)
+        .unwrap_or_else(|_s| panic!("Could not create data file directory"));
+    datafile.push("cogsy_data.db");
+    datafile
+}
+
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            username: String::from("null"),
+            token: String::from("null"),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ColourScheme {
+
+}
+
+pub fn palette_gen() -> Palette {
+    let mut p = Palette::default();
+    p[Background] = TerminalDefault;
+    p[Shadow] = TerminalDefault;
+    p[View] = TerminalDefault;
+    p[Primary] = TerminalDefault;
+    p[Secondary] = TerminalDefault;
+    p[Tertiary] = TerminalDefault;
+    p[TitlePrimary] = TerminalDefault;
+    p[Highlight] = TerminalDefault;
+    p[HighlightInactive] = TerminalDefault;
+    p[HighlightText] = Dark(BaseColor::Yellow);
+
+    return p;
+}
+
+pub fn theme_gen() -> Theme {
+    let mut t = Theme::default();
+    t.shadow = false;
+    t.borders = BorderStyle::Simple;
+    t.palette = palette_gen();
+    return t;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::app::App;
+    use std::path::PathBuf;
+    #[test] //it fails lmao but code works correctly
+    fn check_config_loads_correctly() {
+        let testcfg = Config::load();
+        let checkcfg = App::initialize();
+        println!("{}", testcfg.token);
+        assert_eq!(testcfg.username, checkcfg.user_id);
+    }
+
+    #[test]
+    fn check_filepaths() {
+        assert_eq!(
+            config_file(), 
+            PathBuf::from("/home/raccoon/.config/cogsy/config.toml")
+        );
+        assert_eq!(
+            database_file(),
+            PathBuf::from("/home/raccoon/.local/share/cogsy/cogsy_data.db")
+        );
+    }
+}

@@ -15,18 +15,17 @@
 *       complete(): yeets the entire fucking database
 *       (think sudo rm -rf)
 */
+
 pub mod admin {
     use std::error::Error;
     use rusqlite::{
         Connection,
         NO_PARAMS,
     };
+    use crate::utils;
 
-    //database initialization
-    //this should only be called on first time startup
-    //or when the database has been purged
     pub fn init_db() -> Result<(), Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS profile (
                 username TEXT PRIMARY KEY,
@@ -81,8 +80,8 @@ pub mod admin {
                 title TEXT NOT NULL,
                 artist TEXT,
                 year INTEGER,
-                labels BLOB,
-                formats BLOB,
+                labels TEXT,
+                formats TEXT,
                 date_added TEXT
             )", foldername);
 
@@ -92,7 +91,7 @@ pub mod admin {
 
     //TODO: Account for orphan folder tables
     pub fn check_integrity() -> bool {
-        match Connection::open("cogsy_data.db") {
+        match Connection::open(utils::database_file()) {
             Ok(conn) => {
                 match conn.prepare("SELECT * FROM profile;") {
                     Ok(_) => {},
@@ -137,19 +136,20 @@ pub mod update {
     use rusqlite::{
         Connection,
     };
+    use crate::utils;
     use crate::app::{
         Release, 
         Folders, 
         Profile
     };
-    use crate::app::database::{
+    use super::{
         admin,
         purge,
     };
 
     pub fn profile(profile: Profile) -> Result<(), Box<dyn Error>> {
         purge::table("profile")?;
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         conn.execute("INSERT INTO profile 
         (username, 
         real_name, 
@@ -175,12 +175,14 @@ pub mod update {
 
     pub fn collection(mut collection: Folders) -> Result<(), Box<dyn Error>> {
         purge::folders()?;
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         for (name, folder) in collection.contents.iter_mut() {
             let mut sanitized_name = name.clone();
             sanitized_name.push_str("_");
-            conn.execute("INSERT INTO folders (name) VALUES (?1)",
-                &[&sanitized_name])?;
+            conn.execute(
+                "INSERT INTO folders (name) VALUES (?1)",
+                &[&sanitized_name]
+            )?;
             admin::init_folder(sanitized_name.clone(), &conn)?;
             add_releases(&conn, &sanitized_name, folder)?;
         }
@@ -189,7 +191,7 @@ pub mod update {
 
     pub fn wantlist(mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
         purge::table("wantlist")?;
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         add_releases(&conn, "wantlist", &mut wantlist)?;
         Ok(())
     }
@@ -251,13 +253,13 @@ pub mod query {
         Connection,
         Statement,
         NO_PARAMS,
-
     };
     use crate::app::{
         Release, 
         Folders, 
         Profile
     };
+    use crate::utils;
 
     /*
     profile(), collection() and wantlist() are called when the app starts
@@ -272,7 +274,7 @@ pub mod query {
     }
 
     pub fn profile() -> Result<Profile, Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
 
         let profile = conn.query_row(
             "SELECT * FROM profile", NO_PARAMS, |row| {
@@ -292,7 +294,7 @@ pub mod query {
     }
 
     pub fn collection() -> Result<Folders, Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
 
         let mut folder_names: Vec<String> = Vec::new();
         let mut stmt = conn.prepare("SELECT name FROM folders;")?;
@@ -313,14 +315,14 @@ pub mod query {
     }
 
     pub fn wantlist() -> Result<Vec<Release>, Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare("SELECT * FROM wantlist;")?;
         let wantlist = get_releases(&mut stmt)?;
         Ok(wantlist)
     }
 
     //returns a vec of releases to support multiple results
-    #[allow(dead_code, unused_variables)]
+    //TODO: Escape single apostrophes in search terms
     pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
         let table_to_query: String;
         match querytype {
@@ -331,7 +333,7 @@ pub mod query {
                 table_to_query = "wantlist".to_string();
             }
         }
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(&format!(
             "SELECT * FROM {} WHERE title LIKE '%{}%'",
             table_to_query, query
@@ -381,9 +383,10 @@ pub mod purge {
         Connection,
         NO_PARAMS
     };
+    use crate::utils;
 
     pub fn folders() -> Result<(), Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
 
         let mut folder_names: Vec<String> = Vec::new();
         let mut stmt = conn.prepare("SELECT name FROM folders;")?;
@@ -405,7 +408,7 @@ pub mod purge {
     //* DO NOT CALL THIS ON THE FOLDERS TABLE OUTSIDE OF PURGE::FOLDERS
     //* YOU **WILL** GET ORPHAN TABLES
     pub fn table(tablename: &str) -> Result<(), Box<dyn Error>> {
-        let conn = Connection::open("cogsy_data.db")?;
+        let conn = Connection::open(utils::database_file())?;
         let sqlcommand = format!("DELETE FROM {}", tablename);
 
         match conn.execute(&sqlcommand, NO_PARAMS) {
@@ -417,7 +420,7 @@ pub mod purge {
     //* This will have to be called if orphan folders are detected.
     pub fn complete() -> Result<(), Box<dyn Error>> {
         //i'd rather systematically drop tables in the folder, but this will do for now
-        fs::remove_file("cogsy_data.db")?;
+        fs::remove_file(utils::database_file())?;
         Ok(()) //You just deleted your entire database. Congrats.
     }
 }

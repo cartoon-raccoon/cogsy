@@ -1,5 +1,6 @@
-use std::collections::HashMap;
 use std::path::Path;
+
+use std::collections::HashMap;
 use serde_json::Value;
 use reqwest::blocking::Client;
 use crate::app::{
@@ -7,10 +8,10 @@ use crate::app::{
     request::*,
     database::{admin, update, purge},
 };
+use crate::utils;
 
-//TODO: Add in profile and wantlist parsing
 pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
-    if Path::new("cogsy_data.db").exists() {
+    if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
             false => {
@@ -103,7 +104,6 @@ pub fn wantlist(username: String, token: String) -> Result<(), QueryError> {
     }
 }
 
-//* This should eventually return nothing, and completely write to the db
 pub fn collection(username: String, token: String) -> Result<(), QueryError> {
     let requester = build_client(token);
     //* 1a: Enumerating folders
