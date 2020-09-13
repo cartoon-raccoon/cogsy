@@ -49,7 +49,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     release.year,
     format_vec(labels),
     format_vec(formats),
-    display_time,
+    display_time.format("%A %d %m %Y %R"),
     release.id,
     ));
 

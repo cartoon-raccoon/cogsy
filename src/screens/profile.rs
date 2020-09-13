@@ -7,11 +7,11 @@ use crate::utils::Config;
 use crate::app::database::query;
 
 pub fn build() -> ResizedView<Dialog> {
-    //TODO: Handle unwrap
-    let profile = query::profile().unwrap();
+    //TODO: Implement default for DateTime so can call default if query fails
+    let profile = query::profile().unwrap_or_else(
+        |_s| panic!("Fatal: Could not load profile from database.")
+    );
 
-    //* timezone currently hardcoded
-    //TODO: Add a function to utils to return the user's set timezone
     let display_time = profile.registered
     .with_timezone(&Config::timezone());
 
@@ -29,7 +29,7 @@ pub fn build() -> ResizedView<Dialog> {
     Average rating: {}",
     profile.username,
     profile.real_name,
-    display_time,
+    display_time.format("%A %d %m %Y %R"),
     profile.listings,
     profile.collection,
     profile.wantlist,
