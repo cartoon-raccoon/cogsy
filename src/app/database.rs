@@ -64,7 +64,7 @@ pub mod admin {
             "CREATE TABLE IF NOT EXISTS listenlog (
                 datetime TEXT PRIMARY KEY,
                 album_id INTEGER,
-                title TEXT,
+                title TEXT
             )",
             NO_PARAMS
         )?;
