@@ -3,7 +3,7 @@ use std::io;
 use std::path::Path;
 use std::process::exit;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use cursive::{
     Cursive,
     views::*,
@@ -240,12 +240,12 @@ impl App {
 impl Folders { //wrapper around a HashMap<String, Vec<Release>>
     pub fn new() -> Self {
         let new_self: 
-            HashMap<String, Vec<Release>> = HashMap::new();
+            BTreeMap<String, Vec<Release>> = BTreeMap::new();
         Folders {
             contents: new_self,
         }
     }
-    pub fn contents(&mut self) -> HashMap<String, Vec<Release>> {
+    pub fn contents(&mut self) -> BTreeMap<String, Vec<Release>> {
         self.contents.clone()
     }
 

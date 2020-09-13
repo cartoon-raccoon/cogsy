@@ -5,7 +5,7 @@ pub mod message;
 pub mod response;
 pub mod update;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use chrono::{
     DateTime,
@@ -48,5 +48,5 @@ pub struct Release {
 
 #[derive(Debug, Clone)]
 pub struct Folders {
-    pub contents: HashMap<String, Vec<Release>>,
+    pub contents: BTreeMap<String, Vec<Release>>,
 }
