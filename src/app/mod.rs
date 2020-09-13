@@ -4,6 +4,7 @@ pub mod request;
 pub mod message;
 pub mod response;
 pub mod update;
+pub mod fromcli;
 
 use std::collections::BTreeMap;
 

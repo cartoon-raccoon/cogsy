@@ -3,11 +3,14 @@ mod screens;
 mod utils;
 mod commands;
 
+use std::process::exit;
+
 use cursive::{
     Cursive,
     traits::*,
     views::*,
 };
+use app::fromcli;
 use app::App;
 use commands::{Command};
 use screens::{
@@ -15,7 +18,11 @@ use screens::{
 };
 
 fn main() {
-    
+    let clapapp = fromcli::init().get_matches();
+    if let Some(()) = fromcli::parse_and_execute(clapapp) {
+        exit(0);
+    }
+
     let mut app = App::initialize();
     
     let mut siv = cursive::default();
