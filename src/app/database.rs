@@ -254,7 +254,6 @@ pub mod query {
         Statement,
         NO_PARAMS,
     };
-    use chrono::DateTime;
     use crate::app::{
         Release, 
         Folders, 
@@ -279,15 +278,10 @@ pub mod query {
 
         let profile = conn.query_row(
             "SELECT * FROM profile", NO_PARAMS, |row| {
-                let registered_raw: String = row.get(2)?;
-                let date_joined = DateTime::parse_from_rfc3339(
-                    &registered_raw
-                ).unwrap();
-
                 Ok(Profile {
                     username: row.get(0)?,
                     real_name: row.get(1)?,
-                    registered: date_joined,
+                    registered: row.get(2)?,
                     listings: row.get(3)?,
                     collection: row.get(4)?,
                     wantlist: row.get(5)?,
@@ -355,7 +349,6 @@ pub mod query {
             let contents = stmt.query_map(NO_PARAMS, |row| {
                 let labels_raw: String = row.get(4)?;
                 let formats_raw: String = row.get(5)?;
-                let date_raw: String = row.get(6)?;
 
                 let labels = labels_raw.as_str()
                     .split(':')
@@ -374,7 +367,7 @@ pub mod query {
                     labels: labels,
                     formats: formats,
                     //TODO: Handle the unwrap
-                    date_added: DateTime::parse_from_rfc3339(&date_raw).unwrap(),
+                    date_added: row.get(6)?,
                 })
             })?;
             for release in contents {

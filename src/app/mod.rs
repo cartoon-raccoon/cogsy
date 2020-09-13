@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use chrono::{
     DateTime,
-    FixedOffset,
+    Utc,
 };
 use message::Message;
 use crate::collection::Collection;
@@ -27,7 +27,7 @@ pub struct App {
 pub struct Profile {
     pub username: String,
     pub real_name: String,
-    pub registered: DateTime<FixedOffset>,
+    pub registered: DateTime<Utc>,
     pub listings: u32,
     pub collection: u32,
     pub wantlist: u32,
@@ -43,7 +43,7 @@ pub struct Release {
     pub year: u32,
     pub labels: Vec<String>,
     pub formats: Vec<String>,
-    pub date_added: DateTime<FixedOffset>,
+    pub date_added: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone)]

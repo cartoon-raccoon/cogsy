@@ -9,7 +9,10 @@ use reqwest::{
     StatusCode,
 };
 use serde_json::Value;
-use chrono::DateTime;
+use chrono::{
+    DateTime,
+    Utc,
+};
 use crate::app::Release;
 
 /*
@@ -202,7 +205,9 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 year: info["year"].as_u64().unwrap() as u32,
                 labels: label_names,
                 formats: formats,
-                date_added: added_date
+                date_added: DateTime::<Utc>::from_utc(
+                    added_date.naive_utc(), Utc
+                )
             });
         }
     } else {return Err(Box::new(QueryError::ParseError));}
