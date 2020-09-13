@@ -1,3 +1,8 @@
+//* IMPORTANT: This module is essentially useless.
+//* It _is_ used in the App struct, but only the msg field is used.
+//* I'm just keeping this around in case I ever get around
+//* to implementing coloured text in the messagebox.
+
 use cursive::theme::{BaseColor, Color, ColorStyle, Style};
 //use cursive::utils::span::SpannedString;
 

@@ -1,3 +1,6 @@
+//* IMPORTANT: This file is deprecated and has no use at this point.
+//* I'm just keeping this around in case I ever need it.
+
 use serde::Deserialize;
 
 //sub-structs of Information
