@@ -63,6 +63,8 @@ dependencies
    -rusqlite 0.23.1 (database interface)
    -clap 2.33.2 (command parsing)
    -regex 1.3.9 (regex matching)
+   -chrono 0.4.15 (datetime support)
+   -directories 3.0.1 (project directory)
 
 app structure:
    commands.rs
@@ -85,14 +87,10 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Database query module (almost done!)
-  - Running app as a command
-  - Date-parsing for database insertion and retrieval
-  - Struct for storing listening history
+  - Running app as a command (logic done, execution not yet)
   - Formatting artist and album name for wantlist
   - Sparkview drawing for history and money screens
-  - Config file parsing
-    - Matching config file username and database username
+  - Matching config file username and database username
     (Purge and refresh database if they don't match)
   - Coloured messages (Not important)
   - Implement different colours for folder list (not important)
@@ -104,8 +102,8 @@ Future additions:
   
 Issues:
   - :update freezes the app while it runs
-  - order that folders appear is different everytime cause HashMap is used
   - Query terms with apostrophes ' in them throw sqlite3 syntax errors
+  - Storing DateTime as strings in the database doesn't sit well with me
 
 Configuration:
   Theme
