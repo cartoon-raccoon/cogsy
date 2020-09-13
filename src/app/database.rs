@@ -166,8 +166,8 @@ pub mod update {
             &profile.real_name,
             &profile.registered.to_rfc3339(),
             &profile.listings.to_string(),
-            &profile.wantlist.to_string(),
             &profile.collection.to_string(),
+            &profile.wantlist.to_string(),
             &profile.rated.to_string(),
             &profile.average_rating.to_string()
         ])?;
@@ -343,15 +343,10 @@ pub mod query {
     //returns a vec of releases to support multiple results
     //TODO: Escape single apostrophes in search terms
     pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
-        let table_to_query: String;
-        match querytype {
-            QueryType::Collection => {
-                table_to_query = "All_".to_string();
-            }
-            QueryType::Wantlist => {
-                table_to_query = "wantlist".to_string();
-            }
-        }
+        let table_to_query: String = match querytype {
+            QueryType::Collection => "All_".to_string(),
+            QueryType::Wantlist => "wantlist".to_string()
+        };
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(&format!(
             "SELECT * FROM {} WHERE title LIKE '%{}%'",
