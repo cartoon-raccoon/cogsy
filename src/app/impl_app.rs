@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use cursive::{
     Cursive,
     views::*,
+    event::{Event, Key},
 };
 use crate::app::{
     {App, Release, Folders},
@@ -15,7 +16,11 @@ use crate::app::{
     update,
 };
 use crate::utils::{self, Config};
-use crate::screens::popup;
+use crate::screens::{
+    Wantlist,
+    popup,
+    profile,
+};
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
 
@@ -184,6 +189,50 @@ impl App {
                 });
             }
         }
+    }
+
+    pub fn add_callbacks(s: &mut Cursive) {
+        s.add_global_callback('q', |s| {
+            //TODO: check app modified state and write to file
+            s.quit();
+        });
+        s.add_global_callback(':', |s| {
+            s.call_on_name("commandline", |view: &mut EditView| {
+                view.enable();
+                view.set_content(":");
+            });
+            s.focus_name("commandline").unwrap();
+        });
+        //TODO: implement commands to handle opening of child screens
+        s.add_global_callback(Event::Key(Key::Backspace), |s| {
+            if s.screen().len() > 1 {
+                s.pop_layer();
+            }
+        });
+        //collection screen
+        s.add_global_callback('1', |s| {
+            while s.screen().len() > 1 {
+                s.pop_layer();
+            }
+        });
+        //wantlist screen
+        s.add_global_callback('2', |s| {
+            while s.screen().len() > 1 {
+                s.pop_layer();
+            }
+            if s.screen().len() == 1 {
+                s.add_fullscreen_layer(Wantlist::init().build());
+            }
+        });
+        //profile screen
+        s.add_global_callback('3', |s| {
+            while s.screen().len() > 1 {
+                s.pop_layer();
+            }
+            if s.screen().len() == 1 {
+                s.add_fullscreen_layer(profile::build());
+            }
+        });
     }
 }
 

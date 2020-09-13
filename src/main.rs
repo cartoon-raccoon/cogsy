@@ -7,16 +7,11 @@ use cursive::{
     Cursive,
     traits::*,
     views::*,
-    event::{Event, Key}
 };
-use app::{
-    App,
-};
+use app::App;
 use commands::{Command};
 use screens::{
     collection, 
-    wantlist::Wantlist,
-    profile,
 };
 
 fn main() {
@@ -54,42 +49,7 @@ fn main() {
     
     siv.add_fullscreen_layer(main_layout);
 
-    //adding callbacks
-    siv.add_global_callback('q', |s| {
-        //TODO: check app modified state and write to file
-        s.quit();
-    });
-    siv.add_global_callback(':', |s| {
-        s.call_on_name("commandline", |view: &mut EditView| {
-            view.enable();
-            view.set_content(":");
-        });
-        s.focus_name("commandline").unwrap();
-    });
-    //TODO: implement commands to handle opening of child screens
-    siv.add_global_callback(Event::Key(Key::Backspace), |s| {
-        if s.screen().len() > 1 {
-            s.pop_layer();
-        }
-    });
-    //collection screen
-    siv.add_global_callback('1', move |s| {
-        while s.screen().len() > 1 {
-            s.pop_layer();
-        }
-    });
-    //wantlist screen
-    siv.add_global_callback('2', move |s| {
-        if s.screen().len() == 1 {
-            s.add_fullscreen_layer(Wantlist::init().build());
-        }
-    });
-    //profile screen
-    siv.add_global_callback('3', move |s| {
-        if s.screen().len() == 1 {
-            s.add_fullscreen_layer(profile::build());
-        }
-    });
+    App::add_callbacks(&mut siv);
 
     siv.run();
 }
