@@ -6,7 +6,12 @@ use serde::{Deserialize, Serialize};
 use toml;
 use directories::ProjectDirs;
 
-use chrono::FixedOffset;
+use chrono::{
+    FixedOffset,
+    DateTime,
+    Local,
+    Utc,
+};
 use cursive::theme::{
     Color::*,
     BaseColor,
@@ -65,6 +70,13 @@ impl Config {
             }
         }
     }
+}
+
+pub fn get_utc_now() -> DateTime<Utc> {
+    DateTime::<Utc>::from_utc(
+        Local::now().naive_utc(),
+        Utc
+    )
 }
 
 fn project_dirs() -> ProjectDirs {

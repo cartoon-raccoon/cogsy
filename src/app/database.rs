@@ -62,9 +62,9 @@ pub mod admin {
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS listenlog (
-                album_id INTEGER PRIMARY KEY,
+                datetime TEXT PRIMARY KEY,
+                album_id INTEGER,
                 title TEXT,
-                datetime TEXT 
             )",
             NO_PARAMS
         )?;
@@ -140,7 +140,8 @@ pub mod update {
     use crate::app::{
         Release, 
         Folders, 
-        Profile
+        Profile,
+        ListenLogEntry,
     };
     use super::{
         admin,
@@ -197,7 +198,20 @@ pub mod update {
     }
 
     #[allow(dead_code)] //suppressing warnings for now
-    pub fn listenlog() -> Result<(), Box<dyn Error>> {
+    pub fn listenlog(entry: ListenLogEntry) -> Result<(), Box<dyn Error>> {
+        let conn = Connection::open(utils::database_file())?;
+        conn.execute(
+            "INSERT INTO listenlog
+            (datetime,
+            album_id,
+            title) VALUES
+            (?1, ?2, ?3);",
+            &[
+                entry.time.to_rfc3339(),
+                entry.id.to_string(),
+                entry.title,
+            ]
+        )?;
         Ok(())
     }
 
@@ -249,6 +263,10 @@ pub mod update {
 
 pub mod query {
     use std::error::Error;
+    use chrono::{
+        DateTime,
+        Utc,
+    };
     use rusqlite::{
         Connection,
         Statement,
@@ -257,7 +275,8 @@ pub mod query {
     use crate::app::{
         Release, 
         Folders, 
-        Profile
+        Profile,
+        ListenLog,
     };
     use crate::utils;
 
@@ -341,6 +360,24 @@ pub mod query {
         let results = get_releases(&mut stmt)?;
         
         Ok(results)
+    }
+
+    pub fn listenlog() -> Result<ListenLog, Box<dyn Error>> {
+        let conn = Connection::open(utils::database_file())?;
+        let mut stmt = conn.prepare(
+            "SELECT * FROM listenlog;"
+        )?;
+        let results_iter = stmt.query_map(NO_PARAMS, |row| {
+            let time: DateTime<Utc> = row.get(0)?;
+            let title: String = row.get(2)?;
+            Ok((time, title))
+        })?;
+        let mut listenlog = ListenLog::new();
+        for entry in results_iter {
+            let (time, title) = entry?;
+            listenlog.push(time, title);
+        }
+        Ok(listenlog)
     }
 
     fn get_releases(stmt: &mut Statement) -> Result<Vec<Release>, Box<dyn Error>> {

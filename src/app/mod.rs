@@ -35,6 +35,16 @@ pub struct Profile {
     pub average_rating: f64,
 }
 
+pub struct ListenLogEntry {
+    pub id: i64,
+    pub title: String,
+    pub time: DateTime<Utc>,
+}
+
+pub struct ListenLog { //wrapper around a BTreeMap
+    pub contents: BTreeMap<DateTime<Utc>, String>
+}
+
 #[derive(Debug, Clone)]
 pub struct Release {
     pub id: i64,
