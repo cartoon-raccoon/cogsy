@@ -10,7 +10,13 @@ use cursive::{
     event::{Event, Key},
 };
 use crate::app::{
-    {App, Release, Folders, ListenLogEntry},
+    {
+        App, 
+        Release, 
+        Folders, 
+        ListenLogEntry,
+        ListenLog,
+    },
     database::{
         admin, 
         query, 
@@ -95,9 +101,6 @@ impl App {
         match result {
             Ok(command) => {
                 match command {
-                    //*for every command that updates some data, the app must:
-                    //*1: Update the internal state in memory
-                    //*2: Update the database
                     Command::UpdateDB => {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
@@ -263,6 +266,14 @@ impl App {
                 s.add_fullscreen_layer(profile::build());
             }
         });
+        s.add_global_callback('4', |s| {
+            while s.screen().len() > 1 {
+                s.pop_layer();
+            }
+            if s.screen().len() == 1 {
+                s.add_fullscreen_layer(ListenLog::init().build());
+            }
+        })
     }
 }
 

@@ -1,10 +1,14 @@
 use std::collections::BTreeMap;
 
-use cursive::views::*;
+use cursive::{
+    views::*,
+    view::SizeConstraint,
+};
 use chrono::{
     DateTime,
     Utc,
 };
+use crate::utils::Config;
 use crate::app::{
     ListenLog,
     database::query,
@@ -24,12 +28,23 @@ impl ListenLog { //wrapper around a BTreeMap
             Err(e) => panic!(e.to_string())
         }
     }
-    pub fn build(&self) -> StackView {
-        let screen = StackView::new();
+    pub fn build(&self) -> Panel<
+            ResizedView<
+            ScrollView<
+            SelectView<String>>>> {
+        let list: Vec<String> = self.contents.iter().map(|(k, v)| {
+            let nk = k.with_timezone(&Config::timezone());
+            format!("{} | {}", nk.format("%a %d %b %Y, %l:%M%P"), v)
+        }).collect();
+        let screen = Panel::new(ResizedView::new(
+            SizeConstraint::Full,
+            SizeConstraint::Full,
+            ScrollView::new(
+                SelectView::<String>::new()
+                .with_all_str(list)
+            )
+        ));
         screen
-    }
-    pub fn contents(&mut self) -> BTreeMap<DateTime<Utc>, String> {
-        self.contents.clone()
     }
     pub fn push(&mut self,
         time: DateTime<Utc>,
