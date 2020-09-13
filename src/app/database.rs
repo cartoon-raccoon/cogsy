@@ -163,7 +163,7 @@ pub mod update {
         &[
             &profile.username,
             &profile.real_name,
-            &profile.registered,
+            &profile.registered.to_rfc3339(),
             &profile.listings.to_string(),
             &profile.wantlist.to_string(),
             &profile.collection.to_string(),
@@ -239,7 +239,7 @@ pub mod update {
                     &release.year.to_string(),
                     &stringified_labels,
                     &stringified_formats,
-                    &release.date_added,
+                    &release.date_added.to_rfc3339(),
                 ]
             )?;
         }
@@ -254,6 +254,7 @@ pub mod query {
         Statement,
         NO_PARAMS,
     };
+    use chrono::DateTime;
     use crate::app::{
         Release, 
         Folders, 
@@ -278,10 +279,15 @@ pub mod query {
 
         let profile = conn.query_row(
             "SELECT * FROM profile", NO_PARAMS, |row| {
+                let registered_raw: String = row.get(2)?;
+                let date_joined = DateTime::parse_from_rfc3339(
+                    &registered_raw
+                ).unwrap();
+
                 Ok(Profile {
                     username: row.get(0)?,
                     real_name: row.get(1)?,
-                    registered: row.get(2)?,
+                    registered: date_joined,
                     listings: row.get(3)?,
                     collection: row.get(4)?,
                     wantlist: row.get(5)?,
@@ -349,6 +355,7 @@ pub mod query {
             let contents = stmt.query_map(NO_PARAMS, |row| {
                 let labels_raw: String = row.get(4)?;
                 let formats_raw: String = row.get(5)?;
+                let date_raw: String = row.get(6)?;
 
                 let labels = labels_raw.as_str()
                     .split(':')
@@ -366,7 +373,8 @@ pub mod query {
                     year: row.get(3)?,
                     labels: labels,
                     formats: formats,
-                    date_added: row.get(6)?,
+                    //TODO: Handle the unwrap
+                    date_added: DateTime::parse_from_rfc3339(&date_raw).unwrap(),
                 })
             })?;
             for release in contents {

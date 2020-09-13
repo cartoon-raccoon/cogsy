@@ -5,15 +5,9 @@ use cursive::{
 
 use crate::app::database::query;
 
-/* 
-* Designated for providing views for any action that might require a popup.
-* e.g. AlbumInfo popup, multiple selection popup for :query
-*/
-
-
 pub fn build() -> ResizedView<Dialog> {
-    //TODO: Format the Label and Formats fields properly
-    let profile = query::profile().unwrap_or_default();
+    //TODO: Handle unwrap
+    let profile = query::profile().unwrap();
 
     let content = String::from(format!("
     Username: {}

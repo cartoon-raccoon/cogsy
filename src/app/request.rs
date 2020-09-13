@@ -9,6 +9,7 @@ use reqwest::{
     StatusCode,
 };
 use serde_json::Value;
+use chrono::DateTime;
 use crate::app::Release;
 
 /*
@@ -160,9 +161,10 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
         //deserialization happens here
         for entry in releaselist {
             let id_no = entry.get("id").unwrap().as_u64().unwrap();
-            let added_date = entry.get("date_added").unwrap()
-                .as_str().unwrap()
-                .to_string();
+            let date_raw = entry.get("date_added").unwrap()
+                .as_str().unwrap();
+            let added_date = DateTime::parse_from_rfc3339(date_raw)
+                .unwrap(); //TODO: Fix this unwrap
             let info = entry.get("basic_information").unwrap();
             
             //TODO: Figure out how to do this functionally

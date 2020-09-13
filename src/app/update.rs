@@ -3,6 +3,7 @@ use std::path::Path;
 use std::collections::HashMap;
 use serde_json::Value;
 use reqwest::blocking::Client;
+use chrono::DateTime;
 use crate::app::{
     {Release, Folders, Profile},
     request::*,
@@ -66,13 +67,15 @@ pub fn profile(username: String, token: String) -> Result<(), QueryError> {
     if let Value::Null = profile_raw {
         return Err(QueryError::ParseError)
     }
-    master_prof = Profile {
+    master_prof = Profile { //TODO: Handle the unwraps dammit
         username: profile_raw["username"]
             .as_str().unwrap_or("undefined").to_string(),
         real_name: profile_raw["name"]
             .as_str().unwrap_or("undefined").to_string(),
-        registered: profile_raw["registered"]
-            .as_str().unwrap_or("undefined").to_string(),
+        registered: DateTime::parse_from_rfc3339(
+            profile_raw["registered"]
+            .as_str().unwrap()
+        ).unwrap(),
         listings: profile_raw["num_for_sale"]
             .as_u64().unwrap_or(0) as u32,
         collection: profile_raw["num_collection"]

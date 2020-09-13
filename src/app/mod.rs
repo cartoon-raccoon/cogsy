@@ -7,6 +7,10 @@ pub mod update;
 
 use std::collections::HashMap;
 
+use chrono::{
+    DateTime,
+    FixedOffset,
+};
 use message::Message;
 use crate::collection::Collection;
 
@@ -19,11 +23,11 @@ pub struct App {
     pub modified: bool,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Profile {
     pub username: String,
     pub real_name: String,
-    pub registered: String,
+    pub registered: DateTime<FixedOffset>,
     pub listings: u32,
     pub collection: u32,
     pub wantlist: u32,
@@ -31,7 +35,7 @@ pub struct Profile {
     pub average_rating: f64,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Release {
     pub id: i64,
     pub title: String,
@@ -39,7 +43,7 @@ pub struct Release {
     pub year: u32,
     pub labels: Vec<String>,
     pub formats: Vec<String>,
-    pub date_added: String,
+    pub date_added: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone)]
