@@ -10,8 +10,13 @@ use cursive::{
     event::{Event, Key},
 };
 use crate::app::{
-    {App, Release, Folders},
-    database::{*, query::QueryType},
+    {App, Release, Folders, ListenLogEntry},
+    database::{
+        admin, 
+        query, 
+        update as dbupdate, 
+        query::QueryType
+    },
     message::{Message, MessageKind},
     update,
 };
@@ -135,7 +140,32 @@ impl App {
                         view_content = format!("Setting the price of `{}`", album);
                     }
                     Command::Listen(album, _time) => {
-                        view_content = format!("Listening to: `{}`", album);
+                        match query::release(album.clone(), QueryType::Collection) {
+                            Ok(results) => {
+                                if results.len() > 1 {
+                                    view_content = format!("Multiple results for {}", album);
+                                    s.add_fullscreen_layer(
+                                        //listenlog gets logged internally here
+                                        popup::multiple_results(results, true)
+                                    );
+                                } else if results.len() == 1 {
+                                    let time_now = utils::get_utc_now();
+                                    let entry = ListenLogEntry {
+                                        id: results[0].id,
+                                        title: results[0].title.clone(),
+                                        time: time_now,
+                                    };
+                                    match dbupdate::listenlog(entry) {
+                                        Ok(()) => {view_content = format!("Listening to `{}`", results[0].title);}
+                                        Err(e) => {view_content = e.to_string();}
+                                    }
+                                } else {
+                                    view_content = format!("Unable to find results for `{}`", album);
+                                }
+
+                            }
+                            Err(e) => {view_content = format!("{}", e);}
+                        }
                     }
                     Command::Query(album) => {
                         match query::release(album.clone(), QueryType::Collection) {
@@ -143,7 +173,7 @@ impl App {
                                 view_content = format!("Querying collection for `{}`", album);
                                 if results.len() > 1 {
                                     s.add_fullscreen_layer(
-                                        popup::multiple_results(results)
+                                        popup::multiple_results(results, false)
                                     );
                                 } else if results.len() == 1 {
                                     s.add_fullscreen_layer(
@@ -162,7 +192,7 @@ impl App {
                                 view_content = format!("Querying wantlist for `{}`", album);
                                 if results.len() > 1 {
                                     s.add_fullscreen_layer(
-                                        popup::multiple_results(results)
+                                        popup::multiple_results(results, false)
                                     );
                                 } else if results.len() == 1 {
                                     s.add_fullscreen_layer(
@@ -237,7 +267,7 @@ impl App {
 }
 
 #[allow(dead_code)]
-impl Folders { //wrapper around a HashMap<String, Vec<Release>>
+impl Folders { //wrapper around a BTreeMap<String, Vec<Release>>
     pub fn new() -> Self {
         let new_self: 
             BTreeMap<String, Vec<Release>> = BTreeMap::new();
@@ -249,8 +279,7 @@ impl Folders { //wrapper around a HashMap<String, Vec<Release>>
         self.contents.clone()
     }
 
-    pub fn pull(&mut self,
-        name: &str) -> Option<Vec<Release>> {
+    pub fn pull(&mut self, name: &str) -> Option<Vec<Release>> {
         
         match self.contents.remove(name) {
             None => None,

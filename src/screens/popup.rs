@@ -9,8 +9,12 @@ use cursive::{
     view::SizeConstraint
 };
 
-use crate::utils::Config;
-use crate::app::Release;
+use crate::utils::{self, Config};
+use crate::app::{
+    Release,
+    ListenLogEntry,
+};
+use crate::app::database::update;
 
 /* 
 * Designated for providing views for any action that might require a popup.
@@ -60,22 +64,35 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     screen
 }
 
-pub fn multiple_results(results: Vec<Release>) -> ResizedView<Dialog> {
+pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView<Dialog> {
     let screen = ResizedView::new(
         SizeConstraint::Full,
         SizeConstraint::Full,
         Dialog::around(
             SelectView::<Release>::new()
             .with_all(
-                results.into_iter().map(|i| {
+                results.clone().into_iter().map(|i| {
                     (format!("{} ({})", i.title.clone(), i.formats[0]), i)
                 })
             )
-            .on_submit(|s, item| {
+            .on_submit(move |s, item| {
                 s.pop_layer();
-                s.add_fullscreen_layer(
-                    albuminfo(item)
-                );
+                if !from_listen {
+                    s.add_fullscreen_layer(
+                        albuminfo(item)
+                    );
+                } else {
+                    let time_now = utils::get_utc_now();
+                    let entry = ListenLogEntry {
+                        id: results[0].id,
+                        title: results[0].title.clone(),
+                        time: time_now,
+                    };
+                    match update::listenlog(entry) {
+                        Ok(()) => {}
+                        Err(_) => {}
+                    }
+                }
             })
         ).title("Multiple results for query")
     );
