@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use toml;
 use directories::ProjectDirs;
 
+use chrono::FixedOffset;
 use cursive::theme::{
     Color::*,
     BaseColor,
@@ -17,6 +18,7 @@ use cursive::theme::{
 pub struct Config {
     pub username: String,
     pub token: String,
+    pub timezone: f32,
     //colours: ColourScheme,
 }
 
@@ -25,6 +27,14 @@ impl Config {
         toml::from_str(
             &read_to_string(config_file()).unwrap_or_default()
         ).unwrap()
+    }
+    pub fn timezone() -> FixedOffset {
+        let raw_tz = Config::load().timezone;
+        if raw_tz < 0.0 {
+            FixedOffset::west((-raw_tz * 3600.0) as i32)
+        } else {
+            FixedOffset::east((raw_tz * 3600.0) as i32)
+        }
     }
     pub fn first_init() {
         println!("User information not initialized.");
@@ -36,9 +46,17 @@ impl Config {
         let mut token = String::new();
         io::stdin().read_line(&mut token)
             .expect("Oops, could not read line.");
+        println!("Timezone:");
+        let mut timezone = String::new();
+        io::stdin().read_line(&mut timezone)
+            .expect("Oops, could not read line.");
         let config = Config {
             username: username.trim().to_string(),
             token: token.trim().to_string(),
+            timezone: match timezone.trim().parse() {
+                Ok(num) => num,
+                Err(_) => {panic!("Could not create config file!")}
+            }
         };
         if let Ok(new_config) = toml::to_string(&config) {
             match OpenOptions::new().create(true).write(true).open(&config_file()) {
@@ -77,6 +95,7 @@ impl Default for Config {
         Config {
             username: String::from("null"),
             token: String::from("null"),
+            timezone: 0.0,
         }
     }
 }
@@ -121,6 +140,7 @@ mod tests {
         let checkcfg = App::initialize();
         println!("{}", testcfg.token);
         assert_eq!(testcfg.username, checkcfg.user_id);
+        assert_eq!(testcfg.timezone, 8.0);
     }
 
     #[test]
@@ -133,5 +153,13 @@ mod tests {
             database_file(),
             PathBuf::from("/home/raccoon/.local/share/cogsy/cogsy_data.db")
         );
+    }
+
+    #[test]
+    fn check_timezone() {
+        assert_eq!(
+            Config::timezone(),
+            FixedOffset::east(28800)
+        )
     }
 }

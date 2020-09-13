@@ -3,11 +3,17 @@ use cursive::{
     view::SizeConstraint
 };
 
+use crate::utils::Config;
 use crate::app::database::query;
 
 pub fn build() -> ResizedView<Dialog> {
     //TODO: Handle unwrap
     let profile = query::profile().unwrap();
+
+    //* timezone currently hardcoded
+    //TODO: Add a function to utils to return the user's set timezone
+    let display_time = profile.registered
+    .with_timezone(&Config::timezone());
 
     let content = String::from(format!("
     Username: {}
@@ -17,14 +23,13 @@ pub fn build() -> ResizedView<Dialog> {
 
     No. of Listings: {}
     Collection Size: {}
-    
     Wantlist Size: {}
     
     Releases rated: {}
     Average rating: {}",
     profile.username,
     profile.real_name,
-    profile.registered,
+    display_time,
     profile.listings,
     profile.collection,
     profile.wantlist,

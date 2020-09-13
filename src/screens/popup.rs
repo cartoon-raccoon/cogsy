@@ -9,6 +9,7 @@ use cursive::{
     view::SizeConstraint
 };
 
+use crate::utils::Config;
 use crate::app::Release;
 
 /* 
@@ -24,6 +25,9 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     labels.extend(set.into_iter());
 
     let formats = release.formats.clone();
+
+    let display_time = release.date_added
+    .with_timezone(&Config::timezone());
 
     let content = String::from(format!("
     Artist: {}
@@ -41,7 +45,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     release.year,
     format_vec(labels),
     format_vec(formats),
-    release.date_added,
+    display_time,
     release.id,
     ));
 
