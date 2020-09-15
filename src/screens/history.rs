@@ -68,6 +68,7 @@ impl ListenLog { //wrapper around a BTreeMap
         }
 
     //TODO: Optimise this
+    //? What is its Big O / space-time complexity?
     pub fn build_sparkview_btreemap(&self) -> BTreeMap<String, String> {
         //* compressing ListenLog into date | listens on that day -> listengraph
         let mut listengraph = BTreeMap::<Date<Utc>, Vec<String>>::new();
@@ -86,13 +87,17 @@ impl ListenLog { //wrapper around a BTreeMap
 
         //* padding out listengraph with unused dates
         let today = utils::get_utc_now().date();
-        let mut first_date = listengraph.iter().next().unwrap().0.clone();
-        while first_date < today {
-            if !listengraph.contains_key(&first_date) {
-                listengraph.insert(first_date.clone(), Vec::new());
+        let first_date = listengraph.iter().next().unwrap().0.clone();
+        let earliest_usable_date = today.checked_sub_signed(Duration::days(80))
+            .unwrap_or(today);
+        let mut date_to_use = if first_date > earliest_usable_date 
+            {first_date} else {earliest_usable_date};
+        while date_to_use <= today {
+            if !listengraph.contains_key(&date_to_use) {
+                listengraph.insert(date_to_use.clone(), Vec::new());
             }
-            first_date = first_date.checked_add_signed(Duration::days(1))
-                .unwrap_or(first_date); //will result in infinite loop if overflow
+            date_to_use = date_to_use.checked_add_signed(Duration::days(1))
+                .unwrap_or(date_to_use); //will result in infinite loop if overflow
         }
 
         //* drawing the sparkview
