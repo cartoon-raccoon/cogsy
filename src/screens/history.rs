@@ -92,7 +92,7 @@ impl ListenLog { //wrapper around a BTreeMap
             .unwrap_or(today);
         let mut date_to_use = if first_date > earliest_usable_date 
             {first_date} else {earliest_usable_date};
-        while date_to_use <= today {
+        while date_to_use < today {
             if !listengraph.contains_key(&date_to_use) {
                 listengraph.insert(date_to_use.clone(), Vec::new());
             }
