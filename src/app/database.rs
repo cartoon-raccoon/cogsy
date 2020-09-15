@@ -357,6 +357,19 @@ pub mod query {
         Ok(results)
     }
 
+    pub fn all_titles() -> Result<Vec<String>, Box<dyn Error>> {
+        let conn = Connection::open(utils::database_file())?;
+        let mut stmt = conn.prepare(
+            "SELECT title FROM All_;"
+        )?;
+        let titles = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
+        let mut titlevec = Vec::<String>::new();
+        for title in titles {
+            titlevec.push(title?);
+        }
+        Ok(titlevec)
+    }
+
     pub fn listenlog() -> Result<ListenLog, Box<dyn Error>> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(

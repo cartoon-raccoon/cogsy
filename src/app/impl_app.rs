@@ -271,9 +271,17 @@ impl App {
                 s.pop_layer();
             }
             if s.screen().len() == 1 {
-                s.add_fullscreen_layer(ListenLog::init().build());
+                s.add_fullscreen_layer(ListenLog::init().build_sparkview());
             }
-        })
+        });
+        s.add_global_callback('h', |s| {
+            while s.screen().len() > 1 {
+                s.pop_layer();
+            }
+            if s.screen().len() == 1 {
+                s.add_fullscreen_layer(ListenLog::init().build_history());
+            }
+        });
     }
 }
 
