@@ -28,22 +28,40 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
         Ok(_) => {},
         Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
     }
+
+    //* pulling data from Discogs
     if from_cmd {print!("Updating profile...")}
-    match profile(username.clone(), token.clone()) {
-        Ok(_) => {},
+    let profile = match profile(username.clone(), token.clone()) {
+        Ok(profile) => profile,
         Err(e) => {return Err(e);}
-    }
+    };
     if from_cmd {print!("    Success!\nUpdating wantlist...")}
-    match wantlist(username.clone(), token.clone()) {
-        Ok(_) => {},
+    let wantlist = match wantlist(username.clone(), token.clone()) {
+        Ok(wantlist) => wantlist,
         Err(e) => {return Err(e);}
-    }
+    };
     if from_cmd {print!("   Success!\nUpdating collection...")}
-    match collection(username, token) {
-        Ok(_) => {},
+    let collection = match collection(username, token) {
+        Ok(collection) => collection,
         Err(e) => {return Err(e);}
-    }
+    };
     if from_cmd {print!(" Success!\n")}
+    
+    //* committing data to db
+    match update::profile(profile) {
+        Ok(_) => {},
+        Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
+    }
+    match update::wantlist(wantlist) {
+        Ok(_) => {},
+        Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
+    }
+    match update::collection(collection) {
+        Ok(_) => {},
+        Err(e) => return Err(QueryError::DBWriteError(e.to_string())),
+    }
+
+    //* final integrity check
     match admin::check_integrity() {
         true => {},
         false => {
@@ -55,7 +73,7 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
     Ok(())
 }
 
-pub fn profile(username: String, token: String) -> Result<(), QueryError> {
+pub fn profile(username: String, token: String) -> Result<Profile, QueryError> {
     let requester = build_client(token);
     let profile_url = build_url(ParseType::Profile, username.clone());
     let master_prof: Profile;
@@ -67,7 +85,7 @@ pub fn profile(username: String, token: String) -> Result<(), QueryError> {
     if let Value::Null = profile_raw {
         return Err(QueryError::ParseError)
     }
-    master_prof = Profile { //TODO: Handle the unwraps dammit
+    master_prof = Profile {
         username: profile_raw["username"]
             .as_str().unwrap_or("undefined").to_string(),
         real_name: profile_raw["name"]
@@ -89,27 +107,18 @@ pub fn profile(username: String, token: String) -> Result<(), QueryError> {
         average_rating: profile_raw["rating_avg"]
             .as_f64().unwrap_or(0.0),
     };
-    //committing to db
-    match update::profile(master_prof) {
-        Ok(_) => Ok(()),
-        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
-    }
-
+    Ok(master_prof)
 }
 
-pub fn wantlist(username: String, token: String) -> Result<(), QueryError> {
+pub fn wantlist(username: String, token: String) -> Result<Vec<Release>, QueryError> {
     let requester = build_client(token);
     let wantlist_url = build_url(ParseType::Wantlist, username.clone());
     let master_wants = get_full(&requester, ParseType::Wantlist, wantlist_url)?;
 
-    //committing to db
-    match update::wantlist(master_wants) {
-        Ok(_) => Ok(()),
-        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()));}
-    }
+    Ok(master_wants)
 }
 
-pub fn collection(username: String, token: String) -> Result<(), QueryError> {
+pub fn collection(username: String, token: String) -> Result<Folders, QueryError> {
     let requester = build_client(token);
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.clone());
@@ -146,12 +155,10 @@ pub fn collection(username: String, token: String) -> Result<(), QueryError> {
         let releases = get_full(&requester, ParseType::Collection, collection_url)?;
         master_folders.push(name.clone(), releases);
     }
-    match update::collection(master_folders.clone()) {
-        Ok(_) => {return Ok(())},
-        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))},
-    }
+    Ok(master_folders)
 }
 
+//TODO: Make this multithreaded
 fn get_full(client: &Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();
