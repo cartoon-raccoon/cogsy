@@ -27,14 +27,16 @@ impl Wantlist {
             ScrollView<
             NamedView<
             SelectView<Release>>>>> {
-        //iterator members must be formatted into columns
         let main_screen = Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
                 SelectView::<Release>::new()
-                .with_all(self.wantlist.clone().into_iter().map(|i| {
-                    (i.title.clone(), i)
+                .with_all(self.wantlist.clone().into_iter().map(|mut i| {
+                    i.artist.truncate(30);
+                    let formatted = format!("{:30}| {}",
+                        i.artist, i.title);
+                    (formatted, i)
                 }))
                 .on_submit(|s, item| {
                     s.add_fullscreen_layer(
