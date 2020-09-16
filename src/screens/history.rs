@@ -36,7 +36,7 @@ impl ListenLog { //wrapper around a BTreeMap
         let list: Vec<String> = self.contents.iter().map(|(k, v)| {
             let nk = k.with_timezone(&Config::timezone());
             format!("{} | {}", nk.format("%a %d %b %Y, %l:%M%P"), v)
-        }).collect();
+        }).rev().collect();
         let screen = Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
@@ -87,7 +87,9 @@ impl ListenLog { //wrapper around a BTreeMap
 
         //* padding out listengraph with unused dates
         let today = utils::get_utc_now().date();
-        let first_date = listengraph.iter().next().unwrap().0.clone();
+        let first_date = listengraph.iter().next()
+            .unwrap_or((&today, &vec![String::new()]))
+            .0.clone();
         let earliest_usable_date = today.checked_sub_signed(Duration::days(80))
             .unwrap_or(today);
         let mut date_to_use = if first_date > earliest_usable_date 
