@@ -197,7 +197,6 @@ pub mod update {
         Ok(())
     }
 
-    #[allow(dead_code)] //suppressing warnings for now
     pub fn listenlog(entry: ListenLogEntry) -> Result<(), Box<dyn Error>> {
         let conn = Connection::open(utils::database_file())?;
         conn.execute(
@@ -387,6 +386,15 @@ pub mod query {
             listenlog.push(time, title);
         }
         Ok(listenlog)
+    }
+
+    pub fn random() -> Result<Release, Box<dyn Error>> {
+        let conn = Connection::open(utils::database_file())?;
+        let mut stmt = conn.prepare(
+            "SELECT * FROM All_ ORDER BY RANDOM() LIMIT 1",
+        )?;
+        let mut selection = get_releases(&mut stmt, QueryType::Collection)?;
+        Ok(selection.remove(0))
     }
 
     pub fn size(querytype: QueryType) -> Result<usize, Box<dyn Error>> {

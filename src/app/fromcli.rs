@@ -85,9 +85,38 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
     //TODO: Implement this
     } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
         if sub_m.is_present("nolog") {
-            println!("Selecting random album without logging.")
+            println!("Selecting random album without logging.");
+            match query::random() {
+                Ok(random) => {
+                    println!("You should play `{}.`", random.title);
+                }
+                Err(e) => {
+                    eprintln!("Oops: {}", e);
+                }
+            }
         } else {
             println!("Selecting random album with logging.");
+            match query::random() {
+                Ok(random) => {
+                    let time_now = utils::get_utc_now();
+                    let entry = ListenLogEntry {
+                        id: random.id,
+                        title: random.title.clone(),
+                        time: time_now,
+                    };
+                    match dbupdate::listenlog(entry) {
+                        Ok(()) => {
+                            println!("You should play `{}`.", random.title);
+                        }
+                        Err(e) => {
+                            eprintln!("Oops: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Oops: {}", e);
+                }
+            }
         }
         Some(())
     } else if let Some(sub_m) = clapapp.subcommand_matches("listen") {

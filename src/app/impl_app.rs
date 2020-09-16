@@ -133,11 +133,29 @@ impl App {
                         self.modified = true;
                     }
                     Command::Random(nolog) => {
-                        if nolog {
-                            view_content = "You should play: (No logging)".to_string();
-                        } else {
-                            view_content = "You should play: ".to_string();
-                        }
+                        match query::random() {
+                            Ok(random) => {
+                                if !nolog {
+                                    let time_now = utils::get_utc_now();
+                                    let entry = ListenLogEntry {
+                                        id: random.id,
+                                        title: random.title.clone(),
+                                        time: time_now,
+                                    };
+                                    match dbupdate::listenlog(entry) {
+                                        Ok(()) => {
+                                            view_content = format!("You should play `{}`", random.title);
+                                        }
+                                        Err(e) => {view_content = e.to_string();}
+                                    }
+                                } else {
+                                    view_content = format!("You should play `{}`", random.title);
+                                }
+                            },
+                            Err(e) => {
+                                view_content = e.to_string();
+                            }
+                        };
                     }
                     Command::Price(album, _price) => {
                         view_content = format!("Setting the price of `{}`", album);
