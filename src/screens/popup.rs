@@ -47,8 +47,8 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     Discogs ID: {}",
     release.artist,
     release.year,
-    format_vec(labels),
-    format_vec(formats),
+    format_vec(&labels),
+    format_vec(&formats),
     display_time.format("%A %d %m %Y %R"),
     release.id,
     ));
@@ -99,7 +99,7 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
     screen
 }
 
-fn format_vec(list: Vec<String>) -> String {
+pub fn format_vec(list: &Vec<String>) -> String {
     let mut formatted_string = String::new();
     if list.len() > 1 {
         for item in &list[0..list.len()-1] {

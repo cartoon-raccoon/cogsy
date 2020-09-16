@@ -1,12 +1,14 @@
+use std::io;
 use clap::{
     App as Clap,
     SubCommand,
     Arg,
     ArgMatches,
 };
-use crate::utils;
+use crate::utils::{self, Config};
 use crate::app::{
     ListenLogEntry,
+    Release,
     App,
     update,
     database::{
@@ -14,6 +16,7 @@ use crate::app::{
         update as dbupdate,
     }
 };
+use crate::screens::popup::format_vec;
 
 pub fn init<'a>() -> Clap<'a, 'a> {
     Clap::new("cogsy")
@@ -123,8 +126,44 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         let album = sub_m.value_of("albumname").unwrap().to_string();
         match query::release(album.clone(), QueryType::Collection) {
             Ok(results) => {
-                if results.len() > 1 { //TODO
-                    println!("Multiple results for {}", album);
+                if results.len() > 1 {
+                    println!("Multiple results for `{}`, pick one:", album);
+                    for release in &results {
+                        println!(
+                            "[{}]: {} - {} ({})",
+                            results.iter().position(|x| x == release).unwrap() + 1,
+                            release.artist,
+                            release.title,
+                            format_vec(&release.formats),
+                        );
+                    }
+                    loop {
+                        let mut answer = String::new();
+                        io::stdin().read_line(&mut answer)
+                            .expect("Oops, could not read line.");
+                        let choice: usize = match answer.trim().parse() {
+                            Ok(num) => num,
+                            Err(_) => {println!("Invalid input!"); continue}
+                        };
+                        if choice <= results.len() {
+                            let time_now = utils::get_utc_now();
+                            let entry = ListenLogEntry {
+                                id: results[choice - 1].id,
+                                title: results[choice - 1].title.clone(),
+                                time: time_now,
+                            };
+                            match dbupdate::listenlog(entry) {
+                                Ok(()) => {println!("Listening to `{}` by {}", 
+                                    results[choice - 1].title, 
+                                    results[choice - 1].artist);
+                                }
+                                Err(e) => {eprintln!("{}", e);}
+                            }
+                            break;
+                            } else {
+                            println!("Please select a valid choice.");
+                        }
+                    }
                 } else if results.len() == 1 {
                     let time_now = utils::get_utc_now();
                     let entry = ListenLogEntry {
@@ -145,14 +184,43 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         }  
         Some(())
     } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
+        let results: Vec<Release>;
+        let query: String;
+        let querytype: QueryType;
+        //TODO: Streamline this wet-ass code
         if sub_m.is_present("wantlist") {
-            println!("Querying wantlist for: {}", sub_m
-                .value_of("wantlist")
-                .unwrap_or_else(|| panic!("Album name is required.")));
+            query = sub_m.value_of("wantlist")
+            .unwrap_or_else(|| panic!("Album name is required.")).to_string();
+            querytype = QueryType::Wantlist;
+            println!("Querying wantlist for: {}", query);
         } else {
-            println!("Querying collection for: {}", sub_m
-                .value_of("albumname")
-                .unwrap_or_else(|| panic!("Album name is required.")));
+            query = sub_m.value_of("albumname")
+            .unwrap_or_else(|| panic!("Album name is required.")).to_string();
+            querytype = QueryType::Collection;
+            println!("Querying collection for: {}\n", query);
+        }
+        results = query::release(
+            query.clone(), querytype
+        ).unwrap_or_else(|e| {eprintln!("Oops: {}", e); Vec::new()});
+        if results.len() > 1 {
+            println!("Multiple results for `{}`:\n", query)
+        }
+        if results.is_empty() {
+            println!("Nothing found for `{}`.", query);
+        }
+        for release in results {
+            let display_time = release.date_added
+            .with_timezone(&Config::timezone());
+
+            println!(
+                "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
+                release.title,
+                release.artist,
+                release.year,
+                format_vec(&release.labels),
+                format_vec(&release.formats),
+                display_time.format("%A %d %m %Y %R"),
+            )
         }
         Some(())
     } else {
