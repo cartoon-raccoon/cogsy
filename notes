@@ -87,12 +87,11 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Running app as a command (logic done, execution not yet)
-  - Formatting artist and album name for wantlist
-  - Sparkview drawing for history and money screens
+  - Add text from album (album colors) to Release struct
   - Matching config file username and database username
     (Purge and refresh database if they don't match)
-  - Coloured messages (Not important)
+  - Coloured messages for commandline operation
+  - Making update::collection() handle each batch concurrently (threading)
   - Implement different colours for folder list (not important)
 
 Future additions:
@@ -104,6 +103,7 @@ Issues:
   - :update freezes the app while it runs
   - Query terms with apostrophes ' in them throw sqlite3 syntax errors
   - Storing DateTime as strings in the database doesn't sit well with me
+  - Algorithm for generating sparkviews may not scale well
 
 Configuration:
   Theme
