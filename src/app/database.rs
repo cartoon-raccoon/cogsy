@@ -282,8 +282,7 @@ pub mod query {
 
     /*
     profile(), collection() and wantlist() are called when the app starts
-    they must not fail, so they don't have to return a result
-    and will panic if they do fail
+    they must not fail, so they will panic if they do
     ideally, admin::check() should properly ensure database integrity before starting the app.
     however, it cannot protect against the contents of the table itself.
     */
@@ -326,7 +325,7 @@ pub mod query {
 
         for mut name in folder_names {
             let mut stmt = conn.prepare(&format!("SELECT * FROM {}", name))?;
-            let folder = get_releases(&mut stmt)?;
+            let folder = get_releases(&mut stmt, QueryType::Collection)?;
             name.pop().unwrap();
             folders.push(name, folder);
         }
@@ -336,7 +335,7 @@ pub mod query {
     pub fn wantlist() -> Result<Vec<Release>, Box<dyn Error>> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare("SELECT * FROM wantlist;")?;
-        let wantlist = get_releases(&mut stmt)?;
+        let wantlist = get_releases(&mut stmt, QueryType::Wantlist)?;
         Ok(wantlist)
     }
 
@@ -352,7 +351,7 @@ pub mod query {
             "SELECT * FROM {} WHERE title LIKE '%{}%'",
             table_to_query, query
         ))?;
-        let results = get_releases(&mut stmt)?;
+        let results = get_releases(&mut stmt, querytype)?;
         
         Ok(results)
     }
@@ -363,7 +362,9 @@ pub mod query {
             "SELECT title FROM All_;"
         )?;
         let titles = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
-        let mut titlevec = Vec::<String>::new();
+        let mut titlevec = Vec::<String>::with_capacity(
+            size(QueryType::Collection).unwrap_or(100)
+        );
         for title in titles {
             titlevec.push(title?);
         }
@@ -388,8 +389,22 @@ pub mod query {
         Ok(listenlog)
     }
 
-    fn get_releases(stmt: &mut Statement) -> Result<Vec<Release>, Box<dyn Error>> {
-        let mut folder: Vec<Release> = Vec::new();
+    pub fn size(querytype: QueryType) -> Result<usize, Box<dyn Error>> {
+        let conn = Connection::open(utils::database_file())?;
+        let query = match querytype {
+            QueryType::Collection => "collection",
+            QueryType::Wantlist => "wantlist"
+        };
+        let size: u32 = conn.query_row(
+            &format!("SELECT {} FROM profile;", query),
+            NO_PARAMS,
+            |row| row.get(0)
+        )?;
+        Ok(size as usize)
+    }
+
+    fn get_releases(stmt: &mut Statement, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
+        let mut folder: Vec<Release> = Vec::with_capacity(size(querytype).unwrap_or(100));
 
             let contents = stmt.query_map(NO_PARAMS, |row| {
                 let labels_raw: String = row.get(4)?;
