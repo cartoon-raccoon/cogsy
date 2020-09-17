@@ -9,6 +9,7 @@ use cursive::{
     Cursive,
     traits::*,
     views::*,
+    event::{Event, Key},
 };
 use app::fromcli;
 use app::App;
@@ -43,6 +44,7 @@ fn main() {
                 view.set_content("");
                 view.disable();
             });
+            s.clear_global_callbacks(Event::Key(Key::Esc));
             let result = Command::parse(text);
             app.execute(s, result);
         })

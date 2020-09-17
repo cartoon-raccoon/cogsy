@@ -257,6 +257,14 @@ impl App {
                 view.enable();
                 view.set_content(":");
             });
+            s.add_global_callback(Event::Key(Key::Esc), |s| {
+                s.focus_name("albumlist").unwrap();
+                s.call_on_name("commandline", |view: &mut EditView| {
+                    view.set_content("");
+                    view.disable();
+                });
+                s.clear_global_callbacks(Event::Key(Key::Esc));
+            });
             s.focus_name("commandline").unwrap();
         });
         //TODO: implement commands to handle opening of child screens
