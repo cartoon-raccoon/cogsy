@@ -43,6 +43,8 @@ Work is in progress to package the app for the Arch Linux AUR, which is the reco
 
 `yay -S cogsy` _(or use your preferred AUR helper)_
 
+This app has been tested on Windows 10, Arch Linux and Fedora. Testing for MacOS is underway.
+
 ## Setup
 The app requires some setup: To access the Discogs API, it requires a user token. To obtain this token, go to your Discogs account settings > Developers > Generate new token. Copy the generated string to your clipboard.
 
@@ -54,12 +56,14 @@ After first time startup, a config.toml file will be created and can be found at
 `C:\Users\username\AppData\Roaming\cartoon-raccoon\cogsy\config.toml`
 
 **MacOS:**
-`/Users/username/Library/Application Support/com.cartoon-raccoon.cogsy/config.toml`
+`/Users/username/Library/Application Support/rs.cartoon-raccoon.cogsy/config.toml`
 
 **Linux:**
 `/home/username/.config/cogsy/config.toml`
 
 The config file contains the information you entered during first time startup.
+
+Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
 
 ## Usage
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
