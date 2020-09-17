@@ -163,7 +163,7 @@ impl App {
                         };
                     }
                     Command::Price(album, _price) => {
-                        view_content = format!("Setting the price of `{}`", album);
+                        view_content = format!("Sorry, the price command is not supported at this time.");
                     }
                     Command::Listen(album, _time) => {
                         match query::release(album.clone(), QueryType::Collection) {

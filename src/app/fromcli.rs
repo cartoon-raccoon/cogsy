@@ -71,12 +71,12 @@ pub fn init<'a>() -> Clap<'a, 'a> {
 }
 
 pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
+    let app = App::initialize();
     if let Some(sub_m) = clapapp.subcommand_matches("update") {
-        let app = App::initialize();
         if sub_m.is_present("username") {
-            println!("Updating username to {}", sub_m.value_of("username").unwrap());
+            println!("Sorry, in-app username updates are unsupported at this time.");
         } else if sub_m.is_present("token") {
-            println!("Updating token to {}", sub_m.value_of("token").unwrap());
+            println!("Sorry, in-app token updates are unsupported at this time.");
         } else {
             println!("Beginning full database update.");
             match update::full(app.user_id, app.token, true, false) {
@@ -85,7 +85,6 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
             }
         }
         Some(())
-    //TODO: Implement this
     } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
         if sub_m.is_present("nolog") {
             println!("Selecting random album without logging.");
@@ -194,7 +193,7 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
             query = sub_m.value_of("wantlist")
             .unwrap_or_else(|| panic!("Album name is required.")).to_string()
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
-            
+
             querytype = QueryType::Wantlist;
             println!("Querying wantlist for: {}", query);
         } else {
