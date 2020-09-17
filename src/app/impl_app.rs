@@ -162,7 +162,7 @@ impl App {
                             }
                         };
                     }
-                    Command::Price(album, _price) => {
+                    Command::Price(_album, _price) => {
                         view_content = format!("Sorry, the price command is not supported at this time.");
                     }
                     Command::Listen(album, _time) => {
