@@ -103,3 +103,8 @@ If there any other bugs, please raise an issue and I will do my best to respond 
 - OAuth2 integration, eliminating the need for a user token.
 - Make the update function multithreaded, resulting in faster update times for users with larger collections.
 - An option to read user collection data from a CSV file (Discogs supports downloading collection data as a CSV file). This would prove to be useful for users with larger collections.
+
+## Credits
+[gyscos](https://github.com/gyscos) for the Cursive library that the user interface is built on. Thank you for this amazing crate, and for your assistance on Reddit.
+
+Cogsy was heavily inspired by [dijo](https://github.com/NerdyPepper/dijo) by NerdyPepper. It was this project that inspired me to learn Rust in the first place, and this is the first major project I've built, not just in Rust, but ever. This entire project owes its existence to him. Thank you sir.
