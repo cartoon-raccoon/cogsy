@@ -12,6 +12,7 @@ use crate::app::{
 use crate::utils;
 
 pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
+    let requester = build_client(token);
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
@@ -31,23 +32,24 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
 
     //* pulling data from Discogs
     if from_cmd {print!("Updating profile...")}
-    let profile = match profile(username.clone(), token.clone()) {
+    let profile = match profile(&requester, username.clone()) {
         Ok(profile) => profile,
         Err(e) => {return Err(e);}
     };
     if from_cmd {print!("    Success!\nUpdating wantlist...")}
-    let wantlist = match wantlist(username.clone(), token.clone()) {
+    let wantlist = match wantlist(&requester, username.clone()) {
         Ok(wantlist) => wantlist,
         Err(e) => {return Err(e);}
     };
     if from_cmd {print!("   Success!\nUpdating collection...")}
-    let collection = match collection(username, token) {
+    let collection = match collection(&requester, username) {
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
     };
     if from_cmd {print!(" Success!\n")}
     
     //* committing data to db
+    if from_cmd {println!("Writing to database...\n")}
     match update::profile(profile) {
         Ok(_) => {},
         Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
@@ -73,8 +75,7 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
     Ok(())
 }
 
-pub fn profile(username: String, token: String) -> Result<Profile, QueryError> {
-    let requester = build_client(token);
+pub fn profile(requester: &Client, username: String) -> Result<Profile, QueryError> {
     let profile_url = build_url(ParseType::Profile, username.clone());
     let master_prof: Profile;
 
@@ -110,16 +111,14 @@ pub fn profile(username: String, token: String) -> Result<Profile, QueryError> {
     Ok(master_prof)
 }
 
-pub fn wantlist(username: String, token: String) -> Result<Vec<Release>, QueryError> {
-    let requester = build_client(token);
+pub fn wantlist(requester: &Client, username: String) -> Result<Vec<Release>, QueryError> {
     let wantlist_url = build_url(ParseType::Wantlist, username.clone());
     let master_wants = get_full(&requester, ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
 
-pub fn collection(username: String, token: String) -> Result<Folders, QueryError> {
-    let requester = build_client(token);
+pub fn collection(requester: &Client, username: String) -> Result<Folders, QueryError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.clone());
     let folders_raw = query_discogs(&requester, &initial_url)?;
@@ -159,6 +158,9 @@ pub fn collection(username: String, token: String) -> Result<Folders, QueryError
 }
 
 //TODO: Make this multithreaded
+//* spawn threads from this function, pass get_releases as a closure
+//* might need to refactor the loop to retrieve urls from outside within collection()
+//* use a common Mutex'd vector for the threads to write to
 fn get_full(client: &Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();
