@@ -43,6 +43,7 @@ pub mod admin {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS wantlist (
                 id INTEGER PRIMARY KEY,
+                search_string TEXT,
                 title TEXT NOT NULL,
                 artist TEXT,
                 year INTEGER,
@@ -77,6 +78,7 @@ pub mod admin {
         let sqlcommand = format!(
             "CREATE TABLE IF NOT EXISTS {} (
                 id INTEGER PRIMARY KEY,
+                search_string TEXT,
                 title TEXT NOT NULL,
                 artist TEXT,
                 year INTEGER,
@@ -235,18 +237,20 @@ pub mod update {
             let mut stmt = conn.prepare(
                 &format!("INSERT INTO {}
                 (id,
+                search_string,
                 title,
                 artist,
                 year,
                 labels,
                 formats,
                 date_added) VALUES
-                (?1, ?2, ?3, ?4, ?5, ?6, ?7);", 
+                (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);", 
                 foldername)
             )?;
             stmt.execute(
                 &[
                     &release.id.to_string(),
+                    &release.search_string,
                     &release.title,
                     &release.artist,
                     &release.year.to_string(),
@@ -347,7 +351,7 @@ pub mod query {
         };
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(&format!(
-            "SELECT * FROM {} WHERE title LIKE '%{}%'",
+            "SELECT * FROM {} WHERE search_string LIKE '%{}%'",
             table_to_query, query
         ))?;
         let results = get_releases(&mut stmt, querytype)?;
@@ -415,8 +419,8 @@ pub mod query {
         let mut folder: Vec<Release> = Vec::with_capacity(size(querytype).unwrap_or(100));
 
             let contents = stmt.query_map(NO_PARAMS, |row| {
-                let labels_raw: String = row.get(4)?;
-                let formats_raw: String = row.get(5)?;
+                let labels_raw: String = row.get(5)?;
+                let formats_raw: String = row.get(6)?;
 
                 let labels = labels_raw.as_str()
                     .split(':')
@@ -429,13 +433,14 @@ pub mod query {
                 
                 Ok(Release {
                     id: row.get(0)?,
-                    title: row.get(1)?,
-                    artist: row.get(2)?,
-                    year: row.get(3)?,
+                    search_string: String::new(),
+                    title: row.get(2)?,
+                    artist: row.get(3)?,
+                    year: row.get(4)?,
                     labels: labels,
                     formats: formats,
                     //TODO: Handle the unwrap
-                    date_added: row.get(6)?,
+                    date_added: row.get(7)?,
                 })
             })?;
             for release in contents {

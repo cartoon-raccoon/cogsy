@@ -188,14 +188,17 @@ impl Command {
                 let argv = splitter(input.trim());
                 match argv {
                     Some(args) => {
+                        let query = args[2]
+                        .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+                        
                         if args[1] != "" {
                             return Err(CommandError::TooManyArgs(first, 1));
                         } else if args.len() < 3 {
                             return Err(CommandError::NotEnoughArgs(first, 1));
                         } else if from_wantlist {
-                            return Ok(Command::QueryWantlist(args[2].clone()));
+                            return Ok(Command::QueryWantlist(query));
                         } else {
-                            return Ok(Command::Query(args[2].clone()));
+                            return Ok(Command::Query(query));
                         }
                     }
                     None => Err(CommandError::InvalidAlbum)

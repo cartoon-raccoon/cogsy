@@ -123,7 +123,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         }
         Some(())
     } else if let Some(sub_m) = clapapp.subcommand_matches("listen") {
-        let album = sub_m.value_of("albumname").unwrap().to_string();
+        let album = sub_m.value_of("albumname").unwrap().to_string()
+        .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+
         match query::release(album.clone(), QueryType::Collection) {
             Ok(results) => {
                 if results.len() > 1 {
@@ -190,12 +192,16 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         //TODO: Streamline this wet-ass code
         if sub_m.is_present("wantlist") {
             query = sub_m.value_of("wantlist")
-            .unwrap_or_else(|| panic!("Album name is required.")).to_string();
+            .unwrap_or_else(|| panic!("Album name is required.")).to_string()
+            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+            
             querytype = QueryType::Wantlist;
             println!("Querying wantlist for: {}", query);
         } else {
             query = sub_m.value_of("albumname")
-            .unwrap_or_else(|| panic!("Album name is required.")).to_string();
+            .unwrap_or_else(|| panic!("Album name is required.")).to_string()
+            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+
             querytype = QueryType::Collection;
             println!("Querying collection for: {}\n", query);
         }

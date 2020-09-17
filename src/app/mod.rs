@@ -49,6 +49,7 @@ pub struct ListenLog { //wrapper around a BTreeMap
 #[derive(Debug, Clone, PartialEq)]
 pub struct Release {
     pub id: i64,
+    pub search_string: String,
     pub title: String,
     pub artist: String,
     pub year: u32,

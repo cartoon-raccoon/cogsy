@@ -13,6 +13,7 @@ use chrono::{
     DateTime,
     Utc,
 };
+use unidecode::unidecode;
 use crate::app::Release;
 
 /*
@@ -169,6 +170,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             let added_date = DateTime::parse_from_rfc3339(date_raw)
                 .unwrap(); //TODO: Fix this unwrap
             let info = entry.get("basic_information").unwrap();
+
             
             //TODO: Figure out how to do this functionally
             let mut label_names = Vec::<String>::new();
@@ -195,10 +197,14 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 }
                 formats.push(name);
             }
+            let title = info["title"].as_str().unwrap().to_string();
+            let search_string = unidecode(&title)
+            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
             releases.push(Release {
                 id: id_no as i64,
-                title: info["title"].as_str().unwrap().to_string(),
+                search_string: search_string,
+                title: title,
                 artist: info["artists"][0]["name"].as_str()
                     .unwrap()
                     .to_string(),
