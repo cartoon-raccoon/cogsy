@@ -79,7 +79,7 @@ Cogsy as an app with a user interface, has 4 main screens:
 This is Cogsy's heart. All of Cogsy's features are run from here. Vim users will find this familiar, as you activate it by pressing `:`. From here, you can run Cogsy's core commands. At any time, you can cancel a command by pressing Esc.
 
 Cogsy has four core commands:
-- `update`: Pulls user info from Discogs and updates the entire app database.
+- `update`: Pulls collection info from Discogs and updates the entire app database.
 - `listen [album]`: Cogsy's core feature. Pass it an album name and it will log the album title and the current time as a listening session.
 - `query [album]`: Query the local database for information on an album. Use the `-w` or `--wantlist` switch to query the wantlist, otherwise it defaults to querying the collection.
 - `random`: Use this when you can't decide what to play. It also logs the selected album as a listening session, unless you pass it the `-n`/`--nolog` switch.
@@ -97,12 +97,13 @@ Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to max
 - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
 Async behaviour is expected to be implemented in a future update.
 
-If there any other bugs, please raise an issue and I will do my best to respond and fix it.
+If there are any other bugs, please raise an issue and I will do my best to respond and fix it.
 
 ## Future Additions
 - OAuth2 integration, eliminating the need for a user token.
+- Adding a `price` command, allowing the user to set the price they paid for the album, and also a screen to display the increasing amount of money they spend on their music collection as a sparkview graph. The code to parse the command is already written, all that's left is to implement it.
 - Make the update function multithreaded, resulting in faster update times for users with larger collections.
-- An option to read user collection data from a CSV file (Discogs supports downloading collection data as a CSV file). This would prove to be useful for users with larger collections.
+- An option to read user collection data from a CSV file (Discogs supports downloading collection data as CSV). This would prove to be useful for users with larger collections.
 
 ## Credits
 [gyscos](https://github.com/gyscos) for the Cursive library that the user interface is built on. Thank you for this amazing crate, and for your assistance on Reddit.
