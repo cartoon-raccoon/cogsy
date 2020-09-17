@@ -79,10 +79,15 @@ impl App {
             println!("{}", DB_NOT_INIT_MSG);
             on_init_fail(config.username.clone(), token.clone());
         }
+        if !utils::usernames_match() {
+            println!("The username in your config file seems to have changed.");
+            println!("Would you like to use the new username? [Y/n]");
+            on_init_fail(config.username.clone(), token.clone());
+        }
         if !admin::check_integrity() {
             println!("{}", DB_INTEGRITY_FAIL_MSG);
             on_init_fail(config.username.clone(), token.clone());
-        } //TODO: add db-config username matching
+        }
 
         App {
             user_id: config.username,

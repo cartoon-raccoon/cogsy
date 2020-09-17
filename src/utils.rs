@@ -18,6 +18,7 @@ use cursive::theme::{
     PaletteColor::*,
     {BorderStyle, Palette, Theme}
 };
+use crate::app::database::query;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -70,6 +71,12 @@ impl Config {
             }
         }
     }
+}
+
+pub fn usernames_match() -> bool {
+    Config::load().username 
+    == 
+    query::profile().unwrap().username
 }
 
 pub fn get_utc_now() -> DateTime<Utc> {
