@@ -128,10 +128,10 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
             Ok(results) => {
                 if results.len() > 1 {
                     println!("Multiple results for `{}`, pick one:", album);
-                    for release in &results {
+                    for (i, release) in results.iter().enumerate() {
                         println!(
                             "[{}]: {} - {} ({})",
-                            results.iter().position(|x| x == release).unwrap() + 1,
+                            i + 1,
                             release.artist,
                             release.title,
                             format_vec(&release.formats),
