@@ -53,16 +53,30 @@ impl Config {
         io::stdin().read_line(&mut token)
             .expect("Oops, could not read line.");
         println!("Timezone:");
-        let mut timezone = String::new();
-        io::stdin().read_line(&mut timezone)
+        let mut timezone_raw = String::new(); let mut timezone: f32;
+        loop {
+            io::stdin().read_line(&mut timezone_raw)
             .expect("Oops, could not read line.");
+            match timezone_raw.trim().parse() {
+                Ok(num) => {
+                    timezone = num;
+                }
+                Err(_) => {
+                    timezone_raw.clear();
+                    println!("Please enter a valid timezone.");
+                    continue;
+                }
+            }
+            if timezone > 14.0 || timezone < -12.0 {
+                println!("Please enter a valid timezone.")
+            } else {
+                break;
+            }
+        }
         let config = Config {
             username: username.trim().to_string(),
             token: token.trim().to_string(),
-            timezone: match timezone.trim().parse() {
-                Ok(num) => num,
-                Err(_) => {panic!("Could not create config file!")}
-            }
+            timezone: timezone,
         };
         if let Ok(new_config) = toml::to_string(&config) {
             match OpenOptions::new().create(true).write(true).open(&config_file()) {
