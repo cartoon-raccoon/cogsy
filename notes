@@ -4,8 +4,8 @@ capabilities:
 saves a user's discogs collection into a local database
 pulls new collection updates from discogs
 random song functionality
-track listens and show listening history using unicode braille
-track money spent on record purchases and graph history using unicode braille
+track listens and show listening history using unicode chars
+track money spent on record purchases and graph history using unicode chars (coming soon)
 aims to be as independent of the internet as possible
  - only connects to the internet to pull user data (i.e. when running update)
  - everything else is handled offline (locally)
@@ -32,9 +32,8 @@ commands can also be executed in interactive mode
             if changed, it purges the current database and repopulates it with entries from the new username's collection)
    - random (selects a random album from the database for user to play and adds entry to listening log)
         -n, --nolog (does not add to listening log)
-   - price [album] [price] (sets the amount paid for the album)
-        (defaults to amount pulled from discogs)
-   - listen [album] [time] (when run without time, logs the current time)
+   - price [album] [price] (sets the amount paid for the album) (not yet)
+   - listen [album] (logs the album specified at the current time)
    - query [album] (queries the local database for album and displays release information)
         (no plans to support API queries)
    
@@ -53,8 +52,8 @@ list of screens (accessed by typing their names in the commandline)
 4: history (graphs the listening history of an album)
    - side menu of each album in collection, search bar at top
     (up/down to scroll, the graph of the highlighted album on the right)
-5: money spent (graph built with unicode braille)
-6: log (log of when albums were added)
+5: money spent (graph built with unicode braille) (not yet)
+6: log (log of when albums were added) (not yet)
 
 dependencies
    -cursive 0.15.0 -> termion backend
@@ -65,6 +64,7 @@ dependencies
    -regex 1.3.9 (regex matching)
    -chrono 0.4.15 (datetime support)
    -directories 3.0.1 (project directory)
+   -unidecode 0.3.0 (ascii conversion)
 
 app structure:
    commands.rs
@@ -87,29 +87,26 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Add text from album (album colors) to Release struct
-  - Matching config file username and database username
-    (Purge and refresh database if they don't match)
   - Coloured messages for commandline operation
   - Making update::collection() handle each batch concurrently (threading)
   - Implement different colours for folder list (not important)
 
 Future additions:
   - Turning update into a non-blocking, async function
+  - Making update multithreaded
   - Option to read from csv instead of pulling from web
     (for larger collections and wantlists)
   
 Issues:
   - :update freezes the app while it runs
-  - Query terms with apostrophes ' in them throw sqlite3 syntax errors
   - Storing DateTime as strings in the database doesn't sit well with me
   - Algorithm for generating sparkviews may not scale well
 
 Configuration:
-  Theme
-  Database filepath
+  Theme (WIP)
   Username
   Token
+  Timezone
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct
