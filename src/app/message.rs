@@ -1,11 +1,8 @@
-//* IMPORTANT: This module is essentially useless.
-//* It _is_ used in the App struct, but only the msg field is used.
-//* I'm just keeping this around in case I ever get around
-//* to implementing coloured text in the messagebox.
+//* this module only formats text for commandline usage.
+//* i'm still trying to figure out how to format text for the tui.
 
-use cursive::theme::{BaseColor, Color, ColorStyle, Style};
-//use cursive::utils::span::SpannedString;
-
+use ansi_term::Colour::{Red, Green, Yellow};
+use ansi_term::Style;
 /* 
 The idea is that this module processes a function that returns
 a SpannedString to insert as input to the TextView (commandline)
@@ -19,51 +16,7 @@ pub enum MessageKind {
     Error,
     Info,
     Hint,
-}
-
-#[allow(dead_code)]
-fn get_style(item: MessageKind) -> Style {
-    match item {
-        MessageKind::Error => {
-            let mut error_style = Style::none();
-            error_style.color = Some(ColorStyle::new(
-                Color::Dark(BaseColor::Red),
-                Color::TerminalDefault
-            ));
-
-            return error_style;
-        },
-        MessageKind::Info => {
-            let mut info_style = Style::none();
-            info_style.color = 
-            Some(ColorStyle::new(
-                Color::Dark(BaseColor::Yellow),
-                Color::TerminalDefault
-            ));
-
-            return info_style;
-        }
-        MessageKind::Hint => {
-            let mut hint_style = Style::none();
-            hint_style.color = 
-            Some(ColorStyle::new(
-                Color::Dark(BaseColor::Green),
-                Color::TerminalDefault
-            ));
-
-            return hint_style;
-        },
-    }
-}
-
-impl From<MessageKind> for Color {
-    fn from(item: MessageKind) -> Self {
-        match item {
-            MessageKind::Error => Color::Dark(BaseColor::Red),
-            MessageKind::Info => Color::Dark(BaseColor::Yellow),
-            MessageKind::Hint => Color::Dark(BaseColor::White),
-        }
-    }
+    Success,
 }
 
 impl<T> From<T> for Message
@@ -78,21 +31,32 @@ where
     }
 }
 
-#[allow(dead_code)]
+impl std::fmt::Display for Message {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self.kind {
+            MessageKind::Error => {
+                write!(f, "{}", Red.bold().paint(&self.msg))
+            }
+            MessageKind::Hint => {
+                write!(f, "{}", Yellow.paint(&self.msg))
+            }
+            MessageKind::Info => {
+                write!(f, "{}", Style::new().bold().paint(&self.msg))
+            }
+            MessageKind::Success => {
+                write!(f, "{}", Green.bold().paint(&self.msg))
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Message {
     pub msg: String,
     pub kind: MessageKind,
 }
 
-#[allow(dead_code)]
 impl Message {
-    pub fn contents(&self) -> &String {
-        &self.msg
-    }
-    pub fn kind(&self) -> MessageKind {
-        self.kind
-    }
     pub fn set(text: &str, kind: MessageKind) -> Self {
         Message {
             msg: text.to_string(),
@@ -104,7 +68,7 @@ impl Message {
 impl std::default::Default for Message {
     fn default() -> Self {
         Message {
-            msg: String::from("what"), //StyledString::styled("", get_style(MessageKind::Info)),
+            msg: String::from("what"),
             kind: MessageKind::Info,
         }
     }

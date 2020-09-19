@@ -8,6 +8,7 @@ use crate::app::{
     {Release, Folders, Profile},
     request::*,
     database::{admin, update, purge},
+    message::{Message, MessageKind},
 };
 use crate::utils;
 
@@ -36,20 +37,26 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
         Ok(profile) => profile,
         Err(e) => {return Err(e);}
     };
-    if from_cmd {print!("    Success!\nUpdating wantlist...")}
+    if from_cmd {
+        print!("{}", Message::set("     Success!", MessageKind::Success));
+        print!("\nUpdating wantlist...")
+    }
     let wantlist = match wantlist(&requester, username.clone()) {
         Ok(wantlist) => wantlist,
         Err(e) => {return Err(e);}
     };
-    if from_cmd {print!("   Success!\nUpdating collection...")}
+    if from_cmd {
+        print!("{}", Message::set("    Success!", MessageKind::Success));
+        print!("\nUpdating collection...")
+    }
     let collection = match collection(&requester, username) {
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
     };
-    if from_cmd {print!(" Success!\n")}
+    if from_cmd {print!("{}", Message::set("   Success!", MessageKind::Success));}
     
     //* committing data to db
-    if from_cmd {println!("Writing to database...\n")}
+    if from_cmd {println!("\nWriting to database...\n")}
     match update::profile(profile) {
         Ok(_) => {},
         Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
@@ -71,7 +78,9 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
             return Err(QueryError::DBWriteError(errormsg))
         }
     }
-    if from_cmd {println!("Database update successful.")}
+    if from_cmd {
+        println!("{}", Message::set("Database update successful.", MessageKind::Success));
+    }
     Ok(())
 }
 

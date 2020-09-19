@@ -58,13 +58,12 @@ fn on_init_fail(username: String, token: String) {
             }
         },
         "N\n" | "n\n" | "no\n" | "No\n" => {exit(1);},
-        _ => {println!("Please choose Y/N."); exit(1);}
+        _ => {println!("{}", Message::set("Please choose Y/N", MessageKind::Error)); exit(1);}
     }
 }
 
 impl App {
     pub fn initialize() -> Self {
-        //TODO: Load this from config
         if !Path::new(&utils::config_file()).exists() {
             Config::first_init();
         }
@@ -76,16 +75,21 @@ impl App {
         let dbfilepath = utils::database_file();
 
         if !Path::new(&dbfilepath).exists() {
-            println!("{}", DB_NOT_INIT_MSG);
+            println!("{}", Message::set(DB_NOT_INIT_MSG, MessageKind::Hint));
             on_init_fail(config.username.clone(), token.clone());
         }
         if !utils::usernames_match() {
-            println!("The username in your config file seems to have changed.");
+            println!("{}", 
+                Message::set(
+                    "The username in your config file seems to have changed.", 
+                    MessageKind::Hint
+                )
+            );
             println!("Would you like to use the new username? [Y/n]");
             on_init_fail(config.username.clone(), token.clone());
         }
         if !admin::check_integrity() {
-            println!("{}", DB_INTEGRITY_FAIL_MSG);
+            println!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
             on_init_fail(config.username.clone(), token.clone());
         }
 
@@ -115,7 +119,6 @@ impl App {
                                                      false, false);
                         match updateres {
                             Ok(()) => {
-                                //*Placeholder code (again)
                                 self.collection.folders = query::collection().unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
@@ -267,7 +270,6 @@ impl App {
             });
             s.focus_name("commandline").unwrap();
         });
-        //TODO: implement commands to handle opening of child screens
         s.add_global_callback(Event::Key(Key::Backspace), |s| {
             if s.screen().len() > 1 {
                 s.pop_layer();

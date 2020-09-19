@@ -14,7 +14,8 @@ use crate::app::{
     database::{
         query::{self, QueryType},
         update as dbupdate,
-    }
+    },
+    message::{Message, MessageKind},
 };
 use crate::screens::popup::format_vec;
 
@@ -78,7 +79,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         } else if sub_m.is_present("token") {
             println!("Sorry, in-app token updates are unsupported at this time.");
         } else {
-            println!("Beginning full database update.");
+            println!("{}",
+                Message::set("Beginning full database update.", MessageKind::Info)
+            );
             match update::full(app.user_id, app.token, true, false) {
                 Ok(()) => {}
                 Err(e) => {eprintln!("{}", e)}
@@ -87,7 +90,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         Some(())
     } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
         if sub_m.is_present("nolog") {
-            println!("Selecting random album without logging.");
+            println!("{}", 
+                Message::set("Selecting random album without logging.", MessageKind::Info)
+            );
             match query::random() {
                 Ok(random) => {
                     println!("You should play `{}.`", random.title);
@@ -97,7 +102,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                 }
             }
         } else {
-            println!("Selecting random album with logging.");
+            println!("{}", 
+                Message::set("Selecting random album with logging.", MessageKind::Info)
+            );
             match query::random() {
                 Ok(random) => {
                     let time_now = utils::get_utc_now();
@@ -128,7 +135,12 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         match query::release(album.clone(), QueryType::Collection) {
             Ok(results) => {
                 if results.len() > 1 {
-                    println!("Multiple results for `{}`, pick one:", album);
+                    println!("{}",
+                        Message::set(
+                            &format!("Multiple results for `{}`, pick one:", album),
+                            MessageKind::Info
+                        )
+                    );
                     for (i, release) in results.iter().enumerate() {
                         println!(
                             "[{}]: {} - {} ({})",
@@ -144,7 +156,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                             .expect("Oops, could not read line.");
                         let choice: usize = match answer.trim().parse() {
                             Ok(num) => num,
-                            Err(_) => {println!("Invalid input!"); continue}
+                            Err(_) => {println!("{}",
+                                Message::set("Invalid input!", MessageKind::Error)
+                            ); continue}
                         };
                         if choice <= results.len() {
                             let time_now = utils::get_utc_now();
@@ -162,7 +176,9 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                             }
                             break;
                             } else {
-                            println!("Please select a valid choice.");
+                            println!("{}",
+                                Message::set("Please select a valid choice.", MessageKind::Error)
+                            );
                         }
                     }
                 } else if results.len() == 1 {
