@@ -1,4 +1,5 @@
 use std::io;
+use std::process;
 use clap::{
     App as Clap,
     SubCommand,
@@ -22,7 +23,7 @@ use crate::screens::popup::format_vec;
 pub fn init<'a>() -> Clap<'a, 'a> {
     Clap::new("cogsy")
         .author("cartoon.raccoon")
-        .version("1.0.0")
+        .version("0.1.2")
         .about("A command line Discogs client written in Rust")
         .subcommand(SubCommand::with_name("update")
             .about("Updates the cogsy database.")
@@ -207,14 +208,20 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
         //TODO: Streamline this wet-ass code
         if sub_m.is_present("wantlist") {
             query = sub_m.value_of("wantlist")
-            .unwrap_or_else(|| panic!("Album name is required.")).to_string()
+            .unwrap_or_else(|| {
+                println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
+                process::exit(1);
+            }).to_string()
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
             querytype = QueryType::Wantlist;
             println!("Querying wantlist for: {}", query);
         } else {
             query = sub_m.value_of("albumname")
-            .unwrap_or_else(|| panic!("Album name is required.")).to_string()
+            .unwrap_or_else(|| {
+                println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
+                process::exit(1);
+            }).to_string()
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
             querytype = QueryType::Collection;
