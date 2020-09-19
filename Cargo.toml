@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["cartoon-raccoon <shaughn.chan@gmail.com>"]
 description = "A curses-based CLI Discogs client"
 readme = "README.md"
+homepage = "https://github.com/cartoon-raccoon/cogsy"
 repository = "https://github.com/cartoon-raccoon/cogsy"
 license = "LGPL-2.1"
 license-file = "LICENSE"
