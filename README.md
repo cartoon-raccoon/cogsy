@@ -35,7 +35,7 @@ Read the Arch Wiki article on Rust for more information.
 ## Install
 **macOS, Windows, and Linux**
 
-Cogsy can be installed from crates.io, the official Rust package registry:
+Cogsy cannot be installed yet, but once it is released, it can be installed from crates.io, the official Rust package registry:
 
 `cargo install cogsy`
 
