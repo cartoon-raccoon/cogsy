@@ -164,9 +164,9 @@ pub fn theme_gen() -> Theme {
 
 #[cfg(test)]
 mod tests {
+    use dirs::home_dir;
     use super::*;
     use crate::app::App;
-    use std::path::PathBuf;
     #[test] //it fails lmao but code works correctly
     fn check_config_loads_correctly() {
         let testcfg = Config::load();
@@ -178,14 +178,12 @@ mod tests {
 
     #[test]
     fn check_filepaths() {
-        assert_eq!(
-            config_file(), 
-            PathBuf::from("/home/raccoon/.config/cogsy/config.toml")
-        );
-        assert_eq!(
-            database_file(),
-            PathBuf::from("/home/raccoon/.local/share/cogsy/cogsy_data.db")
-        );
+        let mut homedir = home_dir().unwrap();
+        homedir.push(".config/cogsy/config.toml");
+        assert_eq!(config_file(), homedir);
+        homedir = home_dir().unwrap();
+        homedir.push(".local/share/cogsy/cogsy_data.db");
+        assert_eq!(database_file(), homedir);
     }
 
     #[test]
