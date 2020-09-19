@@ -48,7 +48,7 @@ If anyone is willing to package the app for their own distro, please let me know
 
 This app has been tested on Windows 10, Arch Linux and Fedora. Testing for MacOS is underway.
 
-_Note: Cogsy is still very much in development is still considered unstable._
+_Note: Cogsy is still very much in development and is still considered unstable._
 
 ## Setup
 The app requires some setup: To access the Discogs API, it requires a user token. To obtain this token, go to your Discogs account settings > Developers > Generate new token. Copy the generated string to your clipboard.
@@ -74,9 +74,14 @@ Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is bei
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
 Cogsy as an app with a user interface, has 4 main screens:
-1. **Collection**: This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
+![cogsy_main](images/screenshots/cogsy_main.png)
+1. **Collection**: 
+This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
+![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
 2. **Wantlist**: Pull this up by pressing 2. This displays the contents of your wantlist. Pressing Enter will pull up a screen displaying information on the selected album, and you can press Backspace to go back to the list.
+![cogsy_profile](images/screenshots/cogsy_profile.png)
 3. **Profile**: Your user profile. Pull this up by pressing 3.
+![cogsy_listen](images/screenshots/cogsy_profile.png)
 4. **Listen Graph**: This displays your listening history. Each block represents one day, and the size of each block reflects how many times you listened to that album in that day. To see your listening history as discrete entries, you can pull up that screen by pressing `h`.
 
 **The Command Line**
@@ -98,11 +103,13 @@ Read the notes file for more information on the app, what it can do and how to u
 Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable.
 
 ## Issues and Bugs
-**When running `update`, the app freezes up**
-- This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
+- **When running `update`, the app freezes up**
+    - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
 Async behaviour is expected to be implemented in a future update.
-- Panics when no arguments are passed to `cogsy query`. Working on fixing the logic for it now.
-- Large collections may slow the app down fairly noticeably.
+- **Panics when no arguments are passed to `cogsy query`** 
+    - Working on fixing the logic for it now.
+- **Large collections may slow the app down fairly noticeably**
+    - The computation for displaying the data to the screen is done lazily, i.e. everything is loaded from the database and processed only when the command is invoked. Nothing is pre-computed and cached beforehand. Working on implementing this now.
 
 If there are any other bugs, please raise an issue and I will do my best to respond and fix it.
 
