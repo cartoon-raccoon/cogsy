@@ -74,15 +74,15 @@ Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is bei
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
 Cogsy as an app with a user interface, has 4 main screens:
-![cogsy_main](images/screenshots/cogsy_main.png)
 1. **Collection**: 
 This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
-![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
+![cogsy_main](images/screenshots/cogsy_main.png)
 2. **Wantlist**: Pull this up by pressing 2. This displays the contents of your wantlist. Pressing Enter will pull up a screen displaying information on the selected album, and you can press Backspace to go back to the list.
-![cogsy_profile](images/screenshots/cogsy_profile.png)
+![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
 3. **Profile**: Your user profile. Pull this up by pressing 3.
-![cogsy_listen](images/screenshots/cogsy_profile.png)
+![cogsy_profile](images/screenshots/cogsy_profile.png)
 4. **Listen Graph**: This displays your listening history. Each block represents one day, and the size of each block reflects how many times you listened to that album in that day. To see your listening history as discrete entries, you can pull up that screen by pressing `h`.
+![cogsy_listen](images/screenshots/cogsy_listen.png)
 
 **The Command Line**
 
