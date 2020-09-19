@@ -97,7 +97,7 @@ impl App {
             user_id: config.username,
             token: token,
             message: Message {
-                msg: String::from("Cogsy v0.1.0"),
+                msg: String::from("Cogsy v0.1.1"),
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
