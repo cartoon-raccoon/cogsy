@@ -1,13 +1,12 @@
 [package]
 name = "cogsy"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["cartoon-raccoon <shaughn.chan@gmail.com>"]
 description = "A curses-based CLI Discogs client"
 readme = "README.md"
 homepage = "https://github.com/cartoon-raccoon/cogsy"
 repository = "https://github.com/cartoon-raccoon/cogsy"
 license = "LGPL-2.1"
-license-file = "LICENSE"
 keywords = ["cogsy", "music", "vinyl", "records", "discogs"]
 edition = "2018"
 
