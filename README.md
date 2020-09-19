@@ -75,7 +75,7 @@ Cogsy can be run as a TUI text-based interface or as a command line app, dependi
 
 Cogsy as an app with a user interface, has 4 main screens:
 1. **Collection**: 
-This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
+This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. Pressing Enter on a selected album will bring up a screen with the album's information. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
 ![cogsy_main](images/screenshots/cogsy_main.png)
 2. **Wantlist**: Pull this up by pressing 2. This displays the contents of your wantlist. Pressing Enter will pull up a screen displaying information on the selected album, and you can press Backspace to go back to the list.
 ![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
