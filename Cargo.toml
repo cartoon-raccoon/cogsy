@@ -2,6 +2,10 @@
 name = "cogsy"
 version = "0.1.0"
 authors = ["cartoon-raccoon <shaughn.chan@gmail.com>"]
+description = "A curses-based CLI Discogs client"
+license = "LGPL-2.1"
+license-file = "LICENSE"
+keywords = ["cogsy", "music", "vinyl", "records", "discogs"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
