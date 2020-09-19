@@ -165,6 +165,7 @@ dependencies = [
  "clap",
  "cursive",
  "directories",
+ "dirs",
  "regex",
  "reqwest",
  "rusqlite",
@@ -321,6 +322,15 @@ name = "directories"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fed639d60b58d0f53498ab13d26f621fd77569cc6edb031f4cc36a2ad9da0f"
+dependencies = [
+ "dirs-sys",
+]
+
+[[package]]
+name = "dirs"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "142995ed02755914747cc6ca76fc7e4583cd18578746716d0508ea6ed558b9ff"
 dependencies = [
  "dirs-sys",
 ]
