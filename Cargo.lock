@@ -29,6 +29,12 @@ dependencies = [
 
 [[package]]
 name = "ansi_term"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae206c860259479b73b3abc98b66da811843056ed570ed79eb95d3d9b2524325"
+
+[[package]]
+name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
@@ -141,7 +147,7 @@ version = "2.33.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10040cdf04294b565d9e0319955430099ec3813a64c952b86a41200ad714ae48"
 dependencies = [
- "ansi_term",
+ "ansi_term 0.11.0",
  "atty",
  "bitflags",
  "strsim 0.8.0",
@@ -154,6 +160,7 @@ dependencies = [
 name = "cogsy"
 version = "0.1.0"
 dependencies = [
+ "ansi_term 0.6.3",
  "chrono",
  "clap",
  "cursive",
