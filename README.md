@@ -7,18 +7,19 @@ Cogsy is a curses-based command line app for tracking your Discogs collection. I
 
 For the uninformed, [Discogs](https://www.discogs.com) is a website/marketplace where music enthusiasts can collect and sell physical music media such as vinyl records and CDs.
 
-Cogsy's target audience is admittedly, not very large. It is targeted at people who use their computer's terminal on a daily basis, _and_ are also music enthusiasts with a vinyl/CD collection. That being said, if you don't fit into the above demographic, but this app still appeals to you, do give it a try!
-
 **The final capabilities of this app are:**
 - Query the Discogs database using a user's username and app token. (OAuth integration is expected, but not a priority.)
 - Store the data in a database and display it in a TUI when the app is started.
 - Log user's listening history, and display it when needed.
+
+Cogsy's target audience is admittedly, not very large. It is targeted at people who use their computer's terminal on a daily basis, _and_ are also music enthusiasts with a vinyl/CD collection. That being said, if you don't fit into the above demographic, but this app still appeals to you, do give it a try!
 
 **Note: This app cannot make changes to the user's collection or make purchases, and there are no plans to support this. This will all have to be done on Discogs itself.**
 
 ## Requirements
 - `cargo` v1.46.0 or later (The official Rust build tool and package manager)
 - `rustc` v1.46.0 or later (The official Rust compiler)
+- `gcc` v10 or later (For linking, `rustc` does not do linking by itself)
 - A Discogs account (obviously)
 
 You can install everything using the `rustup` toolchain manager, instructions available from the official Rust [install page](https://www.rust-lang.org/tools/install). 
@@ -32,10 +33,10 @@ rustup default stable
 ```
 Read the Arch Wiki article on Rust for more information.
 
-## Install
+## Installation
 **macOS, Windows, and Linux**
 
-Cogsy cannot be installed yet, but once it is released, it can be installed from crates.io, the official Rust package registry:
+Cogsy can be installed from crates.io, the official Rust package registry:
 
 `cargo install cogsy`
 
@@ -43,7 +44,11 @@ Work is in progress to package the app for the Arch Linux AUR, which is the reco
 
 `yay -S cogsy` _(or use your preferred AUR helper)_
 
+If anyone is willing to package the app for their own distro, please let me know and then go ahead.
+
 This app has been tested on Windows 10, Arch Linux and Fedora. Testing for MacOS is underway.
+
+_Note: Cogsy is still very much in development is still considered unstable._
 
 ## Setup
 The app requires some setup: To access the Discogs API, it requires a user token. To obtain this token, go to your Discogs account settings > Developers > Generate new token. Copy the generated string to your clipboard.
@@ -96,6 +101,8 @@ Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to max
 **When running `update`, the app freezes up**
 - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
 Async behaviour is expected to be implemented in a future update.
+- Panics when no arguments are passed to `cogsy query`. Working on fixing the logic for it now.
+- Large collections may slow the app down fairly noticeably.
 
 If there are any other bugs, please raise an issue and I will do my best to respond and fix it.
 
