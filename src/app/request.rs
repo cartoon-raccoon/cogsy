@@ -96,12 +96,12 @@ pub fn query_discogs(requester: &Client, url: &String) -> Result<String, QueryEr
     }
 }
 
-pub fn build_client(token: String) -> Client {
+pub fn build_client(token: &str) -> Client {
     let mut headers = HeaderMap::new();
 
     headers.insert(
         header::AUTHORIZATION,
-        header::HeaderValue::from_str(&token).unwrap());
+        header::HeaderValue::from_str(token).unwrap());
     let requester = Client::builder()
                         .user_agent("cogsy")
                         .default_headers(headers)
@@ -111,7 +111,7 @@ pub fn build_client(token: String) -> Client {
 }
 
 //builds a url based on its parsetype and user id
-pub fn build_url(parse: ParseType, username: String) -> String {
+pub fn build_url(parse: ParseType, username: &str) -> String {
     match parse {
         ParseType::Initial => {
             format!("https://api.discogs.com/users/{}/collection/folders", username)

@@ -41,7 +41,7 @@ const DB_NOT_INIT_MSG: &str =
 const DB_INTEGRITY_FAIL_MSG: &str =
 "Database integrity check failed, would you like to re-initialize it now? [Y/n]";
 
-fn on_init_fail(username: String, token: String) {
+fn on_init_fail(username: &str, token: &str) {
     let mut answer = String::new();
     io::stdin().read_line(&mut answer)
         .expect("Oops, could not read line.");
@@ -76,7 +76,7 @@ impl App {
 
         if !Path::new(&dbfilepath).exists() {
             println!("{}", Message::set(DB_NOT_INIT_MSG, MessageKind::Hint));
-            on_init_fail(config.username.clone(), token.clone());
+            on_init_fail(&config.username, &token);
         }
         if !utils::usernames_match() {
             println!("{}", 
@@ -86,11 +86,11 @@ impl App {
                 )
             );
             println!("Would you like to use the new username? [Y/n]");
-            on_init_fail(config.username.clone(), token.clone());
+            on_init_fail(&config.username, &token);
         }
         if !admin::check_integrity() {
             println!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
-            on_init_fail(config.username.clone(), token.clone());
+            on_init_fail(&config.username, &token);
         }
 
         App {
@@ -114,8 +114,8 @@ impl App {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content("Updating collection...");
                         });
-                        let updateres = update::full(self.user_id.clone(), 
-                                                     self.token.clone(), 
+                        let updateres = update::full(&self.user_id, 
+                                                     &self.token, 
                                                      false, false);
                         match updateres {
                             Ok(()) => {

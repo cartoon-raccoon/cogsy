@@ -12,8 +12,8 @@ use crate::app::{
 };
 use crate::utils;
 
-pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
-    let requester = build_client(token);
+pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
+    let requester = build_client(&token);
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
@@ -33,7 +33,7 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
 
     //* pulling data from Discogs
     if from_cmd {print!("Updating profile...")}
-    let profile = match profile(&requester, username.clone()) {
+    let profile = match profile(&requester, username) {
         Ok(profile) => profile,
         Err(e) => {return Err(e);}
     };
@@ -41,7 +41,7 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
         print!("{}", Message::set("     Success!", MessageKind::Success));
         print!("\nUpdating wantlist...")
     }
-    let wantlist = match wantlist(&requester, username.clone()) {
+    let wantlist = match wantlist(&requester, username) {
         Ok(wantlist) => wantlist,
         Err(e) => {return Err(e);}
     };
@@ -53,7 +53,7 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
     };
-    if from_cmd {print!("{}", Message::set("   Success!", MessageKind::Success));}
+    if from_cmd {print!("{}", Message::set("  Success!", MessageKind::Success));}
     
     //* committing data to db
     if from_cmd {println!("\nWriting to database...\n")}
@@ -84,8 +84,8 @@ pub fn full(username: String, token: String, from_cmd: bool, debug: bool) -> Res
     Ok(())
 }
 
-pub fn profile(requester: &Client, username: String) -> Result<Profile, QueryError> {
-    let profile_url = build_url(ParseType::Profile, username.clone());
+pub fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
+    let profile_url = build_url(ParseType::Profile, username);
     let master_prof: Profile;
 
     //pulling profile and deserialization
@@ -120,16 +120,16 @@ pub fn profile(requester: &Client, username: String) -> Result<Profile, QueryErr
     Ok(master_prof)
 }
 
-pub fn wantlist(requester: &Client, username: String) -> Result<Vec<Release>, QueryError> {
-    let wantlist_url = build_url(ParseType::Wantlist, username.clone());
+pub fn wantlist(requester: &Client, username: &str) -> Result<Vec<Release>, QueryError> {
+    let wantlist_url = build_url(ParseType::Wantlist, username);
     let master_wants = get_full(&requester, ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
 
-pub fn collection(requester: &Client, username: String) -> Result<Folders, QueryError> {
+pub fn collection(requester: &Client, username: &str) -> Result<Folders, QueryError> {
     //* 1a: Enumerating folders
-    let initial_url = build_url(ParseType::Initial, username.clone());
+    let initial_url = build_url(ParseType::Initial, username);
     let folders_raw = query_discogs(&requester, &initial_url)?;
     let mut folders = HashMap::<String, String>::new();
 
@@ -158,10 +158,10 @@ pub fn collection(requester: &Client, username: String) -> Result<Folders, Query
     let mut master_folders: Folders = Folders::new();
 
     //*1b: Pulling each folder
-    for (name, folderurl) in folders.iter() {
-        let collection_url = build_url(ParseType::Folders(folderurl.clone()), username.clone());
+    for (name, folderurl) in folders {
+        let collection_url = build_url(ParseType::Folders(folderurl), &username);
         let releases = get_full(&requester, ParseType::Collection, collection_url)?;
-        master_folders.push(name.clone(), releases);
+        master_folders.push(name, releases);
     }
     Ok(master_folders)
 }

@@ -83,7 +83,7 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
             println!("{}",
                 Message::set("Beginning full database update.", MessageKind::Info)
             );
-            match update::full(app.user_id, app.token, true, false) {
+            match update::full(&app.user_id, &app.token, true, false) {
                 Ok(()) => {}
                 Err(e) => {eprintln!("{}", e)}
             }
