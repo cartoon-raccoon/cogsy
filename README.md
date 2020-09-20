@@ -35,6 +35,7 @@ Read the Arch Wiki article on Rust for more information.
 
 ## Installation
 **macOS, Windows, and Linux**
+
 Cogsy is currently broken on Windows 10, due to an ncurses dependency. This bug is being worked on right now.
 
 Cogsy can be installed from crates.io, the official Rust package registry:
