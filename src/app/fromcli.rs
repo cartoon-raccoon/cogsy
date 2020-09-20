@@ -23,7 +23,7 @@ use crate::screens::popup::format_vec;
 pub fn init<'a>() -> Clap<'a, 'a> {
     Clap::new("cogsy")
         .author("cartoon.raccoon")
-        .version("0.1.2")
+        .version("0.1.3")
         .about("A command line Discogs client written in Rust")
         .subcommand(SubCommand::with_name("update")
             .about("Updates the cogsy database.")
