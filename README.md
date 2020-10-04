@@ -2,6 +2,8 @@
 ### a curses-based, command line local Discogs client written in Rust
 ![cogsy logo](images/cogsy_logo.png)
 
+![version](https://img.shields.io/crates/v/cogsy) ![downloads](https://img.shields.io/crates/d/cogsy)
+
 ## About
 Cogsy is a curses-based command line app for tracking your Discogs collection. It queries the Discogs API and allows you to view that information offline, without the need for a browser. It also adds additional features such as tracking your listening history, and displaying it nicely for you.
 
