@@ -88,8 +88,9 @@ app structure:
 
 TODO:
   - Coloured messages for commandline operation
-  - Making update::collection() handle each batch concurrently (threading)
   - Implement different colours for folder list (not important)
+  - Fix unwraps
+  - History popup
 
 Future additions:
   - Turning update into a non-blocking, async function
