@@ -52,7 +52,7 @@ If anyone is willing to package the app for their own distro, please let me know
 
 This app has been tested on Arch Linux and Fedora. Testing for MacOS and Windows is underway.
 
-_Note: Cogsy is still very much in development and is still considered unstable._
+_Note: Cogsy is still very much in development and is still considered unstable. It will only enter 1.0.0 when it works on all three target OSes._
 
 ## Setup
 The app requires some setup: To access the Discogs API, it requires a user token. To obtain this token, go to your Discogs account settings > Developers > Generate new token. Copy the generated string to your clipboard.
@@ -75,6 +75,8 @@ The config file contains the information you entered during first time startup.
 Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
 
 ## Usage
+_Multithreading has been implmented for Cogsy! It will now concurrently pull the contents of each folder. See the notes below for more info._
+
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
 Cogsy as an app with a user interface, has 4 main screens:
@@ -104,14 +106,12 @@ For example, `cogsy update` will cause Cogsy to update its database and exit. `c
 
 Read the notes file for more information on the app, what it can do and how to use it. This part of the readme is still a WIP, and a wiki is in the works.
 
-Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable.
+Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
 ## Issues and Bugs
 - **When running `update`, the app freezes up**
     - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
 Async behaviour is expected to be implemented in a future update.
-- **Panics when no arguments are passed to `cogsy query`** 
-    - Working on fixing the logic for it now.
 - **Large collections may slow the app down fairly noticeably**
     - The computation for displaying the data to the screen is done lazily, i.e. everything is loaded from the database and processed only when the command is invoked. Nothing is pre-computed and cached beforehand. Working on implementing this now.
 
@@ -120,8 +120,8 @@ If there are any other bugs, please raise an issue and I will do my best to resp
 ## Future Additions
 - OAuth2 integration, eliminating the need for a user token.
 - Adding a `price` command, allowing the user to set the price they paid for the album, and also a screen to display the increasing amount of money they spend on their music collection as a sparkview graph. The code to parse the command is already written, all that's left is to implement it.
-- Make the update function multithreaded, resulting in faster update times for users with larger collections.
 - An option to read user collection data from a CSV file (Discogs supports downloading collection data as CSV). This would prove to be useful for users with larger collections.
+- A popup in Listening history that shows the history for the album only.
 
 ## Credits
 [gyscos](https://github.com/gyscos) for the Cursive library that the user interface is built on. Thank you for this amazing crate, and for your assistance on Reddit.
