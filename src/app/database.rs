@@ -343,7 +343,6 @@ pub mod query {
     }
 
     //returns a vec of releases to support multiple results
-    //TODO: Escape single apostrophes in search terms
     pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
         let table_to_query: String = match querytype {
             QueryType::Collection => "All_".to_string(),
@@ -439,7 +438,6 @@ pub mod query {
                     year: row.get(4)?,
                     labels: labels,
                     formats: formats,
-                    //TODO: Handle the unwrap
                     date_added: row.get(7)?,
                 })
             })?;
@@ -470,10 +468,7 @@ pub mod purge {
         }
         for name in folder_names {
             let sqlcommand = format!("DROP TABLE {}", name);
-            match conn.execute(&sqlcommand, NO_PARAMS) {
-                Ok(_) => {},
-                Err(_) => {}
-            }
+            conn.execute(&sqlcommand, NO_PARAMS)?;
         }
         table("folders")?;
         Ok(())
@@ -484,11 +479,8 @@ pub mod purge {
     pub fn table(tablename: &str) -> Result<(), Box<dyn Error>> {
         let conn = Connection::open(utils::database_file())?;
         let sqlcommand = format!("DELETE FROM {}", tablename);
-
-        match conn.execute(&sqlcommand, NO_PARAMS) {
-            Ok(_) => Ok(()),
-            Err(_) => Ok(())
-        }
+        conn.execute(&sqlcommand, NO_PARAMS)?;
+        Ok(())
     }
 
     //* This will have to be called if orphan folders are detected.

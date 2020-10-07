@@ -1,6 +1,8 @@
-use std::path::Path;
-use std::thread;
-use std::collections::HashMap;
+use std::{
+    path::Path,
+    thread,
+    collections::HashMap,
+};
 
 use serde_json::Value;
 use reqwest::blocking::Client;
@@ -181,10 +183,6 @@ pub fn collection(requester: Client, username: &str) -> Result<Folders, QueryErr
     Ok(master_folders)
 }
 
-//TODO: Make this multithreaded
-//* spawn threads from this function, pass get_releases as a closure
-//* might need to refactor the loop to retrieve urls from outside within collection()
-//* use a common Mutex'd vector for the threads to write to
 fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();

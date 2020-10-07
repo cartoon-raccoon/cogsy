@@ -14,17 +14,11 @@ use chrono::{
     Utc,
 };
 use unidecode::unidecode;
-use crate::app::Release;
 
-/*
-* This module handles Discogs API requests and JSON deserialization
-* The one main function exposed by this module is fullupdate();
-* It returns a native Rust data structure that can be parsed without
-* any form of (de)serialization or conversion
-*/
+use crate::app::Release;
+use crate::utils;
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub enum ParseType {
     Initial,
     Profile,
@@ -172,7 +166,8 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             let date_raw = entry.get("date_added").unwrap()
                 .as_str().unwrap();
             let added_date = DateTime::parse_from_rfc3339(date_raw)
-                .unwrap(); //TODO: Fix this unwrap
+                .unwrap_or(utils::get_utc_now()
+                .with_timezone(&utils::Config::timezone()));
             let info = entry.get("basic_information").unwrap();
 
             
