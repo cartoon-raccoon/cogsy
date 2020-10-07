@@ -41,6 +41,7 @@ pub enum QueryError {
     AuthorizationError,
     UnknownError,
     ParseError,
+    ThreadPanicError,
     DBWriteError(String),
 }
 
@@ -66,6 +67,9 @@ impl std::fmt::Display for QueryError {
             }
             QueryError::ParseError => {
                 write!(f, "Error: Could not parse data from Discogs. Please try updating again.")
+            }
+            QueryError::ThreadPanicError => {
+                write!(f, "Error: Update thread panicked. Please try again.")
             }
             QueryError::DBWriteError(e) => {
                 write!(f, "Database error: {}", e.to_string())
@@ -111,7 +115,7 @@ pub fn build_client(token: &str) -> Client {
 }
 
 //builds a url based on its parsetype and user id
-pub fn build_url(parse: ParseType, username: &str) -> String {
+pub fn build_url(parse: ParseType, username: String) -> String {
     match parse {
         ParseType::Initial => {
             format!("https://api.discogs.com/users/{}/collection/folders", username)

@@ -1,9 +1,11 @@
 use std::path::Path;
-
+use std::thread;
 use std::collections::HashMap;
+
 use serde_json::Value;
 use reqwest::blocking::Client;
 use chrono::{DateTime, Utc};
+
 use crate::app::{
     {Release, Folders, Profile},
     request::*,
@@ -41,7 +43,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         print!("{}", Message::set("     Success!", MessageKind::Success));
         print!("\nUpdating wantlist...")
     }
-    let wantlist = match wantlist(&requester, username) {
+    let wantlist = match wantlist(requester.clone(), username) {
         Ok(wantlist) => wantlist,
         Err(e) => {return Err(e);}
     };
@@ -49,7 +51,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         print!("{}", Message::set("    Success!", MessageKind::Success));
         print!("\nUpdating collection...")
     }
-    let collection = match collection(&requester, username) {
+    let collection = match collection(requester, username) {
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
     };
@@ -85,7 +87,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
 }
 
 pub fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
-    let profile_url = build_url(ParseType::Profile, username);
+    let profile_url = build_url(ParseType::Profile, username.to_string());
     let master_prof: Profile;
 
     //pulling profile and deserialization
@@ -120,16 +122,16 @@ pub fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError
     Ok(master_prof)
 }
 
-pub fn wantlist(requester: &Client, username: &str) -> Result<Vec<Release>, QueryError> {
-    let wantlist_url = build_url(ParseType::Wantlist, username);
-    let master_wants = get_full(&requester, ParseType::Wantlist, wantlist_url)?;
+pub fn wantlist(requester: Client, username: &str) -> Result<Vec<Release>, QueryError> {
+    let wantlist_url = build_url(ParseType::Wantlist, username.to_string());
+    let master_wants = get_full(requester, ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
 
-pub fn collection(requester: &Client, username: &str) -> Result<Folders, QueryError> {
+pub fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> {
     //* 1a: Enumerating folders
-    let initial_url = build_url(ParseType::Initial, username);
+    let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;
     let mut folders = HashMap::<String, String>::new();
 
@@ -156,13 +158,26 @@ pub fn collection(requester: &Client, username: &str) -> Result<Folders, QueryEr
     } else {return Err(QueryError::ParseError);}
 
     let mut master_folders: Folders = Folders::new();
+    let mut threads = Vec::new();
+    // let (tx, rx) = mpsc::channel();
 
     //*1b: Pulling each folder
     for (name, folderurl) in folders {
-        let collection_url = build_url(ParseType::Folders(folderurl), &username);
-        let releases = get_full(&requester, ParseType::Collection, collection_url)?;
-        master_folders.push(name, releases);
+        let owned_uname = username.to_string();
+        let req_clone = requester.clone();
+        threads.push(thread::spawn( move || -> Result<(String, Vec<Release>), QueryError> {
+            let collection_url = build_url(ParseType::Folders(folderurl), owned_uname);
+            let releases = get_full(req_clone, ParseType::Collection, collection_url)?;
+            Ok((name, releases))
+        }));
     }
+    for thread in threads {
+        let (name, releases) = match thread.join() {
+            Ok(result) => result?,
+            Err(_) => {return Err(QueryError::ThreadPanicError);}
+        };
+        master_folders.push(name, releases);
+    };
     Ok(master_folders)
 }
 
@@ -170,14 +185,14 @@ pub fn collection(requester: &Client, username: &str) -> Result<Folders, QueryEr
 //* spawn threads from this function, pass get_releases as a closure
 //* might need to refactor the loop to retrieve urls from outside within collection()
 //* use a common Mutex'd vector for the threads to write to
-fn get_full(client: &Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
+fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();
 
     //main update loop
     //TODO: Make this nicer and handle the unwraps
     loop { //I hate the stupid pyramid of doom here
-        match query_discogs(client, &url) {
+        match query_discogs(&client, &url) {
             Ok(text) => {
                 let total: u64;
                 let response: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
