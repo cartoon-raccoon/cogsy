@@ -17,7 +17,6 @@ use crate::app::{
 use crate::utils;
 
 pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
-    let requester = build_client(&token);
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
@@ -34,8 +33,10 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         Ok(_) => {},
         Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
     }
-
+    
     //* pulling data from Discogs
+    let requester = build_client(&token);
+    
     if from_cmd {print!("Updating profile...")}
     let profile = match profile(&requester, username) {
         Ok(profile) => profile,
@@ -60,16 +61,21 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     if from_cmd {print!("{}", Message::set("  Success!", MessageKind::Success));}
     
     //* committing data to db
+    let mut dbhandle = match update::DBHandle::new() {
+        Ok(handle) => handle,
+        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()));}
+    };
+
     if from_cmd {println!("\nWriting to database...\n")}
-    match update::profile(profile) {
+    match dbhandle.update_profile(profile) {
         Ok(_) => {},
         Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
     }
-    match update::wantlist(wantlist) {
+    match dbhandle.update_wantlist(wantlist) {
         Ok(_) => {},
         Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
     }
-    match update::collection(collection) {
+    match dbhandle.update_collection(collection) {
         Ok(_) => {},
         Err(e) => return Err(QueryError::DBWriteError(e.to_string())),
     }

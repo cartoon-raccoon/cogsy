@@ -150,53 +150,63 @@ pub mod update {
         purge,
     };
 
-    pub fn profile(profile: Profile) -> Result<(), Box<dyn Error>> {
-        purge::table("profile")?;
-        let conn = Connection::open(utils::database_file())?;
-        conn.execute("INSERT INTO profile 
-        (username, 
-        real_name, 
-        registered, 
-        listings, 
-        collection, 
-        wantlist,
-        rated,
-        average_rating) VALUES
-        (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);", 
-        &[
-            &profile.username,
-            &profile.real_name,
-            &profile.registered.to_rfc3339(),
-            &profile.listings.to_string(),
-            &profile.collection.to_string(),
-            &profile.wantlist.to_string(),
-            &profile.rated.to_string(),
-            &profile.average_rating.to_string()
-        ])?;
-        Ok(())
+    pub struct DBHandle {
+        conn: Connection,
     }
 
-    pub fn collection(mut collection: Folders) -> Result<(), Box<dyn Error>> {
-        purge::folders()?;
-        let conn = Connection::open(utils::database_file())?;
-        for (name, folder) in collection.contents.iter_mut() {
-            let mut sanitized_name = name.clone();
-            sanitized_name.push_str("_");
-            conn.execute(
-                "INSERT INTO folders (name) VALUES (?1)",
-                &[&sanitized_name]
-            )?;
-            admin::init_folder(sanitized_name.clone(), &conn)?;
-            add_releases(&conn, &sanitized_name, folder)?;
+    impl DBHandle {
+        pub fn new() -> Result<Self, Box<dyn Error>> {
+            let connection = Connection::open(utils::database_file())?;
+            Ok(DBHandle {
+                conn: connection,
+            })
         }
-        Ok(())
-    }
 
-    pub fn wantlist(mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
-        purge::table("wantlist")?;
-        let conn = Connection::open(utils::database_file())?;
-        add_releases(&conn, "wantlist", &mut wantlist)?;
-        Ok(())
+        pub fn update_profile(&mut self, profile: Profile) -> Result<(), Box<dyn Error>> {
+            purge::table("profile")?;
+            self.conn.execute("INSERT INTO profile 
+            (username, 
+            real_name, 
+            registered, 
+            listings, 
+            collection, 
+            wantlist,
+            rated,
+            average_rating) VALUES
+            (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);", 
+            &[
+                &profile.username,
+                &profile.real_name,
+                &profile.registered.to_rfc3339(),
+                &profile.listings.to_string(),
+                &profile.collection.to_string(),
+                &profile.wantlist.to_string(),
+                &profile.rated.to_string(),
+                &profile.average_rating.to_string()
+            ])?;
+            Ok(())
+        }
+
+        pub fn update_collection(&mut self, mut collection: Folders) -> Result<(), Box<dyn Error>> {
+            purge::folders()?;
+            for (name, folder) in collection.contents.iter_mut() {
+                let mut sanitized_name = name.clone();
+                sanitized_name.push_str("_");
+                self.conn.execute(
+                    "INSERT INTO folders (name) VALUES (?1)",
+                    &[&sanitized_name]
+                )?;
+                admin::init_folder(sanitized_name.clone(), &self.conn)?;
+                add_releases(&self.conn, &sanitized_name, folder)?;
+            }
+            Ok(())
+        }
+
+        pub fn update_wantlist(&mut self, mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
+            purge::table("wantlist")?;
+            add_releases(&self.conn, "wantlist", &mut wantlist)?;
+            Ok(())
+        }
     }
 
     pub fn listenlog(entry: ListenLogEntry) -> Result<(), Box<dyn Error>> {
