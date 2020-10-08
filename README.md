@@ -31,7 +31,7 @@ For Linux users, it is recommended you install `rustup` from your distro's repos
 For Arch Linux users:
 ```
 pacman -S rustup
-rustup default stable
+rustup default stable/nightly
 ```
 Read the Arch Wiki article on Rust for more information.
 
@@ -39,6 +39,14 @@ Read the Arch Wiki article on Rust for more information.
 **macOS, Windows, and Linux**
 
 Cogsy is currently broken on Windows 10, due to an ncurses dependency. This bug is being worked on right now.
+
+_Due to a dependency using a nightly-only feature, the stable toolchain will not compile Cogsy. You have to install and compile Cogsy with the nightly toolchain._
+
+To switch to the nightly toolchain, run:
+
+`rustup default nightly`
+
+It's really sad, I know.
 
 Cogsy can be installed from crates.io, the official Rust package registry:
 
@@ -106,7 +114,7 @@ For example, `cogsy update` will cause Cogsy to update its database and exit. `c
 
 Read the notes file for more information on the app, what it can do and how to use it. This part of the readme is still a WIP, and a wiki is in the works.
 
-Note: The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
+**Important Note:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
 ## Issues and Bugs
 - **When running `update`, the app freezes up**
