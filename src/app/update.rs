@@ -46,14 +46,25 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         print!("{}", Message::set("     Success!", MessageKind::Success));
         print!("\nUpdating wantlist...")
     }
-    let wantlist = match wantlist(requester.clone(), username) {
-        Ok(wantlist) => wantlist,
-        Err(e) => {return Err(e);}
+
+    //Spawning a synchronous thread to catch panics when parsing json
+    let owned_uname = username.to_string();
+    let req_clone = requester.clone();
+    let wantlist = match thread::spawn( move || -> Result<Vec<Release>, QueryError> {
+        match wantlist(req_clone, owned_uname) {
+            Ok(wantlist) => Ok(wantlist),
+            Err(e) => Err(e)
+        }
+    }).join() { //thread panics are caught here instead of crashing the entire app
+        Ok(wantlist) => wantlist?,
+        Err(_) => {return Err(QueryError::ThreadPanicError);}
     };
+
     if from_cmd {
         print!("{}", Message::set("    Success!", MessageKind::Success));
         print!("\nUpdating collection...")
     }
+    //threads are spawned from within the function
     let collection = match collection(requester, username) {
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
@@ -94,7 +105,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     Ok(())
 }
 
-pub fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
+fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
     let profile_url = build_url(ParseType::Profile, username.to_string());
     let master_prof: Profile;
 
@@ -130,14 +141,14 @@ pub fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError
     Ok(master_prof)
 }
 
-pub fn wantlist(requester: Client, username: &str) -> Result<Vec<Release>, QueryError> {
-    let wantlist_url = build_url(ParseType::Wantlist, username.to_string());
+fn wantlist(requester: Client, username: String) -> Result<Vec<Release>, QueryError> {
+    let wantlist_url = build_url(ParseType::Wantlist, username);
     let master_wants = get_full(requester, ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
 
-pub fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> {
+fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;
