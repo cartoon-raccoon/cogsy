@@ -97,7 +97,7 @@ impl App {
             user_id: config.username,
             token: token,
             message: Message {
-                msg: String::from(env!("CARGO_PKG_VERSION")),
+                msg: String::from(format!("Cogsy v{}", env!("CARGO_PKG_VERSION"))),
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
