@@ -1,4 +1,5 @@
 use std::{
+    io::{self, Write},
     path::Path,
     thread,
     collections::HashMap,
@@ -37,14 +38,15 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     //* pulling data from Discogs
     let requester = build_client(&token);
     
-    if from_cmd {print!("Updating profile...")}
+    if from_cmd {print!("Updating profile..."); io::stdout().flush().unwrap();}
     let profile = match profile(&requester, username) {
         Ok(profile) => profile,
         Err(e) => {return Err(e);}
     };
     if from_cmd {
         print!("{}", Message::set("     Success!", MessageKind::Success));
-        print!("\nUpdating wantlist...")
+        print!("\nUpdating wantlist...");
+        io::stdout().flush().unwrap();
     }
 
     //Spawning a synchronous thread to catch panics when parsing json
@@ -62,7 +64,8 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
 
     if from_cmd {
         print!("{}", Message::set("    Success!", MessageKind::Success));
-        print!("\nUpdating collection...")
+        print!("\nUpdating collection...");
+        io::stdout().flush().unwrap();
     }
     //threads are spawned from within the function
     let collection = match collection(requester, username) {
