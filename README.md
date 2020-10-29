@@ -38,15 +38,13 @@ Read the Arch Wiki article on Rust for more information.
 ## Installation
 **macOS, Windows, and Linux**
 
-Cogsy is currently broken on Windows 10, due to an ncurses dependency. This bug is being worked on right now.
+Cogsy is currently broken on Windows 10, due to an ncurses dependency. This bug is being worked on right now. Windows users could get around this problem by running it on Cygwin or WSL, but I don't have a way to test this yet.
 
-_Due to a dependency using a nightly-only feature, the stable toolchain will not compile Cogsy. You have to install and compile Cogsy with the nightly toolchain._
+_The stable toolchain will compile Cogsy, but in the past some dependencies have used nightly-only features and resulting in errors when compiling on stable. Thus, I recommend you use the nightly toolchain by default._
 
 To switch to the nightly toolchain, run:
 
 `rustup default nightly`
-
-It's really sad, I know.
 
 Cogsy can be installed from crates.io, the official Rust package registry:
 
@@ -83,7 +81,7 @@ The config file contains the information you entered during first time startup.
 Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
 
 ## Usage
-_Multithreading has been implmented for Cogsy! It will now concurrently pull the contents of each folder. See the notes below for more info._
+_Multithreading has been implemented for Cogsy! It will now concurrently pull the contents of each folder. See the notes below for more info._
 
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
@@ -95,7 +93,7 @@ This is the main screen that pops up when you start Cogsy. On the left are the f
 ![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
 3. **Profile**: Your user profile. Pull this up by pressing 3.
 ![cogsy_profile](images/screenshots/cogsy_profile.png)
-4. **Listen Graph**: This displays your listening history. Each block represents one day, and the size of each block reflects how many times you listened to that album in that day. To see your listening history as discrete entries, you can pull up that screen by pressing `h`.
+4. **Listen Graph**: This displays your listening history. Pull this up by pressing 4. Each block represents one day, and the size of each block reflects how many times you listened to that album in that day. To see your listening history as discrete entries, you can pull up that screen by pressing `h`.
 ![cogsy_listen](images/screenshots/cogsy_listen.png)
 
 **The Command Line**
