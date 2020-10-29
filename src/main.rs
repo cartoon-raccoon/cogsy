@@ -20,8 +20,8 @@ use screens::{
 
 fn main() {
     let clapapp = fromcli::init().get_matches();
-    if let Some(()) = fromcli::parse_and_execute(clapapp) {
-        exit(0);
+    if let Some(status) = fromcli::parse_and_execute(clapapp) {
+        exit(status);
     }
 
     let mut app = App::initialize();

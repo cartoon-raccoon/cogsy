@@ -72,23 +72,34 @@ pub fn init<'a>() -> Clap<'a, 'a> {
     )
 }
 
-pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
+//* CLI Mode Exit codes:
+//* 0: All good
+//* 1: Incorrect input from user
+//* 2: Internal app error
+//* 3: Unsupported feature
+
+pub fn parse_and_execute(clapapp: ArgMatches) -> Option<i32> {
     let app = App::initialize();
     if let Some(sub_m) = clapapp.subcommand_matches("update") {
         if sub_m.is_present("username") {
             println!("Sorry, in-app username updates are unsupported at this time.");
+            return Some(3)
         } else if sub_m.is_present("token") {
             println!("Sorry, in-app token updates are unsupported at this time.");
+            return Some(3)
         } else {
             println!("{}",
                 Message::set("Beginning full database update.", MessageKind::Info)
             );
             match update::full(&app.user_id, &app.token, true, false) {
                 Ok(()) => {}
-                Err(e) => {eprintln!("{}", e)}
+                Err(e) => {
+                    eprintln!("\n{}", e);
+                    return Some(2)
+                }
             }
         }
-        Some(())
+        Some(0)
     } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
         if sub_m.is_present("nolog") {
             println!("{}", 
@@ -100,6 +111,7 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                 }
                 Err(e) => {
                     eprintln!("Oops: {}", e);
+                    return Some(2)
                 }
             }
         } else {
@@ -120,15 +132,17 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                         }
                         Err(e) => {
                             eprintln!("Oops: {}", e);
+                            return Some(2)
                         }
                     }
                 }
                 Err(e) => {
                     eprintln!("Oops: {}", e);
+                    return Some(2)
                 }
             }
         }
-        Some(())
+        Some(0)
     } else if let Some(sub_m) = clapapp.subcommand_matches("listen") {
         let album = sub_m.value_of("albumname").unwrap().to_string()
         .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
@@ -173,7 +187,10 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                                     results[choice - 1].title, 
                                     results[choice - 1].artist);
                                 }
-                                Err(e) => {eprintln!("{}", e);}
+                                Err(e) => {
+                                    eprintln!("Database error: {}", e);
+                                    return Some(2)
+                                }
                             }
                             break;
                             } else {
@@ -192,15 +209,22 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                     match dbupdate::listenlog(entry) {
                         Ok(()) => {println!("Listening to `{}` by {}", 
                             results[0].title, results[0].artist);}
-                        Err(e) => {eprintln!("{}", e);}
+                        Err(e) => {
+                            eprintln!("{}", e);
+                            return Some(2)
+                        }
                     }
                 } else {
                     println!("Unable to find results for `{}`", album);
+                    return Some(1)
                 }  
             },
-            Err(e) => {eprintln!("{}", e);}
+            Err(e) => {
+                eprintln!("{}", e);
+                return Some(2)
+            }
         }  
-        Some(())
+        Some(0)
     } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
         let results: Vec<Release>;
         let query: String;
@@ -227,14 +251,21 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
             querytype = QueryType::Collection;
             println!("Querying collection for: {}\n", query);
         }
-        results = query::release(
+        results = match query::release(
             query.clone(), querytype
-        ).unwrap_or_else(|e| {eprintln!("Oops: {}", e); Vec::new()});
+        ) {
+            Ok(queryr) => queryr,
+            Err(e) => {
+                eprintln!("Database error: {}", e);
+                return Some(2)
+            }
+        };
         if results.len() > 1 {
             println!("Multiple results for `{}`:\n", query)
         }
         if results.is_empty() {
             println!("Nothing found for `{}`.", query);
+            return Some(1)
         }
         for release in results {
             let display_time = release.date_added
@@ -250,7 +281,7 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<()> {
                 display_time.format("%A %d %m %Y %R"),
             )
         }
-        Some(())
+        Some(0)
     } else {
         None
     }
