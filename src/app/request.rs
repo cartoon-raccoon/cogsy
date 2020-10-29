@@ -1,6 +1,5 @@
 use std::{
     fs::read_to_string,
-    error::Error,
     fmt
 };
 use reqwest::{
@@ -28,7 +27,7 @@ pub enum ParseType {
 }
 
 #[derive(Debug, Clone)]
-pub enum QueryError {
+pub enum UpdateError {
     NetworkError,
     ServerError,
     NotFoundError,
@@ -39,57 +38,69 @@ pub enum QueryError {
     DBWriteError(String),
 }
 
-impl std::error::Error for QueryError {}
+impl std::error::Error for UpdateError {}
 
-impl std::fmt::Display for QueryError {
+impl std::fmt::Display for UpdateError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            QueryError::NetworkError => {
+            UpdateError::NetworkError => {
                 write!(f, "A network error occurred. Check your internet and try again.")
             }
-            QueryError::ServerError => {
+            UpdateError::ServerError => {
                 write!(f, "The Discogs server encountered an error. Try again later.")
             }
-            QueryError::NotFoundError => {
+            UpdateError::NotFoundError => {
                 write!(f, "Error: Discogs returned a 404. Check your username.")
             }
-            QueryError::AuthorizationError => {
+            UpdateError::AuthorizationError => {
                 write!(f, "Error: Discogs could not authorize your request. Check your token.")
             }
-            QueryError::UnknownError => {
+            UpdateError::UnknownError => {
                 write!(f, "An unknown error occurred. Check the logs for more info.")
             }
-            QueryError::ParseError => {
+            UpdateError::ParseError => {
                 write!(f, "Error: Could not parse data from Discogs. Please try updating again.")
             }
-            QueryError::ThreadPanicError => {
+            UpdateError::ThreadPanicError => {
                 write!(f, "Error: Update thread panicked. Please try again.")
             }
-            QueryError::DBWriteError(e) => {
+            UpdateError::DBWriteError(e) => {
                 write!(f, "Database error: {}", e.to_string())
             }
         }
     }
 }
 
-pub fn query_discogs(requester: &Client, url: &String) -> Result<String, QueryError> {
+impl From<serde_json::Error> for UpdateError {
+    fn from(_error: serde_json::Error) -> Self {
+        UpdateError::ParseError
+    }
+}
+
+impl From<std::io::Error> for UpdateError {
+    fn from(_error: std::io::Error) -> Self {
+        UpdateError::ParseError
+    }
+}
+
+pub fn query_discogs(requester: &Client, url: &String) -> Result<String, UpdateError> {
     match requester.get(url).send() {
         Ok(response) => {
             match response.status() {
                 StatusCode::NOT_FOUND => {
-                    return Err(QueryError::NotFoundError)}
+                    return Err(UpdateError::NotFoundError)}
                 StatusCode::UNAUTHORIZED => {
-                    return Err(QueryError::AuthorizationError)}
+                    return Err(UpdateError::AuthorizationError)}
                 StatusCode::INTERNAL_SERVER_ERROR => {
-                    return Err(QueryError::ServerError)}
+                    return Err(UpdateError::ServerError)}
                 StatusCode::OK => {
                     return Ok(response.text().unwrap())
                 }
-                _ => {return Err(QueryError::UnknownError)}
+                _ => {return Err(UpdateError::UnknownError)}
             };
         }
         Err(_) => {
-            return Err(QueryError::NetworkError)
+            return Err(UpdateError::NetworkError)
         }
     }
 }
@@ -130,7 +141,7 @@ pub fn build_url(parse: ParseType, username: String) -> String {
     }
 }
 
-pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, Box<dyn Error>> {
+pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, UpdateError> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
@@ -156,15 +167,20 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     };
 
     //TODO: Change all the unwraps to handle errors you lazy fuck
-    let releases_raw = response.get(&to_index).unwrap();
+    let releases_raw = response.get(&to_index).ok_or(UpdateError::ParseError)?;
     if let Value::Array(result) = releases_raw {
         let releaselist = result;
 
         //deserialization happens here
         for entry in releaselist {
-            let id_no = entry.get("id").unwrap().as_u64().unwrap();
-            let date_raw = entry.get("date_added").unwrap()
-                .as_str().unwrap();
+            let id_no = entry.get("id")
+                .ok_or(UpdateError::ParseError)?
+                .as_u64()
+                .ok_or(UpdateError::ParseError)?;
+            let date_raw = entry.get("date_added")
+                .ok_or(UpdateError::ParseError)?
+                .as_str().ok_or(UpdateError::ParseError)?;
+            //TODO: impl from for ParseResult
             let added_date = DateTime::parse_from_rfc3339(date_raw)
                 .unwrap_or(utils::get_utc_now()
                 .with_timezone(&utils::Config::timezone()));
@@ -173,19 +189,24 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
             
             //TODO: Figure out how to do this functionally
             let mut label_names = Vec::<String>::new();
-            let labels = info["labels"].as_array().unwrap();
+            let labels = info["labels"].as_array()
+                .ok_or(UpdateError::ParseError)?;
             for label in labels {
                 label_names.push(label["name"].as_str()
-                    .unwrap()
+                    .ok_or(UpdateError::ParseError)?
                     .to_string());
             }
 
             let mut formats = Vec::<String>::new();
-            let formatlist = info["formats"].as_array().unwrap();
+            let formatlist = info["formats"].as_array()
+                .ok_or(UpdateError::ParseError)?;
             for format in formatlist {
-                let mut name = format["name"].as_str().unwrap().to_string();
-                let mut qty = format["qty"].as_str().unwrap().to_string();
-                let text = format["text"].as_str().unwrap_or("").to_string();
+                let mut name = format["name"].as_str()
+                    .ok_or(UpdateError::ParseError)?.to_string();
+                let mut qty = format["qty"].as_str()
+                    .ok_or(UpdateError::ParseError)?.to_string();
+                let text = format["text"].as_str()
+                    .ok_or(UpdateError::ParseError)?.to_string();
                 if name == "Vinyl" {
                     qty.push_str("LP");
                 }
@@ -196,7 +217,8 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 }
                 formats.push(name);
             }
-            let title = info["title"].as_str().unwrap().to_string();
+            let title = info["title"].as_str()
+                .ok_or(UpdateError::ParseError)?.to_string();
             let search_string = unidecode(&title)
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
@@ -205,9 +227,10 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 search_string: search_string,
                 title: title,
                 artist: info["artists"][0]["name"].as_str()
-                    .unwrap()
+                    .ok_or(UpdateError::ParseError)?
                     .to_string(),
-                year: info["year"].as_u64().unwrap() as u32,
+                year: info["year"].as_u64()
+                    .ok_or(UpdateError::ParseError)? as u32,
                 labels: label_names,
                 formats: formats,
                 date_added: DateTime::<Utc>::from_utc(
@@ -215,6 +238,6 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 )
             });
         }
-    } else {return Err(Box::new(QueryError::ParseError));}
+    } else {return Err(UpdateError::ParseError);}
     Ok(releases)
 }

@@ -16,7 +16,7 @@ use crate::app::{
 };
 use crate::utils;
 
-pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<(), QueryError> {
+pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<(), UpdateError> {
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
@@ -24,14 +24,14 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
                 if debug {println!("Database integrity check failed, purging and refreshing now.")}
                 match purge::complete() {
                     Ok(()) => {},
-                    Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+                    Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()))}
                 }
             }
         }
     }
     match admin::init_db() {
         Ok(_) => {},
-        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()))}
+        Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()))}
     }
     
     //* pulling data from Discogs
@@ -50,14 +50,14 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     //Spawning a synchronous thread to catch panics when parsing json
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
-    let wantlist = match thread::spawn( move || -> Result<Vec<Release>, QueryError> {
+    let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
         match wantlist(req_clone, owned_uname) {
             Ok(wantlist) => Ok(wantlist),
             Err(e) => Err(e)
         }
     }).join() { //thread panics are caught here instead of crashing the entire app
         Ok(wantlist) => wantlist?,
-        Err(_) => {return Err(QueryError::ThreadPanicError);}
+        Err(_) => {return Err(UpdateError::ThreadPanicError);}
     };
 
     if from_cmd {
@@ -74,21 +74,21 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     //* committing data to db
     let mut dbhandle = match update::DBHandle::new() {
         Ok(handle) => handle,
-        Err(e) => {return Err(QueryError::DBWriteError(e.to_string()));}
+        Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()));}
     };
 
     if from_cmd {println!("\nWriting to database...\n")}
     match dbhandle.update_profile(profile) {
         Ok(_) => {},
-        Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
+        Err(e) => return Err(UpdateError::DBWriteError(e.to_string()))
     }
     match dbhandle.update_wantlist(wantlist) {
         Ok(_) => {},
-        Err(e) => return Err(QueryError::DBWriteError(e.to_string()))
+        Err(e) => return Err(UpdateError::DBWriteError(e.to_string()))
     }
     match dbhandle.update_collection(collection) {
         Ok(_) => {},
-        Err(e) => return Err(QueryError::DBWriteError(e.to_string())),
+        Err(e) => return Err(UpdateError::DBWriteError(e.to_string())),
     }
 
     //* final integrity check
@@ -96,7 +96,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         true => {},
         false => {
             let errormsg = String::from("Integrity check failed");
-            return Err(QueryError::DBWriteError(errormsg))
+            return Err(UpdateError::DBWriteError(errormsg))
         }
     }
     if from_cmd {
@@ -105,7 +105,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     Ok(())
 }
 
-fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
+fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
     let profile_url = build_url(ParseType::Profile, username.to_string());
     let master_prof: Profile;
 
@@ -114,41 +114,41 @@ fn profile(requester: &Client, username: &str) -> Result<Profile, QueryError> {
     let profile_raw: Value = serde_json::from_str(&response)
                 .unwrap_or(Value::Null);
     if let Value::Null = profile_raw {
-        return Err(QueryError::ParseError)
+        return Err(UpdateError::ParseError)
     }
     master_prof = Profile {
         username: profile_raw["username"]
-            .as_str().unwrap_or("undefined").to_string(),
+            .as_str().ok_or(UpdateError::ParseError)?.to_string(),
         real_name: profile_raw["name"]
-            .as_str().unwrap_or("undefined").to_string(),
+            .as_str().ok_or(UpdateError::ParseError)?.to_string(),
         registered: DateTime::<Utc>::from_utc(
             DateTime::parse_from_rfc3339(
             profile_raw["registered"]
-            .as_str().unwrap()
+            .as_str().ok_or(UpdateError::ParseError)?
             ).unwrap().naive_utc(), Utc
         ),
         listings: profile_raw["num_for_sale"]
-            .as_u64().unwrap_or(0) as u32,
+            .as_u64().ok_or(UpdateError::ParseError)? as u32,
         collection: profile_raw["num_collection"]
-            .as_u64().unwrap_or(0) as u32,
+            .as_u64().ok_or(UpdateError::ParseError)? as u32,
         wantlist: profile_raw["num_wantlist"]
-            .as_u64().unwrap_or(0) as u32,
+            .as_u64().ok_or(UpdateError::ParseError)? as u32,
         rated: profile_raw["releases_rated"]
-            .as_u64().unwrap_or(0) as u32,
+            .as_u64().ok_or(UpdateError::ParseError)? as u32,
         average_rating: profile_raw["rating_avg"]
-            .as_f64().unwrap_or(0.0),
+            .as_f64().ok_or(UpdateError::ParseError)? as f64,
     };
     Ok(master_prof)
 }
 
-fn wantlist(requester: Client, username: String) -> Result<Vec<Release>, QueryError> {
+fn wantlist(requester: Client, username: String) -> Result<Vec<Release>, UpdateError> {
     let wantlist_url = build_url(ParseType::Wantlist, username);
     let master_wants = get_full(requester, ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
 
-fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> {
+fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;
@@ -157,7 +157,7 @@ fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> 
     let to_deserialize: Value = serde_json::from_str(&folders_raw)
         .unwrap_or(Value::Null);
     if let Value::Null = to_deserialize {
-        return Err(QueryError::ParseError);
+        return Err(UpdateError::ParseError);
     }
     let folders_raw = to_deserialize.get("folders");
     if let Some(Value::Array(result)) = folders_raw {
@@ -167,14 +167,14 @@ fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> 
         //generally shouldn't fail but idk for sure
         for raw in folderlist.iter() {
             let foldername = raw.get("name")
-                .unwrap().as_str()
-                .unwrap().to_string();
+                .ok_or(UpdateError::ParseError)?.as_str()
+                .ok_or(UpdateError::ParseError)?.to_string();
             let folderurl = raw.get("resource_url")
-                .unwrap().as_str()
-                .unwrap().to_string();
+                .ok_or(UpdateError::ParseError)?.as_str()
+                .ok_or(UpdateError::ParseError)?.to_string();
             folders.insert(foldername, folderurl);
         } 
-    } else {return Err(QueryError::ParseError);}
+    } else {return Err(UpdateError::ParseError);}
 
     let mut master_folders: Folders = Folders::new();
     let mut threads = Vec::new();
@@ -184,7 +184,7 @@ fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> 
     for (name, folderurl) in folders {
         let owned_uname = username.to_string();
         let req_clone = requester.clone();
-        threads.push(thread::spawn( move || -> Result<(String, Vec<Release>), QueryError> {
+        threads.push(thread::spawn( move || -> Result<(String, Vec<Release>), UpdateError> {
             let collection_url = build_url(ParseType::Folders(folderurl), owned_uname);
             let releases = get_full(req_clone, ParseType::Collection, collection_url)?;
             Ok((name, releases))
@@ -193,14 +193,14 @@ fn collection(requester: Client, username: &str) -> Result<Folders, QueryError> 
     for thread in threads {
         let (name, releases) = match thread.join() {
             Ok(result) => result?,
-            Err(_) => {return Err(QueryError::ThreadPanicError);}
+            Err(_) => {return Err(UpdateError::ThreadPanicError);}
         };
         master_folders.push(name, releases);
     };
     Ok(master_folders)
 }
 
-fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, QueryError> {
+fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, UpdateError> {
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();
 
@@ -212,16 +212,16 @@ fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Ve
                 let total: u64;
                 let response: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
                 if let Value::Null = response { //guard clause to return immediately if cannot read
-                    return Err(QueryError::ParseError);
+                    return Err(UpdateError::ParseError);
                 }
                 let pagination = response.get("pagination").unwrap_or(&Value::Null);
                 if pagination == &Value::Null {
-                    return Err(QueryError::ParseError);
+                    return Err(UpdateError::ParseError);
                 }
                 if let Value::Object(_) = pagination {
                     total = pagination.get("items").unwrap().as_u64().unwrap();
                 } else {
-                    return Err(QueryError::ParseError);
+                    return Err(UpdateError::ParseError);
                 }
                 match parse_releases(parse.clone(), &text, false) {
                     Ok(mut releases) => {
@@ -235,10 +235,10 @@ fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Ve
                                                 .to_string();
                         }
                     }
-                    Err(_) => {return Err(QueryError::ParseError)}
+                    Err(_) => {return Err(UpdateError::ParseError)}
                 }
             }
-            Err(queryerror) => {return Err(queryerror)}
+            Err(_) => {return Err(UpdateError::NetworkError)}
         }
     }
     Ok(master_vec)

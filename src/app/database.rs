@@ -16,15 +16,50 @@
 *       (think sudo rm -rf)
 */
 
+use crate::app::request::UpdateError;
+
+impl From<rusqlite::Error> for UpdateError {
+    fn from(error: rusqlite::Error) -> Self {
+        UpdateError::DBWriteError(error.to_string())
+    }
+}
+
+impl From<DBError> for UpdateError {
+    fn from(error: DBError) -> Self {
+        UpdateError::DBWriteError(error.to_string())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DBError {
+    error: String,
+}
+
+impl std::error::Error for DBError {}
+
+impl std::fmt::Display for DBError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.error)
+    }
+}
+
+impl From<rusqlite::Error> for DBError {
+    fn from(error: rusqlite::Error) -> Self {
+        DBError {
+            error: error.to_string()
+        }
+    }
+}
+
 pub mod admin {
-    use std::error::Error;
     use rusqlite::{
         Connection,
         NO_PARAMS,
     };
+    use super::DBError;
     use crate::utils;
 
-    pub fn init_db() -> Result<(), Box<dyn Error>> {
+    pub fn init_db() -> Result<(), DBError> {
         let conn = Connection::open(utils::database_file())?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS profile (
@@ -74,7 +109,7 @@ pub mod admin {
     }
 
     pub fn init_folder(foldername: String, conn: &Connection) 
-        -> Result <(), Box<dyn Error>> {
+        -> Result <(), DBError> {
         let sqlcommand = format!(
             "CREATE TABLE IF NOT EXISTS {} (
                 id INTEGER PRIMARY KEY,
@@ -134,7 +169,6 @@ pub mod admin {
 }
 
 pub mod update {
-    use std::error::Error;
     use rusqlite::{
         Connection,
     };
@@ -144,10 +178,12 @@ pub mod update {
         Folders, 
         Profile,
         ListenLogEntry,
+        request::UpdateError,
     };
     use super::{
         admin,
         purge,
+        DBError,
     };
 
     pub struct DBHandle {
@@ -155,14 +191,14 @@ pub mod update {
     }
 
     impl DBHandle {
-        pub fn new() -> Result<Self, Box<dyn Error>> {
+        pub fn new() -> Result<Self, DBError> {
             let connection = Connection::open(utils::database_file())?;
             Ok(DBHandle {
                 conn: connection,
             })
         }
 
-        pub fn update_profile(&mut self, profile: Profile) -> Result<(), Box<dyn Error>> {
+        pub fn update_profile(&mut self, profile: Profile) -> Result<(), UpdateError> {
             purge::table("profile")?;
             self.conn.execute("INSERT INTO profile 
             (username, 
@@ -187,7 +223,7 @@ pub mod update {
             Ok(())
         }
 
-        pub fn update_collection(&mut self, mut collection: Folders) -> Result<(), Box<dyn Error>> {
+        pub fn update_collection(&mut self, mut collection: Folders) -> Result<(), UpdateError> {
             purge::folders()?;
             for (name, folder) in collection.contents.iter_mut() {
                 let mut sanitized_name = name.clone();
@@ -202,14 +238,14 @@ pub mod update {
             Ok(())
         }
 
-        pub fn update_wantlist(&mut self, mut wantlist: Vec<Release>) -> Result<(), Box<dyn Error>> {
+        pub fn update_wantlist(&mut self, mut wantlist: Vec<Release>) -> Result<(), UpdateError> {
             purge::table("wantlist")?;
             add_releases(&self.conn, "wantlist", &mut wantlist)?;
             Ok(())
         }
     }
 
-    pub fn listenlog(entry: ListenLogEntry) -> Result<(), Box<dyn Error>> {
+    pub fn listenlog(entry: ListenLogEntry) -> Result<(), DBError> {
         let conn = Connection::open(utils::database_file())?;
         conn.execute(
             "INSERT INTO listenlog
@@ -227,7 +263,7 @@ pub mod update {
     }
 
     fn add_releases(conn: &Connection, foldername: &str, folder: &mut Vec<Release>)
-        -> Result<(), Box<dyn Error>> {
+        -> Result<(), DBError> {
         for release in folder {
             let mut stringified_labels = String::new();
             for label in &release.labels {
@@ -275,7 +311,6 @@ pub mod update {
 }
 
 pub mod query {
-    use std::error::Error;
     use chrono::{
         DateTime,
         Utc,
@@ -285,6 +320,7 @@ pub mod query {
         Statement,
         NO_PARAMS,
     };
+    use super::DBError;
     use crate::app::{
         Release, 
         Folders, 
@@ -304,7 +340,7 @@ pub mod query {
         Wantlist,
     }
 
-    pub fn profile() -> Result<Profile, Box<dyn Error>> {
+    pub fn profile() -> Result<Profile, DBError> {
         let conn = Connection::open(utils::database_file())?;
 
         let profile = conn.query_row(
@@ -324,7 +360,7 @@ pub mod query {
         Ok(profile)
     }
 
-    pub fn collection() -> Result<Folders, Box<dyn Error>> {
+    pub fn collection() -> Result<Folders, DBError> {
         let conn = Connection::open(utils::database_file())?;
 
         let mut folder_names: Vec<String> = Vec::new();
@@ -345,7 +381,7 @@ pub mod query {
         Ok(folders)
     }
 
-    pub fn wantlist() -> Result<Vec<Release>, Box<dyn Error>> {
+    pub fn wantlist() -> Result<Vec<Release>, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare("SELECT * FROM wantlist;")?;
         let wantlist = get_releases(&mut stmt, QueryType::Wantlist)?;
@@ -353,7 +389,7 @@ pub mod query {
     }
 
     //returns a vec of releases to support multiple results
-    pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
+    pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, DBError> {
         let table_to_query: String = match querytype {
             QueryType::Collection => "All_".to_string(),
             QueryType::Wantlist => "wantlist".to_string()
@@ -368,7 +404,7 @@ pub mod query {
         Ok(results)
     }
 
-    pub fn all_titles() -> Result<Vec<String>, Box<dyn Error>> {
+    pub fn all_titles() -> Result<Vec<String>, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(
             "SELECT title FROM All_;"
@@ -383,7 +419,7 @@ pub mod query {
         Ok(titlevec)
     }
 
-    pub fn listenlog() -> Result<ListenLog, Box<dyn Error>> {
+    pub fn listenlog() -> Result<ListenLog, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(
             "SELECT * FROM listenlog;"
@@ -401,7 +437,7 @@ pub mod query {
         Ok(listenlog)
     }
 
-    pub fn random() -> Result<Release, Box<dyn Error>> {
+    pub fn random() -> Result<Release, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(
             "SELECT * FROM All_ ORDER BY RANDOM() LIMIT 1",
@@ -410,7 +446,7 @@ pub mod query {
         Ok(selection.remove(0))
     }
 
-    pub fn size(querytype: QueryType) -> Result<usize, Box<dyn Error>> {
+    pub fn size(querytype: QueryType) -> Result<usize, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let query = match querytype {
             QueryType::Collection => "collection",
@@ -424,7 +460,7 @@ pub mod query {
         Ok(size as usize)
     }
 
-    fn get_releases(stmt: &mut Statement, querytype: QueryType) -> Result<Vec<Release>, Box<dyn Error>> {
+    fn get_releases(stmt: &mut Statement, querytype: QueryType) -> Result<Vec<Release>, DBError> {
         let mut folder: Vec<Release> = Vec::with_capacity(size(querytype).unwrap_or(100));
 
             let contents = stmt.query_map(NO_PARAMS, |row| {
@@ -465,9 +501,10 @@ pub mod purge {
         Connection,
         NO_PARAMS
     };
+    use super::DBError;
     use crate::utils;
 
-    pub fn folders() -> Result<(), Box<dyn Error>> {
+    pub fn folders() -> Result<(), DBError> {
         let conn = Connection::open(utils::database_file())?;
 
         let mut folder_names: Vec<String> = Vec::new();
@@ -486,7 +523,7 @@ pub mod purge {
 
     //* DO NOT CALL THIS ON THE FOLDERS TABLE OUTSIDE OF PURGE::FOLDERS
     //* YOU **WILL** GET ORPHAN TABLES
-    pub fn table(tablename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn table(tablename: &str) -> Result<(), DBError> {
         let conn = Connection::open(utils::database_file())?;
         let sqlcommand = format!("DELETE FROM {}", tablename);
         conn.execute(&sqlcommand, NO_PARAMS)?;
