@@ -166,8 +166,6 @@ fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError>
     if let Some(Value::Array(result)) = folders_raw {
         let folderlist = result;
 
-        //not sure how to handle the unwraps here
-        //generally shouldn't fail but idk for sure
         for raw in folderlist.iter() {
             let foldername = raw.get("name")
                 .ok_or(UpdateError::ParseError)?.as_str()
@@ -208,40 +206,38 @@ fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Ve
     let mut master_vec: Vec<Release> = Vec::new();
 
     //main update loop
-    //TODO: Make this nicer and handle the unwraps
-    loop { //I hate the stupid pyramid of doom here
-        match query_discogs(&client, &url) {
-            Ok(text) => {
-                let total: u64;
-                let response: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
-                if let Value::Null = response { //guard clause to return immediately if cannot read
-                    return Err(UpdateError::ParseError);
-                }
-                let pagination = response.get("pagination").unwrap_or(&Value::Null);
-                if pagination == &Value::Null {
-                    return Err(UpdateError::ParseError);
-                }
-                if let Value::Object(_) = pagination {
-                    total = pagination.get("items").unwrap().as_u64().unwrap();
-                } else {
-                    return Err(UpdateError::ParseError);
-                }
-                match parse_releases(parse.clone(), &text, false) {
-                    Ok(mut releases) => {
-                        master_vec.append(&mut releases);
-                        if master_vec.len() as u64 == total {
-                            break;
-                        } else {
-                            url = pagination["urls"]["next"]
-                                                .as_str()
-                                                .unwrap()
-                                                .to_string();
-                        }
-                    }
-                    Err(_) => {return Err(UpdateError::ParseError)}
-                }
-            }
-            Err(_) => {return Err(UpdateError::NetworkError)}
+    loop {
+        let text =  query_discogs(&client, &url)?;
+        let total: u64;
+        let response: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
+        if let Value::Null = response { //guard clause to return immediately if cannot read
+            return Err(UpdateError::ParseError);
+        }
+        let pagination = response.get("pagination").unwrap_or(&Value::Null);
+        if pagination == &Value::Null {
+            return Err(UpdateError::ParseError);
+        }
+        if let Value::Object(_) = pagination {
+            total = pagination.get("items")
+                .ok_or(UpdateError::ParseError)?
+                .as_u64()
+                .ok_or(UpdateError::ParseError)?;
+        } else {
+            return Err(UpdateError::ParseError);
+        }
+        let mut releases = parse_releases(parse.clone(), &text, false)?; 
+        master_vec.append(&mut releases);
+        if master_vec.len() as u64 == total {
+            break;
+        } else {
+            //* Quite risky as wantlist is not paginated
+            //* and its json will not have this field
+            //* Should be safe as execution should never reach this branch
+            //* on wantlist update, but is still risky nonetheless
+            url = pagination["urls"]["next"]
+                                .as_str()
+                                .ok_or(UpdateError::ParseError)?
+                                .to_string();
         }
     }
     Ok(master_vec)

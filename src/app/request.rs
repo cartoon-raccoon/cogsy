@@ -166,7 +166,6 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
         _ => String::from("releases")
     };
 
-    //TODO: Change all the unwraps to handle errors you lazy fuck
     let releases_raw = response.get(&to_index).ok_or(UpdateError::ParseError)?;
     if let Value::Array(result) = releases_raw {
         let releaselist = result;
@@ -206,7 +205,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
                 let mut qty = format["qty"].as_str()
                     .ok_or(UpdateError::ParseError)?.to_string();
                 let text = format["text"].as_str()
-                    .ok_or(UpdateError::ParseError)?.to_string();
+                    .unwrap_or("").to_string();
                 if name == "Vinyl" {
                     qty.push_str("LP");
                 }
