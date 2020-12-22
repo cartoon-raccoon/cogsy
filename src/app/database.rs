@@ -111,7 +111,7 @@ pub mod admin {
     pub fn init_folder(foldername: String, conn: &Connection) 
         -> Result <(), DBError> {
         let sqlcommand = format!(
-            "CREATE TABLE IF NOT EXISTS {} (
+            "CREATE TABLE IF NOT EXISTS \"{}\" (
                 id INTEGER PRIMARY KEY,
                 search_string TEXT,
                 title TEXT NOT NULL,
@@ -152,7 +152,7 @@ pub mod admin {
                             folder_names.push(folder.unwrap());
                         }
                         for folder in folder_names {
-                            let sqlcommand = format!("SELECT * FROM {}", folder);
+                            let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
                             match conn.query_row(&sqlcommand, NO_PARAMS, |_row| Ok(0)) {
                                 Ok(_) => {},
                                 Err(_) => return false
@@ -281,7 +281,7 @@ pub mod update {
             stringified_formats.pop().unwrap();
 
             let mut stmt = conn.prepare(
-                &format!("INSERT INTO {}
+                &format!("INSERT INTO \"{}\"
                 (id,
                 search_string,
                 title,
@@ -373,7 +373,7 @@ pub mod query {
         let mut folders = Folders::new();
 
         for mut name in folder_names {
-            let mut stmt = conn.prepare(&format!("SELECT * FROM {}", name))?;
+            let mut stmt = conn.prepare(&format!("SELECT * FROM \"{}\"", name))?;
             let folder = get_releases(&mut stmt, QueryType::Collection)?;
             name.pop().unwrap();
             folders.push(name, folder);
@@ -514,7 +514,7 @@ pub mod purge {
             folder_names.push(folder?);
         }
         for name in folder_names {
-            let sqlcommand = format!("DROP TABLE {}", name);
+            let sqlcommand = format!("DROP TABLE \"{}\"", name);
             conn.execute(&sqlcommand, NO_PARAMS)?;
         }
         table("folders")?;
@@ -525,7 +525,7 @@ pub mod purge {
     //* YOU **WILL** GET ORPHAN TABLES
     pub fn table(tablename: &str) -> Result<(), DBError> {
         let conn = Connection::open(utils::database_file())?;
-        let sqlcommand = format!("DELETE FROM {}", tablename);
+        let sqlcommand = format!("DELETE FROM \"{}\"", tablename);
         conn.execute(&sqlcommand, NO_PARAMS)?;
         Ok(())
     }
