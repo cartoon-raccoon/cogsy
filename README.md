@@ -27,6 +27,7 @@ Cogsy's target audience is admittedly, not very large. It is targeted at people 
 - `libsqlite-dev` or its equivalent for your distro.
 - `openssl` (Should already exist)
 - `ncurses`
+
 Most installation errors stem from the linker not being able to find the corresponding `.so` file on your system. Look for the missing package and install its `dev` version. This should fix most errors.
 
 You can install everything using the `rustup` toolchain manager, instructions available from the official Rust [install page](https://www.rust-lang.org/tools/install). 
