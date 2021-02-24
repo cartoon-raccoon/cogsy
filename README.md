@@ -23,6 +23,11 @@ Cogsy's target audience is admittedly, not very large. It is targeted at people 
 - `rustc` v1.46.0 or later (The official Rust compiler)
 - `gcc` v10 or later (For linking, `rustc` does not do linking by itself)
 - A Discogs account (obviously)
+### The following C shared libraries are needed:
+- `libsqlite-dev` or its equivalent for your distro.
+- `openssl` (Should already exist)
+- `ncurses`
+Most installation errors stem from the linker not being able to find the corresponding `.so` file on your system. Look for the missing package and install its `dev` version. This should fix most errors.
 
 You can install everything using the `rustup` toolchain manager, instructions available from the official Rust [install page](https://www.rust-lang.org/tools/install). 
 
@@ -50,13 +55,16 @@ Cogsy can be installed from crates.io, the official Rust package registry:
 
 `cargo install cogsy`
 
-Work is in progress to package the app for the Arch Linux AUR, which is the recommended install method for Arch Linux users.
-
-`yay -S cogsy` _(or use your preferred AUR helper)_
+To build from source:
+```
+git clone https://github.com/cartoon-raccoon/cogsy
+cd cogsy
+cargo run
+```
 
 If anyone is willing to package the app for their own distro, please let me know and then go ahead.
 
-This app has been tested on Arch Linux and Fedora. Testing for MacOS and Windows is underway.
+This app has been tested on Arch Linux, Void Linux, Pop!-OS and Fedora. Testing for MacOS and Windows is underway.
 
 _Note: Cogsy is still very much in development and is still considered unstable. It will only enter 1.0.0 when it works on all three target OSes._
 
