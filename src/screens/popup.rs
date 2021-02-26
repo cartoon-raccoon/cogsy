@@ -23,7 +23,7 @@ use crate::app::database::update;
 */
 
 
-pub fn albuminfo(release: Release) -> ResizedView<Dialog> {
+pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     //TODO: Format the Label and Formats fields properly
     let set: HashSet<_> = release.labels.clone().drain(..).collect();
     let mut labels: Vec<String> = Vec::new();
@@ -54,6 +54,9 @@ pub fn albuminfo(release: Release) -> ResizedView<Dialog> {
     release.id,
     ));
 
+    let title = release.title.clone();
+    let id = release.id;
+
     let screen = ResizedView::new(
         SizeConstraint::Full,
         SizeConstraint::Full,
@@ -63,15 +66,15 @@ pub fn albuminfo(release: Release) -> ResizedView<Dialog> {
             release.title.clone()))
             .button("Listen", move |s| {
                 let entry = ListenLogEntry {
-                    id: release.id,
-                    title: release.title.clone(),
+                    id: id,
+                    title: title.clone(),
                     time: utils::get_utc_now(),
                 };
 
                 match update::listenlog(entry) {
                     Ok(()) => {
                         s.call_on_name("messagebox", |view: &mut TextView| {
-                            view.set_content(format!("Listening to {}", release.title))
+                            view.set_content(format!("Listening to {}", title))
                         });
                         s.pop_layer();
                     }
@@ -102,7 +105,7 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
                 s.pop_layer();
                 if !from_listen {
                     s.add_fullscreen_layer(
-                        albuminfo(item.clone())
+                        albuminfo(item)
                     );
                 } else {
                     let time_now = utils::get_utc_now();

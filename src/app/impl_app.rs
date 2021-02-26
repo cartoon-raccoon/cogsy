@@ -206,7 +206,7 @@ impl App {
                                     );
                                 } else if results.len() == 1 {
                                     s.add_fullscreen_layer(
-                                        popup::albuminfo(results[0].clone())
+                                        popup::albuminfo(&results[0])
                                     );
                                 } else {
                                     view_content = format!("Unable to find results for `{}`", album);
@@ -225,7 +225,7 @@ impl App {
                                     );
                                 } else if results.len() == 1 {
                                     s.add_fullscreen_layer(
-                                        popup::albuminfo(results[0].clone())
+                                        popup::albuminfo(&results[0])
                                     );
                                 } else {
                                     view_content = format!("Unable to find results for `{}`", album);
