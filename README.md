@@ -9,6 +9,8 @@ Cogsy is a curses-based command line app for tracking your Discogs collection. I
 
 For the uninformed, [Discogs](https://www.discogs.com) is a website/marketplace where music enthusiasts can collect and sell physical music media such as vinyl records and CDs.
 
+To see what's new, jump to the Usage section.
+
 **The final capabilities of this app are:**
 - Query the Discogs database using a user's username and app token. (OAuth integration is expected, but not a priority.)
 - Store the data in a database and display it in a TUI when the app is started.
@@ -76,57 +78,25 @@ On first time startup, the app will query you for your user credentials: Your us
 
 After first time startup, a config.toml file will be created and can be found at:
 
-**Windows:**
-`C:\Users\username\AppData\Roaming\cartoon-raccoon\cogsy\config.toml`
+**Linux:**
+`/home/username/.config/cogsy/config.toml`
 
 **MacOS:**
 `/Users/username/Library/Application Support/rs.cartoon-raccoon.cogsy/config.toml`
 
-**Linux:**
-`/home/username/.config/cogsy/config.toml`
+**Windows:**
+`C:\Users\username\AppData\Roaming\cartoon-raccoon\cogsy\config.toml`
 
 The config file contains the information you entered during first time startup.
 
 Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
 
 ## Usage
-_Multithreading has been implemented for Cogsy! It will now concurrently pull the contents of each folder. See the notes below for more info._
-
-Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
-
-Cogsy as an app with a user interface, has 4 main screens:
-1. **Collection**: 
-This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. Pressing Enter on a selected album will bring up a screen with the album's information. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
-![cogsy_main](images/screenshots/cogsy_main.png)
-2. **Wantlist**: Pull this up by pressing 2. This displays the contents of your wantlist. Pressing Enter will pull up a screen displaying information on the selected album, and you can press Backspace to go back to the list.
-![cogsy_wantlist](images/screenshots/cogsy_wantlist.png)
-3. **Profile**: Your user profile. Pull this up by pressing 3.
-![cogsy_profile](images/screenshots/cogsy_profile.png)
-4. **Listen Graph**: This displays your listening history. Pull this up by pressing 4. Each block represents one day, and the size of each block reflects how many times you listened to that album in that day. To see your listening history as discrete entries, you can pull up that screen by pressing `h`.
-![cogsy_listen](images/screenshots/cogsy_listen.png)
-
-**The Command Line**
-
-This is Cogsy's heart. All of Cogsy's features are run from here. Vim users will find this familiar, as you activate it by pressing `:`. From here, you can run Cogsy's core commands. At any time, you can cancel a command by pressing Esc.
-
-Cogsy has four core commands:
-- `update`: Pulls collection info from Discogs and updates the entire app database.
-- `listen [album]`: Cogsy's core feature. Pass it an album name and it will log the album title and the current time as a listening session.
-- `query [album]`: Query the local database for information on an album. Use the `-w` or `--wantlist` switch to query the wantlist, otherwise it defaults to querying the collection.
-- `random`: Use this when you can't decide what to play. It also logs the selected album as a listening session, unless you pass it the `-n`/`--nolog` switch.
-
-Cogsy can also be run as a terminal app, by passing it one of its core commands. Running Cogsy without any arguments will bring up the user interface.
-
-For example, `cogsy update` will cause Cogsy to update its database and exit. `cogsy query [albumname]` will cause Cogsy to display all the matches for `[albumname]` and exit.
-
-Read the notes file for more information on the app, what it can do and how to use it. This part of the readme is still a WIP, and a wiki is in the works.
-
-**Important Note:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
+See the [documentation](docs/usage.md).
 
 ## Issues and Bugs
 - **When running `update`, the app freezes up**
-    - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running.
-Async behaviour is expected to be implemented in a future update.
+    - This is normal behaviour. Cogsy uses a blocking API to query Discogs, which means the entire app is put on pause while the update process is running. Async behaviour is not planned.
 - **Large collections may slow the app down fairly noticeably**
     - The computation for displaying the data to the screen is done lazily, i.e. everything is loaded from the database and processed only when the command is invoked. Nothing is pre-computed and cached beforehand. Working on implementing this now.
 
