@@ -5,6 +5,7 @@ use cursive::{
         ResizedView, 
         Dialog,
         SelectView,
+        TextView,
     },
     view::SizeConstraint
 };
@@ -22,7 +23,7 @@ use crate::app::database::update;
 */
 
 
-pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
+pub fn albuminfo(release: Release) -> ResizedView<Dialog> {
     //TODO: Format the Label and Formats fields properly
     let set: HashSet<_> = release.labels.clone().drain(..).collect();
     let mut labels: Vec<String> = Vec::new();
@@ -47,8 +48,8 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     Discogs ID: {}",
     release.artist,
     release.year,
-    format_vec(&labels),
-    format_vec(&formats),
+    labels.join(", "),
+    formats.join(", "),
     display_time.format("%A %d %m %Y %R"),
     release.id,
     ));
@@ -60,6 +61,27 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             .title(format!("{} - {}", 
             release.artist.clone(), 
             release.title.clone()))
+            .button("Listen", move |s| {
+                let entry = ListenLogEntry {
+                    id: release.id,
+                    title: release.title.clone(),
+                    time: utils::get_utc_now(),
+                };
+
+                match update::listenlog(entry) {
+                    Ok(()) => {
+                        s.call_on_name("messagebox", |view: &mut TextView| {
+                            view.set_content(format!("Listening to {}", release.title))
+                        });
+                        s.pop_layer();
+                    }
+                    Err(e) => {
+                        s.call_on_name("messagebox", |view: &mut TextView| {
+                            view.set_content(format!("Error: {}", e))
+                        });
+                    }
+                }
+            })
     );
     screen
 }
@@ -79,7 +101,7 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
                 s.pop_layer();
                 if !from_listen {
                     s.add_fullscreen_layer(
-                        albuminfo(item)
+                        albuminfo(item.clone())
                     );
                 } else {
                     let time_now = utils::get_utc_now();

@@ -66,7 +66,7 @@ impl Collection {
                     }))
                     .on_submit(|s, item| {
                         s.add_fullscreen_layer(
-                            popup::albuminfo(item)
+                            popup::albuminfo(item.clone())
                         );
                     })
                     .with_name("albumlist"))))
