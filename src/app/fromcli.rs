@@ -92,7 +92,7 @@ pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
     } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
         handle_query(sub_m)
     } else if let Some(_) = clapapp.subcommand_matches("reset") {
-        handle_reset()
+        handle_reset(app)
     } else {
         None
     }
@@ -110,7 +110,9 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             Message::set("Beginning full database update.", MessageKind::Info)
         );
         match update::full(&app.user_id, &app.token, true, false) {
-            Ok(()) => {}
+            Ok(()) => {
+                println!("{}", Message::set("Database update successful.", MessageKind::Success));
+            }
             Err(e) => {
                 eprintln!("\n{}", e);
                 return Some(2)
@@ -308,11 +310,20 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
         Some(0)
 }
 
-fn handle_reset() -> Option<i32> {
+fn handle_reset(app: &App) -> Option<i32> {
+    println!("{}", Message::set("Resetting database.", MessageKind::Info));
     match purge::complete() {
         Ok(_) => {
-            println!("Successfully reset database.");
-            println!("Run `cogsy update` to update your collection.");
+            println!("Database purged. Pulling data from Discogs...");
+            match update::full(&app.user_id, &app.token, true, false) {
+                Ok(()) => {}
+                Err(e) => {
+                    println!("\n{}", e);
+                    std::fs::remove_file(utils::database_file()).unwrap();
+                    return Some(2)
+                }
+            }
+            println!("{}", Message::set("Successfully reset database.", MessageKind::Success));
             Some(0)
         }
         Err(e) => {

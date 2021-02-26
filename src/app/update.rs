@@ -102,9 +102,6 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
             return Err(UpdateError::DBWriteError(errormsg))
         }
     }
-    if from_cmd {
-        println!("{}", Message::set("Database update successful.", MessageKind::Success));
-    }
     Ok(())
 }
 
