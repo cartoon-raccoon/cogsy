@@ -34,7 +34,7 @@ impl Collection {
     pub fn build(&self) -> NamedView<LinearLayout> {
         let collection = LinearLayout::horizontal()
             .child(Panel::new(ResizedView::new(
-                SizeConstraint::Fixed(35), 
+                SizeConstraint::Fixed(30), 
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<Vec<Release>>::new()
