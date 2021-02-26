@@ -15,6 +15,7 @@ use crate::app::{
     database::{
         query::{self, QueryType},
         update as dbupdate,
+        purge,
     },
     message::{Message, MessageKind},
 };
@@ -68,8 +69,11 @@ pub fn init<'a>() -> Clap<'a, 'a> {
             )
             .arg(Arg::with_name("albumname")
                 .help("The name of the album you want to query.")
+            )
         )
-    )
+        .subcommand(SubCommand::with_name("reset")
+            .about("Reset the entire database.")
+        )   
 }
 
 //* CLI Mode Exit codes:
@@ -282,6 +286,18 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<i32> {
             )
         }
         Some(0)
+    } else if let Some(_) = clapapp.subcommand_matches("reset") {
+        match purge::complete() {
+            Ok(_) => {
+                println!("Successfully reset database.");
+                println!("Run `cogsy update` to update your collection.");
+                Some(0)
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                Some(2)
+            }
+        }
     } else {
         None
     }
