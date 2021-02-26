@@ -79,6 +79,7 @@ pub fn albuminfo(release: Release) -> ResizedView<Dialog> {
                         s.call_on_name("messagebox", |view: &mut TextView| {
                             view.set_content(format!("Error: {}", e))
                         });
+                        s.pop_layer();
                     }
                 }
             })
