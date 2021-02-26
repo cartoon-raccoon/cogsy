@@ -20,12 +20,12 @@ use screens::{
 
 fn main() {
     let clapapp = fromcli::init().get_matches();
-    if let Some(status) = fromcli::parse_and_execute(clapapp) {
+    let mut app = App::initialize();
+
+    if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {
         exit(status);
     }
 
-    let mut app = App::initialize();
-    
     let mut siv = cursive::default();
     siv.set_theme(utils::theme_gen());
 

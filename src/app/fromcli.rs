@@ -82,73 +82,91 @@ pub fn init<'a>() -> Clap<'a, 'a> {
 //* 2: Internal app error
 //* 3: Unsupported feature
 
-pub fn parse_and_execute(clapapp: ArgMatches) -> Option<i32> {
-    let app = App::initialize();
+pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
     if let Some(sub_m) = clapapp.subcommand_matches("update") {
-        if sub_m.is_present("username") {
-            println!("Sorry, in-app username updates are unsupported at this time.");
-            return Some(3)
-        } else if sub_m.is_present("token") {
-            println!("Sorry, in-app token updates are unsupported at this time.");
-            return Some(3)
-        } else {
-            println!("{}",
-                Message::set("Beginning full database update.", MessageKind::Info)
-            );
-            match update::full(&app.user_id, &app.token, true, false) {
-                Ok(()) => {}
-                Err(e) => {
-                    eprintln!("\n{}", e);
-                    return Some(2)
-                }
+        handle_update(sub_m , app)
+    } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
+        handle_random(sub_m)
+    } else if let Some(sub_m) = clapapp.subcommand_matches("listen") {
+        handle_listen(sub_m)
+    } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
+        handle_query(sub_m)
+    } else if let Some(_) = clapapp.subcommand_matches("reset") {
+        handle_reset()
+    } else {
+        None
+    }
+}
+
+fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
+    if sub_m.is_present("username") {
+        println!("Sorry, in-app username updates are unsupported at this time.");
+        return Some(3)
+    } else if sub_m.is_present("token") {
+        println!("Sorry, in-app token updates are unsupported at this time.");
+        return Some(3)
+    } else {
+        println!("{}",
+            Message::set("Beginning full database update.", MessageKind::Info)
+        );
+        match update::full(&app.user_id, &app.token, true, false) {
+            Ok(()) => {}
+            Err(e) => {
+                eprintln!("\n{}", e);
+                return Some(2)
             }
         }
-        Some(0)
-    } else if let Some(sub_m) = clapapp.subcommand_matches("random") {
-        if sub_m.is_present("nolog") {
-            println!("{}", 
-                Message::set("Selecting random album without logging.", MessageKind::Info)
-            );
-            match query::random() {
-                Ok(random) => {
-                    println!("You should play `{}.`", random.title);
-                }
-                Err(e) => {
-                    eprintln!("Oops: {}", e);
-                    return Some(2)
-                }
+    }
+    Some(0)
+}
+
+fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
+    if sub_m.is_present("nolog") {
+        println!("{}", 
+            Message::set("Selecting random album without logging.", MessageKind::Info)
+        );
+        match query::random() {
+            Ok(random) => {
+                println!("You should play `{}.`", random.title);
             }
-        } else {
-            println!("{}", 
-                Message::set("Selecting random album with logging.", MessageKind::Info)
-            );
-            match query::random() {
-                Ok(random) => {
-                    let time_now = utils::get_utc_now();
-                    let entry = ListenLogEntry {
-                        id: random.id,
-                        title: random.title.clone(),
-                        time: time_now,
-                    };
-                    match dbupdate::listenlog(entry) {
-                        Ok(()) => {
-                            println!("You should play `{}`.", random.title);
-                        }
-                        Err(e) => {
-                            eprintln!("Oops: {}", e);
-                            return Some(2)
-                        }
+            Err(e) => {
+                eprintln!("Oops: {}", e);
+                return Some(2)
+            }
+        }
+    } else {
+        println!("{}", 
+            Message::set("Selecting random album with logging.", MessageKind::Info)
+        );
+        match query::random() {
+            Ok(random) => {
+                let time_now = utils::get_utc_now();
+                let entry = ListenLogEntry {
+                    id: random.id,
+                    title: random.title.clone(),
+                    time: time_now,
+                };
+                match dbupdate::listenlog(entry) {
+                    Ok(()) => {
+                        println!("You should play `{}`.", random.title);
+                    }
+                    Err(e) => {
+                        eprintln!("Oops: {}", e);
+                        return Some(2)
                     }
                 }
-                Err(e) => {
-                    eprintln!("Oops: {}", e);
-                    return Some(2)
-                }
+            }
+            Err(e) => {
+                eprintln!("Oops: {}", e);
+                return Some(2)
             }
         }
-        Some(0)
-    } else if let Some(sub_m) = clapapp.subcommand_matches("listen") {
-        let album = sub_m.value_of("albumname").unwrap().to_string()
+    }
+    Some(0)
+}
+
+fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
+    let album = sub_m.value_of("albumname").unwrap().to_string()
         .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
         match query::release(album.clone(), QueryType::Collection) {
@@ -229,8 +247,10 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<i32> {
             }
         }  
         Some(0)
-    } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
-        let results: Vec<Release>;
+}
+
+fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
+    let results: Vec<Release>;
         let query: String;
         let querytype: QueryType;
         //TODO: Streamline this wet-ass code
@@ -286,19 +306,18 @@ pub fn parse_and_execute(clapapp: ArgMatches) -> Option<i32> {
             )
         }
         Some(0)
-    } else if let Some(_) = clapapp.subcommand_matches("reset") {
-        match purge::complete() {
-            Ok(_) => {
-                println!("Successfully reset database.");
-                println!("Run `cogsy update` to update your collection.");
-                Some(0)
-            }
-            Err(e) => {
-                eprintln!("Error: {}", e);
-                Some(2)
-            }
+}
+
+fn handle_reset() -> Option<i32> {
+    match purge::complete() {
+        Ok(_) => {
+            println!("Successfully reset database.");
+            println!("Run `cogsy update` to update your collection.");
+            Some(0)
         }
-    } else {
-        None
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            Some(2)
+        }
     }
 }
