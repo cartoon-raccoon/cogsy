@@ -70,9 +70,11 @@ impl Config {
         println!("User information not initialized.");
         println!("Username:");
         let mut username = String::new();
+        print!(">>> "); io::stdout().flush().unwrap();
         io::stdin().read_line(&mut username)
             .expect("Oops, could not read line.");
         println!("Token:");
+        print!(">>> "); io::stdout().flush().unwrap();
         let mut token = String::new();
         io::stdin().read_line(&mut token)
             .expect("Oops, could not read line.");
