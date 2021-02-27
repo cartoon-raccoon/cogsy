@@ -58,6 +58,8 @@ Cogsy can be installed from crates.io, the official Rust package registry:
 
 `cargo install cogsy`
 
+This command is also used to update Cogsy when a new version is released. Your data should remain intact.
+
 To build from source:
 ```
 git clone https://github.com/cartoon-raccoon/cogsy

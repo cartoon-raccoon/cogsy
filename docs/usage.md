@@ -1,7 +1,30 @@
+## Configuration
+Your config.toml file will look something like this:
+```
+username = cartoon-raccoon
+token = <token>
+timezone = 8.0
+colour = "yellow"
+```
+You can customize the colour field. This changes the highlight colour of the text used when Cogsy is run with a TUI.
+
+The possible values are the eight tty colours, or:
+- black
+- red
+- green
+- yellow
+- blue
+- magenta
+- cyan
+- white
+
+To use their bright variants, prepend the colour with "br" (e.g. "bryellow"). This is not supported by the native Linux TTY, but is supported by almost all terminal emulators.
+
 ## How to use Cogsy
 _What's New?_
 - The `reset` subcommand
 - A Listen button on the release info page
+- Colour customization
 
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
@@ -49,7 +72,7 @@ On startup, Cogsy does a database check for the required folders. If the test do
 
 In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore cannot be accessed by Cogsy. This cannot be detected by the database check on startup. To remove orphan tables, you can run `cogsy reset`. Alternatively, if you want to preserve your listening history, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>`.
 
-**Important Note:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not yet possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
+**Important Note on Updating:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not yet possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
 However, it might be possible to work out the URL of each page in advance and pull the info concurrently that way, but the app is still subject to Discogs' rate limiting and this would just make Cogsy hit the request limit faster. Users with extremely large collections will still see a performance hit.
 
