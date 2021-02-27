@@ -20,6 +20,9 @@ use screens::{
 
 fn main() {
     let clapapp = fromcli::init().get_matches();
+    if let Some(_) = clapapp.subcommand_matches("reset") {
+        exit(fromcli::handle_reset(utils::Config::load()).unwrap());
+    }
     let mut app = App::initialize();
     
     if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {

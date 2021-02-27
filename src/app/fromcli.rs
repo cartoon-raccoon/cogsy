@@ -91,8 +91,6 @@ pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
         handle_listen(sub_m)
     } else if let Some(sub_m) = clapapp.subcommand_matches("query") {
         handle_query(sub_m)
-    } else if let Some(_) = clapapp.subcommand_matches("reset") {
-        handle_reset(app)
     } else {
         None
     }
@@ -310,12 +308,12 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
         Some(0)
 }
 
-fn handle_reset(app: &App) -> Option<i32> {
+pub fn handle_reset(config: Config) -> Option<i32> {
     println!("{}", Message::set("Resetting database.", MessageKind::Info));
     match purge::complete() {
         Ok(_) => {
             println!("Database purged. Pulling data from Discogs...");
-            match update::full(&app.user_id, &app.token, true, false) {
+            match update::full(&config.username, &config.token, true, false) {
                 Ok(()) => {}
                 Err(e) => {
                     println!("\n{}", e);
