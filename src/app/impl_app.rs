@@ -8,6 +8,7 @@ use cursive::{
     Cursive,
     views::*,
     event::{Event, Key},
+    //theme::Color,
 };
 use crate::app::{
     {
@@ -94,14 +95,15 @@ impl App {
         }
 
         App {
-            user_id: config.username,
+            user_id: config.username.clone(),
             token: token,
             message: Message {
                 msg: String::from(format!("Cogsy v{}", env!("CARGO_PKG_VERSION"))),
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
-            modified: false
+            modified: false,
+            colour: config.gen_colour(),
         }
     }
 
@@ -316,6 +318,10 @@ impl App {
             }
         });
     }
+
+    // pub fn colour(&self) -> Color {
+    //     self.colour
+    // }
 }
 
 #[allow(dead_code)]

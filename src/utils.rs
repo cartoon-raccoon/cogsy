@@ -13,8 +13,8 @@ use chrono::{
     Utc,
 };
 use cursive::theme::{
-    Color::*,
-    BaseColor,
+    Color,
+    BaseColor as BC,
     PaletteColor::*,
     {BorderStyle, Palette, Theme}
 };
@@ -25,14 +25,17 @@ pub struct Config {
     pub username: String,
     pub token: String,
     pub timezone: f32,
-    //colours: ColourScheme,
+    pub colour: String,
 }
 
 impl Config {
     pub fn load() -> Config {
         toml::from_str(
             &read_to_string(config_file()).unwrap_or_default()
-        ).unwrap()
+        ).unwrap_or_else(|e| {
+            eprintln!("Config error: {}", e);
+            std::process::exit(2);
+        })
     }
     pub fn timezone() -> FixedOffset {
         let raw_tz = Config::load().timezone;
@@ -40,6 +43,27 @@ impl Config {
             FixedOffset::west((-raw_tz * 3600.0) as i32)
         } else {
             FixedOffset::east((raw_tz * 3600.0) as i32)
+        }
+    }
+    pub fn gen_colour(&self) -> Color {
+        match self.colour.to_lowercase().as_str() {
+            "black"     => Color::Dark(BC::Black),
+            "red"       => Color::Dark(BC::Red),
+            "green"     => Color::Dark(BC::Green),
+            "yellow"    => Color::Dark(BC::Yellow),
+            "blue"      => Color::Dark(BC::Blue),
+            "magenta"   => Color::Dark(BC::Magenta),
+            "cyan"      => Color::Dark(BC::Cyan),
+            "white"     => Color::Dark(BC::White),
+            "brblack"   => Color::Light(BC::Black),
+            "brred"     => Color::Light(BC::Red),
+            "brgreen"   => Color::Light(BC::Green),
+            "bryellow"  => Color::Light(BC::Yellow),
+            "brblue"    => Color::Light(BC::Blue),
+            "brmagenta" => Color::Light(BC::Magenta),
+            "brcyan"    => Color::Light(BC::Cyan),
+            "brwhite"   => Color::Light(BC::White),
+            _           => Color::Light(BC::Yellow),
         }
     }
     pub fn first_init() {
@@ -77,6 +101,7 @@ impl Config {
             username: username.trim().to_string(),
             token: token.trim().to_string(),
             timezone: timezone,
+            colour: String::from("yellow"),
         };
         if let Ok(new_config) = toml::to_string(&config) {
             match OpenOptions::new().create(true).write(true).open(&config_file()) {
@@ -129,6 +154,7 @@ impl Default for Config {
             username: String::from("null"),
             token: String::from("null"),
             timezone: 0.0,
+            colour: String::from("yellow"),
         }
     }
 }
@@ -138,27 +164,27 @@ pub struct ColourScheme {
 
 }
 
-pub fn palette_gen() -> Palette {
+pub fn palette_gen(colour: Color) -> Palette {
     let mut p = Palette::default();
-    p[Background] = TerminalDefault;
-    p[Shadow] = TerminalDefault;
-    p[View] = TerminalDefault;
-    p[Primary] = TerminalDefault;
-    p[Secondary] = TerminalDefault;
-    p[Tertiary] = TerminalDefault;
-    p[TitlePrimary] = TerminalDefault;
-    p[Highlight] = TerminalDefault;
-    p[HighlightInactive] = TerminalDefault;
-    p[HighlightText] = Dark(BaseColor::Yellow);
+    p[Background] = Color::TerminalDefault;
+    p[Shadow] = Color::TerminalDefault;
+    p[View] = Color::TerminalDefault;
+    p[Primary] = Color::TerminalDefault;
+    p[Secondary] = Color::TerminalDefault;
+    p[Tertiary] = Color::TerminalDefault;
+    p[TitlePrimary] = Color::TerminalDefault;
+    p[Highlight] = Color::TerminalDefault;
+    p[HighlightInactive] = Color::TerminalDefault;
+    p[HighlightText] = colour;
 
-    return p;
+    p
 }
 
-pub fn theme_gen() -> Theme {
+pub fn theme_gen(colour: Color) -> Theme {
     let mut t = Theme::default();
     t.shadow = false;
     t.borders = BorderStyle::Simple;
-    t.palette = palette_gen();
+    t.palette = palette_gen(colour);
     return t;
 }
 

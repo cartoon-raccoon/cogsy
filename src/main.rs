@@ -21,13 +21,13 @@ use screens::{
 fn main() {
     let clapapp = fromcli::init().get_matches();
     let mut app = App::initialize();
-
+    
     if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {
         exit(status);
     }
-
+    
     let mut siv = cursive::default();
-    siv.set_theme(utils::theme_gen());
+    siv.set_theme(utils::theme_gen(app.colour));
 
     //initialize screen data
     let collectscreen = app.collection.build();
