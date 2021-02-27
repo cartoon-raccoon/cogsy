@@ -2,6 +2,7 @@ use std::{
     io::{self, Write},
     path::Path,
     thread,
+    sync::Arc,
     collections::HashMap,
 };
 
@@ -143,7 +144,7 @@ fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
 
 fn wantlist(requester: Client, username: String) -> Result<Vec<Release>, UpdateError> {
     let wantlist_url = build_url(ParseType::Wantlist, username);
-    let master_wants = get_full(requester, ParseType::Wantlist, wantlist_url)?;
+    let master_wants = get_full(Arc::new(requester), ParseType::Wantlist, wantlist_url)?;
 
     Ok(master_wants)
 }
@@ -176,6 +177,7 @@ fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError>
 
     let mut master_folders: Folders = Folders::new();
     let mut threads = Vec::new();
+    let requester = Arc::new(requester);
     // let (tx, rx) = mpsc::channel();
 
     //*1b: Pulling each folder
@@ -198,9 +200,12 @@ fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError>
     Ok(master_folders)
 }
 
-fn get_full(client: Client, parse: ParseType, starting_url: String) -> Result<Vec<Release>, UpdateError> {
+fn get_full(client: Arc<Client>, parse: ParseType, starting_url: String) -> Result<Vec<Release>, UpdateError> {
+    use std::rc::Rc;
+
     let mut url = starting_url;
     let mut master_vec: Vec<Release> = Vec::new();
+    let parse = Rc::new(parse);
 
     //main update loop
     loop {

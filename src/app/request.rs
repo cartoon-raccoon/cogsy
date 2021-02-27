@@ -1,6 +1,7 @@
 use std::{
     fs::read_to_string,
-    fmt
+    fmt,
+    rc::Rc,
 };
 use reqwest::{
     blocking::Client,
@@ -141,7 +142,7 @@ pub fn build_url(parse: ParseType, username: String) -> String {
     }
 }
 
-pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<Vec<Release>, UpdateError> {
+pub fn parse_releases(parse: Rc<ParseType>, text: &str, from_file: bool) -> Result<Vec<Release>, UpdateError> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
@@ -160,7 +161,7 @@ pub fn parse_releases(parse: ParseType, text: &str, from_file: bool) -> Result<V
     }
     let response: Value = serde_json::from_str(&contents)?;
 
-    let to_index = match parse {
+    let to_index = match parse.as_ref() {
         ParseType::Collection => String::from("releases"),
         ParseType::Wantlist => String::from("wants"),
         _ => String::from("releases")
