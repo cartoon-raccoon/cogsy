@@ -1,5 +1,5 @@
 use std::fs;
-use std::io;
+use std::io::{self, Write};
 use std::path::Path;
 use std::process::exit;
 
@@ -18,9 +18,10 @@ use crate::app::{
         ListenLogEntry,
         ListenLog,
     },
+    request::UpdateError,
     database::{
         admin, 
-        query, 
+        query,
         update as dbupdate, 
         query::QueryType
     },
@@ -42,23 +43,31 @@ const DB_NOT_INIT_MSG: &str =
 const DB_INTEGRITY_FAIL_MSG: &str =
 "Database integrity check failed, would you like to re-initialize it now? [Y/n]";
 
-fn on_init_fail(username: &str, token: &str) {
+fn on_init_fail(username: &str, token: &str, integ_fail: bool) {
     let mut answer = String::new();
+    print!(">>> "); io::stdout().flush().unwrap();
     io::stdin().read_line(&mut answer)
         .expect("Oops, could not read line.");
-    match answer.as_str() {
-        "Y\n" | "y\n" | "yes\n" | "Yes\n" => {
+    match answer.to_lowercase().as_str().trim() {
+        "y" | "yes" => {
             println!("Beginning database initialization.");
             match update::full(username, token, true, false) {
                 Ok(()) => {}
                 Err(e) => {
                     println!("\n{}", e);
-                    fs::remove_file(utils::database_file()).unwrap();
+                    if let UpdateError::DBWriteError(_) = e {
+                        fs::remove_file(utils::database_file()).unwrap();
+                    }
                     exit(1);
                 }
             }
         },
-        "N\n" | "n\n" | "no\n" | "No\n" => {exit(1);},
+        "n" | "no" => {
+            if integ_fail {
+                println!("Run `cogsy reset` to reset your user database manually.")
+            }
+            exit(1);
+        },
         _ => {println!("{}", Message::set("Please choose Y/N", MessageKind::Error)); exit(1);}
     }
 }
@@ -77,7 +86,7 @@ impl App {
 
         if !Path::new(&dbfilepath).exists() {
             println!("{}", Message::set(DB_NOT_INIT_MSG, MessageKind::Hint));
-            on_init_fail(&config.username, &token);
+            on_init_fail(&config.username, &token, false);
         }
         if !utils::usernames_match() {
             println!("{}", 
@@ -87,11 +96,11 @@ impl App {
                 )
             );
             println!("Would you like to use the new username? [Y/n]");
-            on_init_fail(&config.username, &token);
+            on_init_fail(&config.username, &token, false);
         }
         if !admin::check_integrity() {
             println!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
-            on_init_fail(&config.username, &token);
+            on_init_fail(&config.username, &token, false);
         }
 
         App {
