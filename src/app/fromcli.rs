@@ -32,7 +32,6 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .short("v")
                 .long("verbose")
                 .takes_value(false)
-                .value_name("verbose")
                 .help("Toggle verbose output when updating."))
             .arg(Arg::with_name("username")
                 .short("u")
