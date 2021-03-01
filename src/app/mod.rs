@@ -7,6 +7,7 @@ pub mod update;
 pub mod fromcli;
 
 use std::collections::BTreeMap;
+use std::hash::Hash;
 
 use chrono::{
     DateTime,
@@ -48,7 +49,7 @@ pub struct ListenLog { //wrapper around a BTreeMap
     pub contents: BTreeMap<DateTime<Utc>, String>
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Release {
     pub id: i64,
     pub search_string: String,

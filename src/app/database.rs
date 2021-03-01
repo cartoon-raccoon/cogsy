@@ -77,7 +77,9 @@ pub mod admin {
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS wantlist (
-                id INTEGER PRIMARY KEY,
+                idx INTEGER PRIMARY KEY,
+                hash INTEGER,
+                id INTEGER,
                 search_string TEXT,
                 title TEXT NOT NULL,
                 artist TEXT,
@@ -112,7 +114,9 @@ pub mod admin {
         -> Result <(), DBError> {
         let sqlcommand = format!(
             "CREATE TABLE IF NOT EXISTS \"{}\" (
-                id INTEGER PRIMARY KEY,
+                idx INTEGER PRIMARY KEY,
+                hash INTEGER,
+                id INTEGER,
                 search_string TEXT,
                 title TEXT NOT NULL,
                 artist TEXT,
@@ -172,6 +176,9 @@ pub mod update {
     use rusqlite::{
         Connection,
     };
+    use std::mem;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hasher, Hash};
     use crate::utils;
     use crate::app::{
         Release, 
@@ -232,15 +239,17 @@ pub mod update {
                     "INSERT INTO folders (name) VALUES (?1)",
                     &[&sanitized_name]
                 )?;
+                let mut new = Vec::new();
+                mem::swap(&mut new, folder);
                 admin::init_folder(sanitized_name.clone(), &self.conn)?;
-                add_releases(&self.conn, &sanitized_name, folder)?;
+                add_releases(&self.conn, &sanitized_name, new)?;
             }
             Ok(())
         }
 
-        pub fn update_wantlist(&mut self, mut wantlist: Vec<Release>) -> Result<(), UpdateError> {
+        pub fn update_wantlist(&mut self, wantlist: Vec<Release>) -> Result<(), UpdateError> {
             purge::table("wantlist")?;
-            add_releases(&self.conn, "wantlist", &mut wantlist)?;
+            add_releases(&self.conn, "wantlist", wantlist)?;
             Ok(())
         }
     }
@@ -262,8 +271,10 @@ pub mod update {
         Ok(())
     }
 
-    fn add_releases(conn: &Connection, foldername: &str, folder: &mut Vec<Release>)
+    fn add_releases(conn: &Connection, foldername: &str, folder: Vec<Release>)
         -> Result<(), DBError> {
+        let mut idx: u64 = 1;
+        let mut hasher = DefaultHasher::new();
         for release in folder {
             let mut stringified_labels = String::new();
             for label in &release.labels {
@@ -280,9 +291,16 @@ pub mod update {
             stringified_labels.pop().unwrap();
             stringified_formats.pop().unwrap();
 
+            //hashing the release
+            release.hash(&mut hasher);
+            let hash = hasher.finish();
+
+            //inserting the data
             let mut stmt = conn.prepare(
                 &format!("INSERT INTO \"{}\"
-                (id,
+                (idx,
+                hash,
+                id,
                 search_string,
                 title,
                 artist,
@@ -290,11 +308,13 @@ pub mod update {
                 labels,
                 formats,
                 date_added) VALUES
-                (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);", 
+                (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10);", 
                 foldername)
             )?;
             stmt.execute(
                 &[
+                    &idx.to_string(),
+                    &hash.to_string(),
                     &release.id.to_string(),
                     &release.search_string,
                     &release.title,
@@ -305,6 +325,7 @@ pub mod update {
                     &release.date_added.to_rfc3339(),
                 ]
             )?;
+            idx += 1;
         }
         Ok(())
     }
@@ -464,8 +485,8 @@ pub mod query {
         let mut folder: Vec<Release> = Vec::with_capacity(size(querytype).unwrap_or(100));
 
             let contents = stmt.query_map(NO_PARAMS, |row| {
-                let labels_raw: String = row.get(5)?;
-                let formats_raw: String = row.get(6)?;
+                let labels_raw: String = row.get(7)?;
+                let formats_raw: String = row.get(8)?;
 
                 let labels = labels_raw.as_str()
                     .split(':')
@@ -477,14 +498,14 @@ pub mod query {
                     .collect();
                 
                 Ok(Release {
-                    id: row.get(0)?,
+                    id: row.get(2)?,
                     search_string: String::new(),
-                    title: row.get(2)?,
-                    artist: row.get(3)?,
-                    year: row.get(4)?,
+                    title: row.get(4)?,
+                    artist: row.get(5)?,
+                    year: row.get(6)?,
                     labels: labels,
                     formats: formats,
-                    date_added: row.get(7)?,
+                    date_added: row.get(9)?,
                 })
             })?;
             for release in contents {
