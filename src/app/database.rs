@@ -158,7 +158,7 @@ pub mod admin {
                     Ok(mut stmt) => {
                         let collection_check = stmt.query_map(
                             NO_PARAMS, 
-                            |row| row.get(0)).unwrap();
+                            |row| row.get(0))?;
                         let mut folder_names: Vec<String> = Vec::new();
                         for folder in collection_check {
                             folder_names.push(folder.unwrap());
