@@ -165,7 +165,7 @@ pub mod admin {
                         }
                         for folder in folder_names {
                             let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
-                            match conn.query_row(&sqlcommand, NO_PARAMS, |_row| Ok(0)) {
+                            match conn.prepare(&sqlcommand) {
                                 Ok(_) => {},
                                 Err(e) => return Err(format!("{}: {}", folder, e).as_str().into())
                             }
