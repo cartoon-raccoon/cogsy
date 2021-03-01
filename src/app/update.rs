@@ -35,19 +35,14 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
             }
         }
     }
-    match admin::init_db() {
-        Ok(_) => {},
-        Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()))}
-    }
+    
+    admin::init_db()?;
     
     //* pulling data from Discogs
     let requester = build_client(&token);
     
     if from_cmd {print!("Updating profile..."); io::stdout().flush().unwrap();}
-    let profile = match profile(&requester, username) {
-        Ok(profile) => profile,
-        Err(e) => {return Err(e);}
-    };
+    let profile = profile(&requester, username)?;
     if from_cmd {
         print!("{}", Message::set("     Success!", MessageKind::Success));
         print!("\nUpdating wantlist...");
@@ -73,10 +68,8 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
         io::stdout().flush().unwrap();
     }
     //threads are spawned from within the function
-    let collection = match collection(requester, username, from_cmd, verbose) {
-        Ok(collection) => collection,
-        Err(e) => {return Err(e);}
-    };
+    let collection = collection(requester, username, from_cmd, verbose)?;
+
     if from_cmd {print!("{}", Message::set("  Success!", MessageKind::Success));}
     
     //* committing data to db
@@ -86,26 +79,14 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     };
 
     if from_cmd {println!("\nWriting to database...\n")}
-    match dbhandle.update_profile(profile) {
-        Ok(_) => {},
-        Err(e) => return Err(UpdateError::DBWriteError(e.to_string()))
-    }
-    match dbhandle.update_wantlist(wantlist) {
-        Ok(_) => {},
-        Err(e) => return Err(UpdateError::DBWriteError(e.to_string()))
-    }
-    match dbhandle.update_collection(collection) {
-        Ok(_) => {},
-        Err(e) => return Err(UpdateError::DBWriteError(e.to_string())),
-    }
+
+    dbhandle.update_profile(profile)?;
+    dbhandle.update_wantlist(wantlist)?;
+    dbhandle.update_collection(collection)?;
 
     //* final integrity check
-    match admin::check_integrity() {
-        Ok(()) => {},
-        Err(e) => {
-            return Err(UpdateError::DBWriteError(e.to_string()))
-        }
-    }
+    admin::check_integrity()?;
+    
     Ok(())
 }
 
