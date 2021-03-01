@@ -144,15 +144,15 @@ pub mod admin {
             Ok(conn) => {
                 match conn.prepare("SELECT * FROM profile;") {
                     Ok(_) => {},
-                    Err(_) => return Err("profile table missing".into())
+                    Err(e) => return Err(format!("profile: {}", e).as_str().into())
                 }
                 match conn.prepare("SELECT * FROM wantlist;") {
                     Ok(_) => {},
-                    Err(_) => return Err("wantlist table missing".into())
+                    Err(e) => return Err(format!("wantlist: {}", e).as_str().into())
                 }
                 match conn.prepare("SELECT * FROM listenlog;") {
                     Ok(_) => {},
-                    Err(_) => return Err("listenlog table missing".into())
+                    Err(e) => return Err(format!("listenlog: {}", e).as_str().into())
                 }
                 match conn.prepare("SELECT * FROM folders;") {
                     Ok(mut stmt) => {
@@ -167,15 +167,15 @@ pub mod admin {
                             let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
                             match conn.query_row(&sqlcommand, NO_PARAMS, |_row| Ok(0)) {
                                 Ok(_) => {},
-                                Err(_) => return Err(format!("{} table missing", folder).as_str().into())
+                                Err(e) => return Err(format!("{}: {}", folder, e).as_str().into())
                             }
                         }
                     }
-                    Err(_) => return Err("folders table missing".into())
+                    Err(e) => return Err(format!("folders: {}", e).as_str().into())
                 }
                 Ok(())
             },
-            Err(_) => return Err("database folder does not exist".into())
+            Err(_) => return Err("database file does not exist".into())
         }
     }
 }
