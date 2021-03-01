@@ -28,6 +28,12 @@ pub fn init<'a>() -> Clap<'a, 'a> {
         .about("A command line Discogs client written in Rust")
         .subcommand(SubCommand::with_name("update")
             .about("Updates the cogsy database.")
+            .arg(Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .takes_value(false)
+                .value_name("verbose")
+                .help("Toggle verbose output when updating."))
             .arg(Arg::with_name("username")
                 .short("u")
                 .long("username")
@@ -107,7 +113,11 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
         println!("{}",
             Message::set("Beginning full database update.", MessageKind::Info)
         );
-        match update::full(&app.user_id, &app.token, true, false) {
+        let verbose = if sub_m.is_present("verbose") {true} else {false};
+        if verbose {
+            println!("{}", Message::set("Info: verbose output not yet implemented.", MessageKind::Hint));
+        }
+        match update::full(&app.user_id, &app.token, true, verbose) {
             Ok(()) => {
                 println!("{}", Message::set("Database update successful.", MessageKind::Success));
             }

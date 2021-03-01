@@ -9,6 +9,7 @@ use std::{
 use serde_json::Value;
 use reqwest::blocking::Client;
 use chrono::{DateTime, Utc};
+use indicatif::{MultiProgress, ProgressBar};
 
 use crate::app::{
     {Release, Folders, Profile},
@@ -18,12 +19,12 @@ use crate::app::{
 };
 use crate::utils;
 
-pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<(), UpdateError> {
+pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Result<(), UpdateError> {
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
             true => {},
             false => {
-                if debug {println!("Database integrity check failed, purging and refreshing now.")}
+                if from_cmd {println!("Database integrity check failed, purging and refreshing now.")}
                 match purge::complete() {
                     Ok(()) => {},
                     Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()))}
@@ -54,7 +55,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
     let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
-        match wantlist(req_clone, owned_uname) {
+        match wantlist(req_clone, owned_uname, from_cmd) {
             Ok(wantlist) => Ok(wantlist),
             Err(e) => Err(e)
         }
@@ -69,7 +70,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, debug: bool) -> Result<
         io::stdout().flush().unwrap();
     }
     //threads are spawned from within the function
-    let collection = match collection(requester, username) {
+    let collection = match collection(requester, username, from_cmd, verbose) {
         Ok(collection) => collection,
         Err(e) => {return Err(e);}
     };
@@ -142,18 +143,20 @@ fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
     Ok(master_prof)
 }
 
-fn wantlist(requester: Client, username: String) -> Result<Vec<Release>, UpdateError> {
+fn wantlist(requester: Client, username: String, c: bool) -> Result<Vec<Release>, UpdateError> {
     let wantlist_url = build_url(ParseType::Wantlist, username);
-    let master_wants = get_full(Arc::new(requester), ParseType::Wantlist, wantlist_url)?;
+    let pgb = if c {ProgressBar::new(60)} else {ProgressBar::hidden()};
+    let master_wants = get_full(Arc::new(requester), ParseType::Wantlist, wantlist_url, pgb)?;
 
     Ok(master_wants)
 }
 
-fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError> {
+fn collection(requester: Client, username: &str, c: bool, _v: bool) -> Result<Folders, UpdateError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;
     let mut folders = HashMap::<String, String>::new();
+    let total_prog = MultiProgress::new();
 
     let to_deserialize: Value = serde_json::from_str(&folders_raw)
         .unwrap_or(Value::Null);
@@ -184,9 +187,11 @@ fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError>
     for (name, folderurl) in folders {
         let owned_uname = username.to_string();
         let req_clone = requester.clone();
+        let pb = if c { ProgressBar::new(60)} else {ProgressBar::hidden()};
+        total_prog.add(pb.clone());
         threads.push(thread::spawn( move || -> Result<(String, Vec<Release>), UpdateError> {
             let collection_url = build_url(ParseType::Folders(folderurl), owned_uname);
-            let releases = get_full(req_clone, ParseType::Collection, collection_url)?;
+            let releases = get_full(req_clone, ParseType::Collection, collection_url, pb)?;
             Ok((name, releases))
         }));
     }
@@ -197,10 +202,11 @@ fn collection(requester: Client, username: &str) -> Result<Folders, UpdateError>
         };
         master_folders.push(name, releases);
     };
+    total_prog.join().unwrap();
     Ok(master_folders)
 }
 
-fn get_full(client: Arc<Client>, parse: ParseType, starting_url: String) -> Result<Vec<Release>, UpdateError> {
+fn get_full(client: Arc<Client>, parse: ParseType, starting_url: String, _pb: ProgressBar) -> Result<Vec<Release>, UpdateError> {
     use std::rc::Rc;
 
     let mut url = starting_url;
