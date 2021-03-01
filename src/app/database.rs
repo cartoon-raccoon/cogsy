@@ -35,6 +35,14 @@ pub struct DBError {
     error: String,
 }
 
+impl From<&str> for DBError {
+    fn from(from: &str) -> Self {
+        DBError {
+            error: from.into()
+        }
+    }
+}
+
 impl std::error::Error for DBError {}
 
 impl std::fmt::Display for DBError {
@@ -131,20 +139,20 @@ pub mod admin {
     }
 
     //TODO: Account for orphan folder tables
-    pub fn check_integrity() -> bool {
+    pub fn check_integrity() -> Result<(), DBError> {
         match Connection::open(utils::database_file()) {
             Ok(conn) => {
                 match conn.prepare("SELECT * FROM profile;") {
                     Ok(_) => {},
-                    Err(_) => return false
+                    Err(_) => return Err("profile table missing".into())
                 }
                 match conn.prepare("SELECT * FROM wantlist;") {
                     Ok(_) => {},
-                    Err(_) => return false
+                    Err(_) => return Err("wantlist table missing".into())
                 }
                 match conn.prepare("SELECT * FROM listenlog;") {
                     Ok(_) => {},
-                    Err(_) => return false
+                    Err(_) => return Err("listenlog table missing".into())
                 }
                 match conn.prepare("SELECT * FROM folders;") {
                     Ok(mut stmt) => {
@@ -159,15 +167,15 @@ pub mod admin {
                             let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
                             match conn.query_row(&sqlcommand, NO_PARAMS, |_row| Ok(0)) {
                                 Ok(_) => {},
-                                Err(_) => return false
+                                Err(_) => return Err(format!("{} table missing", folder).as_str().into())
                             }
                         }
                     }
-                    Err(_) => return false
+                    Err(_) => return Err("folders table missing".into())
                 }
-                true
+                Ok(())
             },
-            Err(_) => return false
+            Err(_) => return Err("database folder does not exist".into())
         }
     }
 }

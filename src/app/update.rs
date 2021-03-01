@@ -22,9 +22,12 @@ use crate::utils;
 pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Result<(), UpdateError> {
     if Path::new(&utils::database_file()).exists() {
         match admin::check_integrity() {
-            true => {},
-            false => {
-                if from_cmd {println!("Database integrity check failed, purging and refreshing now.")}
+            Ok(()) => {},
+            Err(e) => {
+                if from_cmd {
+                    println!("Error on integrity check: {}", e);
+                    println!("Database integrity check failed, purging and refreshing now.")
+                }
                 match purge::complete() {
                     Ok(()) => {},
                     Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()))}
@@ -98,10 +101,9 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
 
     //* final integrity check
     match admin::check_integrity() {
-        true => {},
-        false => {
-            let errormsg = String::from("Integrity check failed");
-            return Err(UpdateError::DBWriteError(errormsg))
+        Ok(()) => {},
+        Err(e) => {
+            return Err(UpdateError::DBWriteError(e.to_string()))
         }
     }
     Ok(())

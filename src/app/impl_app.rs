@@ -98,8 +98,9 @@ impl App {
             println!("Would you like to use the new username? [Y/n]");
             on_init_fail(&config.username, &token, false);
         }
-        if !admin::check_integrity() {
-            println!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
+        if let Err(e) = admin::check_integrity() {
+            eprintln!("{}", Message::set(&e.to_string(), MessageKind::Error));
+            eprintln!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
             on_init_fail(&config.username, &token, false);
         }
 
