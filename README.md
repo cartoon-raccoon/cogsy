@@ -25,6 +25,7 @@ Cogsy's target audience is admittedly, not very large. It is targeted at people 
 - `rustc` v1.46.0 or later (The official Rust compiler)
 - `gcc` v10 or later (For linking, `rustc` does not do linking by itself)
 - A Discogs account (obviously)
+    - Note: your Discogs collection has to have a folder named "All" in it. Not having it will break a lot of Cogsy's functionality.
 ### The following C shared libraries are needed:
 - `libsqlite-dev` or its equivalent for your distro.
 - `openssl` (Should already exist)
@@ -60,11 +61,11 @@ Cogsy can be installed from crates.io, the official Rust package registry:
 
 This command is also used to update Cogsy when a new version is released. Your data should remain intact.
 
-To build from source:
+To build from source (please don't do this, use cargo instead):
 ```
 git clone https://github.com/cartoon-raccoon/cogsy
 cd cogsy
-cargo run
+make install
 ```
 
 If anyone is willing to package the app for their own distro, please let me know and then go ahead.
