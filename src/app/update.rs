@@ -53,10 +53,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
     let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
-        match wantlist(req_clone, owned_uname, from_cmd) {
-            Ok(wantlist) => Ok(wantlist),
-            Err(e) => Err(e)
-        }
+        Ok(wantlist(req_clone, owned_uname, from_cmd)?)
     }).join() { //thread panics are caught here instead of crashing the entire app
         Ok(wantlist) => wantlist?,
         Err(_) => {return Err(UpdateError::ThreadPanicError);}
@@ -73,10 +70,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     if from_cmd {print!("{}", Message::set("  Success!", MessageKind::Success));}
     
     //* committing data to db
-    let mut dbhandle = match update::DBHandle::new() {
-        Ok(handle) => handle,
-        Err(e) => {return Err(UpdateError::DBWriteError(e.to_string()));}
-    };
+    let mut dbhandle = update::DBHandle::new()?;
 
     if from_cmd {println!("\nWriting to database...\n")}
 
