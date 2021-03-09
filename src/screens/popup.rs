@@ -55,6 +55,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     ));
 
     let title = release.title.clone();
+    let artist = release.artist.clone();
     let id = release.id;
 
     let screen = ResizedView::new(
@@ -62,8 +63,10 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
         SizeConstraint::Full,
         Dialog::text(content)
             .title(format!("{} - {}", 
-            release.artist.clone(), 
-            release.title.clone()))
+            artist, title))
+            .button("Ok", move |s| {
+                s.pop_layer();
+            })
             .button("Listen", move |s| {
                 let entry = ListenLogEntry {
                     id: id,
@@ -74,7 +77,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
                 match update::listenlog(entry) {
                     Ok(()) => {
                         s.call_on_name("messagebox", |view: &mut TextView| {
-                            view.set_content(format!("Listening to {}", title))
+                            view.set_content(format!("Listening to `{}` by {}", title, artist))
                         });
                         s.pop_layer();
                     }
