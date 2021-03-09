@@ -3,7 +3,11 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
-use toml;
+use toml::{
+    self, 
+    value::Value, 
+    map::Map,
+};
 use directories::ProjectDirs;
 
 use chrono::{
@@ -18,14 +22,15 @@ use cursive::theme::{
     PaletteColor::*,
     {BorderStyle, Palette, Theme}
 };
-use crate::app::database::query;
+use crate::app::{
+    message::Message,
+    database::query,
+};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    pub username: String,
-    pub token: String,
-    pub timezone: f32,
-    pub colour: String,
+    pub user: User,
+    pub appearance: Option<Appearance>,
 }
 
 impl Config {
@@ -38,32 +43,11 @@ impl Config {
         })
     }
     pub fn timezone() -> FixedOffset {
-        let raw_tz = Config::load().timezone;
+        let raw_tz = Config::load().user.timezone;
         if raw_tz < 0.0 {
             FixedOffset::west((-raw_tz * 3600.0) as i32)
         } else {
             FixedOffset::east((raw_tz * 3600.0) as i32)
-        }
-    }
-    pub fn gen_colour(&self) -> Color {
-        match self.colour.to_lowercase().as_str() {
-            "black"     => Color::Dark(BC::Black),
-            "red"       => Color::Dark(BC::Red),
-            "green"     => Color::Dark(BC::Green),
-            "yellow"    => Color::Dark(BC::Yellow),
-            "blue"      => Color::Dark(BC::Blue),
-            "magenta"   => Color::Dark(BC::Magenta),
-            "cyan"      => Color::Dark(BC::Cyan),
-            "white"     => Color::Dark(BC::White),
-            "brblack"   => Color::Light(BC::Black),
-            "brred"     => Color::Light(BC::Red),
-            "brgreen"   => Color::Light(BC::Green),
-            "bryellow"  => Color::Light(BC::Yellow),
-            "brblue"    => Color::Light(BC::Blue),
-            "brmagenta" => Color::Light(BC::Magenta),
-            "brcyan"    => Color::Light(BC::Cyan),
-            "brwhite"   => Color::Light(BC::White),
-            _           => Color::Light(BC::Yellow),
         }
     }
     pub fn first_init() {
@@ -100,10 +84,12 @@ impl Config {
             }
         }
         let config = Config {
-            username: username.trim().to_string(),
-            token: token.trim().to_string(),
-            timezone: timezone,
-            colour: String::from("yellow"),
+            user: User { 
+                username: username.trim().to_string(),
+                token: token.trim().to_string(),
+                timezone: timezone,
+            },
+            appearance: None,
         };
         if let Ok(new_config) = toml::to_string(&config) {
             match OpenOptions::new().create(true).write(true).open(&config_file()) {
@@ -114,8 +100,99 @@ impl Config {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct User {
+    pub username: String,
+    pub token: String,
+    pub timezone: f32,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct Appearance {
+    pub folders_width: Option<u32>,
+    // colours
+    /// The selected text colour
+    pub selectcol: Option<String>,
+    /// Message box colour
+    pub messagecol: Option<Value>,
+    /// Command line colour
+    pub commandcol: Option<String>,
+    /// Title colour
+    pub titlecol: Option<String>,
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance {
+            folders_width: Some(30),
+            selectcol: Some(String::from("yellow")),
+            messagecol: Some(gen_default_msg_cols()),
+            commandcol: Some(String::from("white")),
+            titlecol: Some(String::from("yellow")),
+        }
+    }
+}
+
+impl Appearance {
+
+    /// Resolves all the empty (None) fields to a default colour
+    pub fn resolve(&mut self) {
+        if let None = self.folders_width {
+            self.folders_width = Some(30);
+        }
+
+        if let None = self.selectcol {
+            self.selectcol = Some(String::from("yellow"));
+        }
+
+        if let None = self.messagecol {
+            self.messagecol = Some(gen_default_msg_cols());
+        } else {
+            // ensuring all values are strings
+            for (k, v) in self.messagecol().iter() {
+                if !v.is_str() {
+                    Message::error(format!("Incorrect type for `{}`", k))
+                }
+            }
+
+        }
+
+        if let None = self.commandcol {
+            self.commandcol = Some(String::from("white"));
+        }
+
+        if let None = self.titlecol {
+            self.titlecol = Some(String::from("yellow"));
+        }
+    }
+
+    pub fn folders(&self) -> u32 {
+        self.folders_width.unwrap()
+    }
+
+    pub fn selectcol(&self) -> Color {
+        parse_colour(self.selectcol.as_ref().unwrap())
+    }
+
+    pub fn messagecol(&self) -> &Map<String, Value> {
+        self.messagecol.as_ref().unwrap().as_table().unwrap()
+    }
+
+    fn messagecol_mut(&mut self) -> &mut Map<String, Value> {
+        self.messagecol.as_ref().unwrap().as_table_mut().unwrap()
+    }
+
+    pub fn commandcol(&self) -> Color {
+        parse_colour(self.commandcol.as_ref().unwrap())
+    }
+
+    pub fn titlecol(&self) -> Color {
+        parse_colour(self.titlecol.as_ref().unwrap())
+    }
+}
+
 pub fn usernames_match() -> bool {
-    Config::load().username 
+    Config::load().user.username 
     == 
     query::profile().unwrap().username
 }
@@ -125,6 +202,54 @@ pub fn get_utc_now() -> DateTime<Utc> {
         Local::now().naive_utc(),
         Utc
     )
+}
+
+fn parse_colour(color: &str) -> Color {
+    match color {
+        "black"     => Color::Dark(BC::Black),
+        "red"       => Color::Dark(BC::Red),
+        "green"     => Color::Dark(BC::Green),
+        "yellow"    => Color::Dark(BC::Yellow),
+        "blue"      => Color::Dark(BC::Blue),
+        "magenta"   => Color::Dark(BC::Magenta),
+        "cyan"      => Color::Dark(BC::Cyan),
+        "white"     => Color::Dark(BC::White),
+        "brblack"   => Color::Light(BC::Black),
+        "brred"     => Color::Light(BC::Red),
+        "brgreen"   => Color::Light(BC::Green),
+        "bryellow"  => Color::Light(BC::Yellow),
+        "brblue"    => Color::Light(BC::Blue),
+        "brmagenta" => Color::Light(BC::Magenta),
+        "brcyan"    => Color::Light(BC::Cyan),
+        "brwhite"   => Color::Light(BC::White),
+        _           => Color::Light(BC::Yellow),
+    }
+}
+
+fn gen_default_msg_cols() -> Value {
+    let mut table = Map::with_capacity(3);
+                
+    table.insert(
+        String::from("default"), 
+        Value::String(String::from("white"))
+    );
+
+    table.insert(
+        String::from("error"),
+        Value::String(String::from("red"))
+    );
+
+    table.insert(
+        String::from("success"),
+        Value::String(String::from("green"))
+    );
+
+    table.insert(
+        String::from("hint"),
+        Value::String(String::from("yellow"))
+    );
+
+    Value::Table(table)
 }
 
 fn project_dirs() -> ProjectDirs {
@@ -153,10 +278,12 @@ pub fn database_file() -> PathBuf {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            username: String::from("null"),
-            token: String::from("null"),
-            timezone: 0.0,
-            colour: String::from("yellow"),
+            user: User {
+                username: String::from("null"),
+                token: String::from("null"),
+                timezone: 0.0,
+            },
+            appearance: Some(Appearance::default()),
         }
     }
 }
@@ -166,27 +293,34 @@ pub struct ColourScheme {
 
 }
 
-pub fn palette_gen(colour: Color) -> Palette {
+pub fn palette_gen(colours: &mut Appearance) -> Palette {
+    colours.resolve();
+
     let mut p = Palette::default();
     p[Background] = Color::TerminalDefault;
     p[Shadow] = Color::TerminalDefault;
     p[View] = Color::TerminalDefault;
     p[Primary] = Color::TerminalDefault;
-    p[Secondary] = Color::TerminalDefault;
+
+    // Command line text colour
+    p[Secondary] = colours.commandcol();
+
     p[Tertiary] = Color::TerminalDefault;
-    p[TitlePrimary] = Color::TerminalDefault;
+
+    // Popup title colours
+    p[TitlePrimary] = colours.titlecol();
     p[Highlight] = Color::TerminalDefault;
     p[HighlightInactive] = Color::TerminalDefault;
-    p[HighlightText] = colour;
+    p[HighlightText] = colours.selectcol();
 
     p
 }
 
-pub fn theme_gen(colour: Color) -> Theme {
+pub fn theme_gen(colours: &mut Appearance) -> Theme {
     let mut t = Theme::default();
     t.shadow = false;
     t.borders = BorderStyle::Simple;
-    t.palette = palette_gen(colour);
+    t.palette = palette_gen(colours);
     return t;
 }
 
@@ -199,9 +333,9 @@ mod tests {
     fn check_config_loads_correctly() {
         let testcfg = Config::load();
         let checkcfg = App::initialize();
-        println!("{}", testcfg.token);
-        assert_eq!(testcfg.username, checkcfg.user_id);
-        assert_eq!(testcfg.timezone, 8.0);
+        println!("{}", testcfg.user.token);
+        assert_eq!(testcfg.user.username, checkcfg.user_id);
+        assert_eq!(testcfg.user.timezone, 8.0);
     }
 
     #[test]
