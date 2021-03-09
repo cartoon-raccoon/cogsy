@@ -162,8 +162,38 @@ impl Appearance {
                 }
             }
 
-        }
+            if !self.messagecol_mut().contains_key("default") {
+                self.messagecol_mut().insert(
+                    String::from("default"), 
+                    Value::String(String::from("white"))
+                );
+            }
 
+            if !self.messagecol_mut().contains_key("success") {
+                self.messagecol_mut().insert(
+                    String::from("success"),
+                    Value::String(String::from("green"))
+                );
+            }
+
+            if !self.messagecol_mut().contains_key("error") {
+                self.messagecol_mut().insert(
+                    String::from("error"),
+                    Value::String(String::from("red"))
+                );
+            }
+
+            if !self.messagecol_mut().contains_key("hint") {
+                self.messagecol_mut().insert(
+                    String::from("hint"),
+                    Value::String(String::from("yellow"))
+                );
+            }
+
+            
+        }
+        assert!(self.messagecol().len() == 4);
+        
         if let None = self.commandcol {
             self.commandcol = Some(String::from("white"));
         }
