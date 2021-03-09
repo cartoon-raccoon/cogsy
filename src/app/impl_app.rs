@@ -8,7 +8,6 @@ use cursive::{
     Cursive,
     views::*,
     event::{Event, Key},
-    //theme::Color,
 };
 use crate::app::{
     {
@@ -25,7 +24,7 @@ use crate::app::{
         update as dbupdate, 
         query::QueryType
     },
-    message::{Message, MessageKind},
+    message::{Message, MessageKind, msgbox},
     update,
 };
 use crate::utils::{self, Config};
@@ -119,6 +118,7 @@ impl App {
 
     pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
         let mut view_content: String;
+        let mut view_style = msgbox::DEFAULT;
         match result {
             Ok(command) => {
                 match command {
@@ -134,22 +134,23 @@ impl App {
                                 self.collection.folders = query::collection().unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
+                                view_style = msgbox::SUCCESS;
                             }
                             Err(e) => {
                                 view_content = e.to_string();
                             }
                         }
                     }
-                    Command::UpdateID(id) => {
-                        view_content = format!(
-                            "Your id has been set to `{}`, restart the app for the changes.",
-                            id);
-                        self.user_id = id;
+                    Command::UpdateID(_id) => {
+                        view_content = String::from("In-app id changes are not supported yet.");
+                        view_style = msgbox::HINT;
+                        //self.user_id = id;
                         self.modified = true;
                     }
-                    Command::UpdateToken(tk) => {
-                        view_content = format!("Your token has been set to: {}", tk);
-                        self.token = format!("Discogs token={}", tk);
+                    Command::UpdateToken(_tk) => {
+                        view_content = String::from("In-app token changes are not supported yet.");
+                        view_style = msgbox::HINT;
+                        //self.token = format!("Discogs token={}", tk);
                         self.modified = true;
                     }
                     Command::Random(nolog) => {
@@ -164,16 +165,22 @@ impl App {
                                     };
                                     match dbupdate::listenlog(entry) {
                                         Ok(()) => {
-                                            view_content = format!("You should play `{}`", random.title);
+                                            view_content = format!("You should play `{}` by {}", 
+                                                random.title, 
+                                                random.artist,
+                                            );
                                         }
                                         Err(e) => {view_content = e.to_string();}
                                     }
                                 } else {
-                                    view_content = format!("You should play `{}`", random.title);
+                                    view_content = format!("You should play `{}` by {}", 
+                                        random.title, random.artist
+                                    );
                                 }
                             },
                             Err(e) => {
                                 view_content = e.to_string();
+                                view_style = msgbox::ERROR;
                             }
                         };
                     }
@@ -184,7 +191,7 @@ impl App {
                         match query::release(album.clone(), QueryType::Collection) {
                             Ok(results) => {
                                 if results.len() > 1 {
-                                    view_content = format!("Multiple results for {}", album);
+                                    view_content = format!("Multiple results for `{}`", album);
                                     s.add_fullscreen_layer(
                                         //listenlog gets logged internally here
                                         popup::multiple_results(results, true)
@@ -197,7 +204,10 @@ impl App {
                                         time: time_now,
                                     };
                                     match dbupdate::listenlog(entry) {
-                                        Ok(()) => {view_content = format!("Listening to `{}`", results[0].title);}
+                                        Ok(()) => {view_content = format!("Listening to `{}` by {}", 
+                                            results[0].title, 
+                                            results[0].artist,
+                                        );}
                                         Err(e) => {view_content = e.to_string();}
                                     }
                                 } else {
@@ -252,11 +262,13 @@ impl App {
                 }
                 s.call_on_name("messagebox", |view: &mut TextView| {
                     view.set_content(view_content);
+                    view.set_style(view_style);
                 });
             }
             Err(error) => {
                 s.call_on_name("messagebox", |view: &mut TextView| {
                     view.set_content(error.to_string());
+                    view.set_style(msgbox::ERROR);
                 });
             }
         }

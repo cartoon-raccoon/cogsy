@@ -1,8 +1,6 @@
-//* this module only formats text for commandline usage.
-//* i'm still trying to figure out how to format text for the tui.
-
 use ansi_term::Colour::{Red, Green, Yellow};
 use ansi_term::Style;
+
 /* 
 The idea is that this module processes a function that returns
 a SpannedString to insert as input to the TextView (commandline)
@@ -72,4 +70,14 @@ impl std::default::Default for Message {
             kind: MessageKind::Info,
         }
     }
+}
+
+pub mod msgbox {
+    use cursive::theme::{Color, BaseColor as Bc};
+
+    pub const ERROR: Color = Color::Dark(Bc::Red);
+    pub const DEFAULT: Color = Color::Dark(Bc::White);
+    pub const SUCCESS: Color = Color::Dark(Bc::Green);
+    pub const HINT: Color = Color::Dark(Bc::Yellow);
+
 }
