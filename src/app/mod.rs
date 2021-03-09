@@ -15,7 +15,7 @@ use chrono::{
 };
 use message::Message;
 use crate::collection::Collection;
-use cursive::theme::Color;
+use crate::utils::Appearance;
 
 #[derive(Debug, Clone)]
 pub struct App {
@@ -24,7 +24,7 @@ pub struct App {
     pub message: Message,
     pub collection: Collection,
     pub modified: bool,
-    pub colour: Color,
+    pub appearance: Appearance,
 }
 
 #[derive(Debug, Clone)]

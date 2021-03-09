@@ -24,16 +24,19 @@ fn main() {
         exit(fromcli::handle_reset(utils::Config::load()).unwrap());
     }
     let mut app = App::initialize();
+    app.appearance.resolve();
     
     if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {
         exit(status);
     }
     
     let mut siv = cursive::default();
-    siv.set_theme(utils::theme_gen(app.colour));
+    siv.set_theme(utils::theme_gen(&mut app.appearance));
 
     //initialize screen data
-    let collectscreen = app.collection.build();
+    let collectscreen = app.collection.build(
+        app.appearance.folders() as usize
+    );
 
     //building gui tree
     let message = TextContent::new(app.message.msg.clone());

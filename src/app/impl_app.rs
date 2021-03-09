@@ -79,13 +79,13 @@ impl App {
         let config = Config::load();
         let token = format!(
             "Discogs token={}",
-            config.token
+            config.user.token
         );
         let dbfilepath = utils::database_file();
 
         if !Path::new(&dbfilepath).exists() {
             println!("{}", Message::set(DB_NOT_INIT_MSG, MessageKind::Hint));
-            on_init_fail(&config.username, &token, false);
+            on_init_fail(&config.user.username, &token, false);
         }
         if !utils::usernames_match() {
             println!("{}", 
@@ -95,16 +95,16 @@ impl App {
                 )
             );
             println!("Would you like to use the new username? [Y/n]");
-            on_init_fail(&config.username, &token, false);
+            on_init_fail(&config.user.username, &token, false);
         }
         if let Err(e) = admin::check_integrity() {
             eprintln!("{}", Message::set(&e.to_string(), MessageKind::Error));
             eprintln!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
-            on_init_fail(&config.username, &token, false);
+            on_init_fail(&config.user.username, &token, false);
         }
 
         App {
-            user_id: config.username.clone(),
+            user_id: config.user.username.clone(),
             token: token,
             message: Message {
                 msg: String::from(format!("Cogsy v{}", env!("CARGO_PKG_VERSION"))),
@@ -112,7 +112,7 @@ impl App {
             },
             collection: Collection::new(),
             modified: false,
-            colour: config.gen_colour(),
+            appearance: config.appearance.unwrap_or_default(),
         }
     }
 

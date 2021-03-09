@@ -322,7 +322,7 @@ pub fn handle_reset(config: Config) -> Option<i32> {
     match purge::complete() {
         Ok(_) => {
             println!("Database purged. Pulling data from Discogs...");
-            match update::full(&config.username, &config.token, true, false) {
+            match update::full(&config.user.username, &config.user.token, true, false) {
                 Ok(()) => {}
                 Err(e) => {
                     println!("\n{}", e);

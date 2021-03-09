@@ -61,6 +61,16 @@ impl Message {
             kind: kind,
         }
     }
+
+    pub fn error(text: &str) -> ! {
+        let msg = Message {
+            msg: text.into(),
+            kind: MessageKind::Error,
+        };
+
+        eprintln!("{}", msg);
+        std::process::exit(2)
+    }
 }
 
 impl std::default::Default for Message {

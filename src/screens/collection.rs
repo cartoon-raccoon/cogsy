@@ -31,10 +31,10 @@ impl Collection {
                 .unwrap_or(Folders::new())
         }
     }
-    pub fn build(&self) -> NamedView<LinearLayout> {
+    pub fn build(&self, folders_width: usize) -> NamedView<LinearLayout> {
         let collection = LinearLayout::horizontal()
             .child(Panel::new(ResizedView::new(
-                SizeConstraint::Fixed(30), 
+                SizeConstraint::Fixed(folders_width), 
                 SizeConstraint::Full,
                 ScrollView::new(
                     SelectView::<Vec<Release>>::new()
