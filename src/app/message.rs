@@ -62,6 +62,27 @@ impl Message {
         }
     }
 
+    pub fn success(text: &str) -> Self {
+        Message {
+            msg: text.into(),
+            kind: MessageKind::Success,
+        }
+    }
+
+    pub fn hint(text: &str) -> Self {
+        Message {
+            msg: text.into(),
+            kind: MessageKind::Hint,
+        }
+    }
+
+    pub fn info(text: &str) -> Self {
+        Message {
+            msg: text.into(),
+            kind: MessageKind::Info,
+        }
+    }
+
     pub fn error(text: &str) -> ! {
         let msg = Message {
             msg: text.into(),

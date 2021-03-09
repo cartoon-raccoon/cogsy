@@ -39,6 +39,13 @@ impl Config {
             &read_to_string(config_file()).unwrap_or_default()
         ).unwrap_or_else(|e| {
             eprintln!("Config error: {}", e);
+
+            //todo: remove after upgrading to version 0.1.14
+            eprint!("{}", Message::hint("hint:"));
+            eprintln!("v0.1.13 marked a switch to a new config format.");
+            eprintln!("See https://github.com/cartoon-raccoon/cogsy/blob/master/docs/usage.md");
+            eprintln!("for more information.");
+
             std::process::exit(2);
         })
     }
