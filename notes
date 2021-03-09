@@ -87,15 +87,15 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - Implement different colours for folder list (not important)
-  - History popup
-  - Additional config options - 
-      Folder view width
+  - [0.1.13] History popup for each album
+  - [0.1.13] Additional config options
+      (x) Folder view width
       Messagebox colours
-      Command line colours
-      Title colours
-  - Verbose output (with indicatif)
+      (x) Command line colours
+      (x) Title colours
+  - [0.1.13] Verbose output (with indicatif)
   - Reading from a csv input file
+  - Implement different colours for folder list (not important)
 
 Future additions:
   - Option to read from csv instead of pulling from web
