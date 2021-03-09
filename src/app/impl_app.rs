@@ -256,6 +256,10 @@ impl App {
                             Err(e) => {view_content = format!("{}", e);}
                         }
                     }
+                    Command::Quit => {
+                        view_content = String::from("Quitting...");
+                        s.quit();
+                    }
                     Command::Empty => {
                         view_content = "Empty command".to_string();
                     }

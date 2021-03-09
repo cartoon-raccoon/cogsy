@@ -18,6 +18,7 @@ pub enum Command {
     Listen(String, String), //album name, time
     Query(String),          //album name
     QueryWantlist(String),
+    Quit,
     Empty,
 }
 
@@ -204,6 +205,12 @@ impl Command {
                     None => Err(CommandError::InvalidAlbum)
                 }
             },
+            "quit" | "q" => {
+                if strings.len() > 1 {
+                    return Err(CommandError::TooManyArgs(first, 0))
+                }
+                return Ok(Command::Quit)
+            }
             _ => {
                 return Err(CommandError::InvalidCommand(first));
             },
