@@ -151,7 +151,7 @@ impl Appearance {
             // ensuring all values are strings
             for (k, v) in self.messagecol().iter() {
                 if !v.is_str() {
-                    Message::error(format!("Incorrect type for `{}`", k))
+                    Message::error(&format!("Incorrect type for `{}`", k))
                 }
             }
 
@@ -179,7 +179,7 @@ impl Appearance {
     }
 
     fn messagecol_mut(&mut self) -> &mut Map<String, Value> {
-        self.messagecol.as_ref().unwrap().as_table_mut().unwrap()
+        self.messagecol.as_mut().unwrap().as_table_mut().unwrap()
     }
 
     pub fn commandcol(&self) -> Color {
