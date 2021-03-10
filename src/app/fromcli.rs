@@ -115,9 +115,6 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             Message::set("Beginning full database update.", MessageKind::Info)
         );
         let verbose = if sub_m.is_present("verbose") {true} else {false};
-        if verbose {
-            println!("{}", Message::info("Info: verbose output not yet implemented."));
-        }
         match update::full(&app.user_id, &app.token, true, verbose) {
             Ok(()) => {
                 println!("{}", Message::success("Database update successful."));

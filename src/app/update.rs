@@ -45,29 +45,44 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     let profile = profile(&requester, username)?;
     if from_cmd {
         print!("{}", Message::set("     Success!", MessageKind::Success));
-        print!("\nUpdating wantlist...");
-        io::stdout().flush().unwrap();
+        if verbose {
+            println!("\nUpdating wantlist...")
+        } else {
+            print!("\nUpdating wantlist...");
+            io::stdout().flush().unwrap();
+        }
     }
 
     //Spawning a synchronous thread to catch panics when parsing json
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
     let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
-        Ok(wantlist(req_clone, owned_uname, from_cmd)?)
+        Ok(wantlist(req_clone, owned_uname, from_cmd, verbose)?)
     }).join() { //thread panics are caught here instead of crashing the entire app
         Ok(wantlist) => wantlist?,
         Err(_) => {return Err(UpdateError::ThreadPanicError);}
     };
 
     if from_cmd {
-        print!("{}", Message::set("    Success!", MessageKind::Success));
-        print!("\nUpdating collection...");
-        io::stdout().flush().unwrap();
+        if verbose {
+            println!("{}", Message::success("Success!"));
+            println!("\nUpdating collection...")
+        } else {
+            print!("{}", Message::set("    Success!", MessageKind::Success));
+            print!("\nUpdating collection...");
+            io::stdout().flush().unwrap();
+        }
     }
     //threads are spawned from within the function
     let collection = collection(requester, username, from_cmd, verbose)?;
 
-    if from_cmd {print!("{}", Message::set("  Success!", MessageKind::Success));}
+    if from_cmd {
+        if verbose {
+            println!("{}", Message::success("Success!"));
+        } else {
+            print!("{}", Message::set("  Success!", MessageKind::Success));
+        }
+    }
     
     //* committing data to db
     let mut dbhandle = update::DBHandle::new()?;
@@ -120,15 +135,20 @@ fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
     Ok(master_prof)
 }
 
-fn wantlist(requester: Client, username: String, c: bool) -> Result<Vec<Release>, UpdateError> {
+fn wantlist(requester: Client, username: String, c: bool, v: bool) -> Result<Vec<Release>, UpdateError> {
     let wantlist_url = build_url(ParseType::Wantlist, username);
     let pgb = if c {ProgressBar::new(60)} else {ProgressBar::hidden()};
-    let master_wants = get_full(Arc::new(requester), ParseType::Wantlist, wantlist_url, pgb)?;
+    let master_wants = get_full(
+        Arc::new(requester), 
+        ParseType::Wantlist, 
+        wantlist_url, pgb, v, 
+        "Wantlist".into()
+    )?;
 
     Ok(master_wants)
 }
 
-fn collection(requester: Client, username: &str, c: bool, _v: bool) -> Result<Folders, UpdateError> {
+fn collection(requester: Client, username: &str, c: bool, v: bool) -> Result<Folders, UpdateError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;
@@ -168,7 +188,7 @@ fn collection(requester: Client, username: &str, c: bool, _v: bool) -> Result<Fo
         total_prog.add(pb.clone());
         threads.push(thread::spawn( move || -> Result<(String, Vec<Release>), UpdateError> {
             let collection_url = build_url(ParseType::Folders(folderurl), owned_uname);
-            let releases = get_full(req_clone, ParseType::Collection, collection_url, pb)?;
+            let releases = get_full(req_clone, ParseType::Collection, collection_url, pb, v, name.clone())?;
             Ok((name, releases))
         }));
     }
@@ -183,7 +203,14 @@ fn collection(requester: Client, username: &str, c: bool, _v: bool) -> Result<Fo
     Ok(master_folders)
 }
 
-fn get_full(client: Arc<Client>, parse: ParseType, starting_url: String, _pb: ProgressBar) -> Result<Vec<Release>, UpdateError> {
+fn get_full(
+    client: Arc<Client>, 
+    parse: ParseType, 
+    starting_url: String, 
+    _pb: ProgressBar,
+    from_cli: bool,
+    name: String,
+) -> Result<Vec<Release>, UpdateError> {
     use std::rc::Rc;
 
     let mut url = starting_url;
@@ -210,7 +237,7 @@ fn get_full(client: Arc<Client>, parse: ParseType, starting_url: String, _pb: Pr
         } else {
             return Err(UpdateError::ParseError);
         }
-        let mut releases = parse_releases(parse.clone(), &text, false)?; 
+        let mut releases = parse_releases(parse.clone(), &text, false, from_cli, &name)?; 
         master_vec.append(&mut releases);
         if master_vec.len() as u64 == total {
             break;

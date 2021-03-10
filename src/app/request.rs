@@ -15,7 +15,10 @@ use chrono::{
 };
 use unidecode::unidecode;
 
-use crate::app::Release;
+use crate::app::{
+    Release,
+    message::Message
+};
 use crate::utils;
 use crate::CONFIG;
 
@@ -143,7 +146,12 @@ pub fn build_url(parse: ParseType, username: String) -> String {
     }
 }
 
-pub fn parse_releases(parse: Rc<ParseType>, text: &str, from_file: bool) -> Result<Vec<Release>, UpdateError> {
+pub fn parse_releases(
+    parse: Rc<ParseType>, 
+    text: &str, 
+    from_file: bool, c: bool,
+    name: &str
+) -> Result<Vec<Release>, UpdateError> {
     /*
     *Step 1: Obtain the total item count
     *Step 2: Index into "releases" and ensure it is an array
@@ -220,16 +228,21 @@ pub fn parse_releases(parse: Rc<ParseType>, text: &str, from_file: bool) -> Resu
             }
             let title = info["title"].as_str()
                 .ok_or(UpdateError::ParseError)?.to_string();
+            let artist = info["artists"][0]["name"].as_str()
+                .ok_or(UpdateError::ParseError)?
+                .to_string();
             let search_string = unidecode(&title)
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+
+            if c {
+                println!("'[{}] {}' by {}", Message::info(&name), title, artist)
+            }
 
             releases.push(Release {
                 id: id_no as i64,
                 search_string: search_string,
                 title: title,
-                artist: info["artists"][0]["name"].as_str()
-                    .ok_or(UpdateError::ParseError)?
-                    .to_string(),
+                artist: artist,
                 year: info["year"].as_u64()
                     .ok_or(UpdateError::ParseError)? as u32,
                 labels: label_names,
