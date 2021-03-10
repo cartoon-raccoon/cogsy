@@ -6,7 +6,9 @@ use clap::{
     Arg,
     ArgMatches,
 };
-use crate::utils::{self, Config};
+use crate::CONFIG;
+use crate::config::Config;
+use crate::utils;
 use crate::app::{
     ListenLogEntry,
     Release,
@@ -114,11 +116,11 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
         );
         let verbose = if sub_m.is_present("verbose") {true} else {false};
         if verbose {
-            println!("{}", Message::set("Info: verbose output not yet implemented.", MessageKind::Hint));
+            println!("{}", Message::info("Info: verbose output not yet implemented."));
         }
         match update::full(&app.user_id, &app.token, true, verbose) {
             Ok(()) => {
-                println!("{}", Message::set("Database update successful.", MessageKind::Success));
+                println!("{}", Message::success("Database update successful."));
             }
             Err(e) => {
                 eprintln!("\n{}", e);
@@ -132,7 +134,7 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
 fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
     if sub_m.is_present("nolog") {
         println!("{}", 
-            Message::set("Selecting random album without logging.", MessageKind::Info)
+            Message::info("Selecting random album without logging.")
         );
         match query::random() {
             Ok(random) => {
@@ -145,7 +147,7 @@ fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
         }
     } else {
         println!("{}", 
-            Message::set("Selecting random album with logging.", MessageKind::Info)
+            Message::info("Selecting random album with logging.")
         );
         match query::random() {
             Ok(random) => {
@@ -182,9 +184,8 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
             Ok(results) => {
                 if results.len() > 1 {
                     println!("{}",
-                        Message::set(
+                        Message::info(
                             &format!("Multiple results for `{}`, pick one:", album),
-                            MessageKind::Info
                         )
                     );
                     for (i, release) in results.iter().enumerate() {
@@ -302,7 +303,7 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
         }
         for release in results {
             let display_time = release.date_added
-            .with_timezone(&Config::timezone());
+            .with_timezone(&CONFIG.timezone());
 
             println!(
                 "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
@@ -317,7 +318,7 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
         Some(0)
 }
 
-pub fn handle_reset(config: Config) -> Option<i32> {
+pub fn handle_reset(config: &Config) -> Option<i32> {
     println!("{}", Message::set("Resetting database.", MessageKind::Info));
     match purge::complete() {
         Ok(_) => {

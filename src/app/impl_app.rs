@@ -24,10 +24,11 @@ use crate::app::{
         update as dbupdate, 
         query::QueryType
     },
-    message::{Message, MessageKind, msgbox},
+    message::{Message, MessageKind},
     update,
 };
-use crate::utils::{self, Config};
+use crate::utils;
+use crate::config::Config;
 use crate::screens::{
     Wantlist,
     popup,
@@ -103,7 +104,7 @@ impl App {
             on_init_fail(&config.user.username, &token, false);
         }
 
-        App {
+        let mut app = App {
             user_id: config.user.username.clone(),
             token: token,
             message: Message {
@@ -113,12 +114,16 @@ impl App {
             collection: Collection::new(),
             modified: false,
             appearance: config.appearance.unwrap_or_default(),
-        }
+        };
+
+        app.appearance.resolve();
+
+        app
     }
 
     pub fn execute(&mut self, s: &mut Cursive, result: Result<Command, CommandError>) {
         let mut view_content: String;
-        let mut view_style = msgbox::DEFAULT;
+        let mut view_style = self.appearance.default_col();
         match result {
             Ok(command) => {
                 match command {
@@ -134,22 +139,23 @@ impl App {
                                 self.collection.folders = query::collection().unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
-                                view_style = msgbox::SUCCESS;
+                                view_style = self.appearance.success_col();
                             }
                             Err(e) => {
                                 view_content = e.to_string();
+                                view_style = self.appearance.error_col();
                             }
                         }
                     }
                     Command::UpdateID(_id) => {
                         view_content = String::from("In-app id changes are not supported yet.");
-                        view_style = msgbox::HINT;
+                        view_style = self.appearance.hint_col();
                         //self.user_id = id;
                         self.modified = true;
                     }
                     Command::UpdateToken(_tk) => {
                         view_content = String::from("In-app token changes are not supported yet.");
-                        view_style = msgbox::HINT;
+                        view_style = self.appearance.hint_col();
                         //self.token = format!("Discogs token={}", tk);
                         self.modified = true;
                     }
@@ -180,7 +186,7 @@ impl App {
                             },
                             Err(e) => {
                                 view_content = e.to_string();
-                                view_style = msgbox::ERROR;
+                                view_style = self.appearance.error_col();
                             }
                         };
                     }
@@ -272,7 +278,7 @@ impl App {
             Err(error) => {
                 s.call_on_name("messagebox", |view: &mut TextView| {
                     view.set_content(error.to_string());
-                    view.set_style(msgbox::ERROR);
+                    view.set_style(self.appearance.error_col());
                 });
             }
         }
