@@ -1,12 +1,32 @@
 ## Configuration
-Your config.toml file will look something like this:
+Your new config.toml file will look something like this:
 ```
+[user]
 username = cartoon-raccoon
 token = <token>
 timezone = 8.0
-colour = "yellow"
 ```
-You can customize the colour field. This changes the highlight colour of the text used when Cogsy is run with a TUI.
+You can add an additional `appearance` section with the following fields (containing their default values):
+```
+[appearance]
+folders_width = 30
+selectcol = "yellow"
+messagecol = { 
+    default = "white", 
+    error = "red", 
+    success = "green",
+    hint = "yellow",
+}
+titlecol = "yellow"
+
+```
+`folders_width` is the width of the folders element (left side) in the main view.
+
+`selectcol` is the colour of the text selected.
+
+`messagecol` is the colour of the text that appears in the message box.
+
+`commandcol` is the colour of the command line.
 
 The possible values are the eight tty colours, or:
 - black
@@ -20,11 +40,11 @@ The possible values are the eight tty colours, or:
 
 To use their bright variants, prepend the colour with "br" (e.g. "bryellow"). This is not supported by the native Linux TTY, but is supported by almost all terminal emulators.
 
-## How to use Cogsy
+## Usage
 _What's New?_
-- The `reset` subcommand
-- A Listen button on the release info page
-- Colour customization
+- Ok and History buttons on the album info page
+- The quit command
+- Even More Colour Customization
 
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
 
@@ -70,7 +90,7 @@ This is a simple sqlite3 database and can be browsed with the sqlite3 browser pr
 
 On startup, Cogsy does a database check for the required folders. If the test does not pass (the required tables are absent), it exits with a database error.
 
-In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore cannot be accessed by Cogsy. This cannot be detected by the database check on startup. To remove orphan tables, you can run `cogsy reset`. Alternatively, if you want to preserve your listening history, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>`.
+In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore cannot be accessed by Cogsy. This is detected by the database check on startup, and the relevant error message is shown. To remove orphan tables, you can run `cogsy reset`. Alternatively, if you want to preserve your listening history, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>`.
 
 **Important Note on Updating:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not yet possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
