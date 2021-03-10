@@ -161,15 +161,17 @@ pub mod admin {
                             |row| row.get(0))?;
                         let mut folder_names: Vec<String> = Vec::new();
                         for folder in collection_check {
-                            folder_names.push(folder.unwrap());
+                            folder_names.push(folder?);
                         }
-                        for folder in folder_names {
+                        for folder in &folder_names {
                             let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
                             match conn.prepare(&sqlcommand) {
                                 Ok(_) => {},
                                 Err(e) => return Err(format!("{}: {}", folder, e).as_str().into())
                             }
                         }
+                        check_orphans(&conn, &folder_names)?;
+
                     }
                     Err(e) => return Err(format!("folders: {}", e).as_str().into())
                 }
@@ -177,6 +179,28 @@ pub mod admin {
             },
             Err(_) => return Err("database file does not exist".into())
         }
+    }
+
+    fn check_orphans(conn: &Connection, folders: &[String]) -> Result<(), DBError> {
+        let mut stmt = conn.prepare("SELECT name FROM sqlite_master
+        WHERE type ='table'
+        AND name NOT LIKE 'sqlite_%';")?;
+
+        let mut tables: Vec<String> = Vec::new();
+        for table in stmt.query_map(NO_PARAMS, |row| row.get(0))? {
+            tables.push(table?);
+        }
+        if 
+        !(tables.contains(&"profile".into()) &&
+        tables.contains(&"wantlist".into()) &&
+        tables.contains(&"folders".into()) &&
+        tables.contains(&"listenlog".into())){
+            return Err("Integrity check: Missing core table(s)".into())
+        }
+        if tables.len() - 4 != folders.len() {
+            return Err("Integrity check: orphan tables".into())
+        }
+        Ok(())
     }
 }
 
