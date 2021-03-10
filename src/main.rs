@@ -1,7 +1,11 @@
 mod app;
 mod screens;
+mod config;
 mod utils;
 mod commands;
+
+#[macro_use]
+extern crate lazy_static;
 
 use std::process::exit;
 
@@ -13,25 +17,29 @@ use cursive::{
 };
 use app::fromcli;
 use app::App;
+use config::Config;
 use commands::{Command};
 use screens::{
     collection, 
 };
 
+lazy_static! {
+    pub static ref CONFIG: Config = Config::load();
+}
+
 fn main() {
     let clapapp = fromcli::init().get_matches();
     if let Some(_) = clapapp.subcommand_matches("reset") {
-        exit(fromcli::handle_reset(utils::Config::load()).unwrap());
+        exit(fromcli::handle_reset(&CONFIG).unwrap());
     }
     let mut app = App::initialize();
-    app.appearance.resolve();
     
     if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {
         exit(status);
     }
     
     let mut siv = cursive::default();
-    siv.set_theme(utils::theme_gen(&mut app.appearance));
+    siv.set_theme(config::theme_gen(&mut app.appearance));
 
     //initialize screen data
     let collectscreen = app.collection.build(

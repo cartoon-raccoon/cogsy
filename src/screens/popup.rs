@@ -10,7 +10,8 @@ use cursive::{
     view::SizeConstraint
 };
 
-use crate::utils::{self, Config};
+use crate::utils;
+use crate::CONFIG;
 use crate::app::{
     Release,
     ListenLogEntry,
@@ -32,7 +33,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     let formats = release.formats.clone();
 
     let display_time = release.date_added
-    .with_timezone(&Config::timezone());
+    .with_timezone(&CONFIG.timezone());
 
     let content = String::from(format!("
     Artist: {}

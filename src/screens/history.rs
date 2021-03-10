@@ -10,7 +10,8 @@ use chrono::{
     DateTime,
     Utc,
 };
-use crate::utils::{self, Config};
+use crate::utils;
+use crate::CONFIG;
 use crate::app::{
     ListenLog,
     database::query,
@@ -34,7 +35,7 @@ impl ListenLog { //wrapper around a BTreeMap
             ScrollView<
             SelectView<String>>>> {
         let list: Vec<String> = self.contents.iter().map(|(k, v)| {
-            let nk = k.with_timezone(&Config::timezone());
+            let nk = k.with_timezone(&CONFIG.timezone());
             format!("{} | {}", nk.format("%a %d %b %Y, %l:%M%P"), v)
         }).rev().collect();
         let screen = Panel::new(ResizedView::new(

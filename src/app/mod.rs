@@ -15,7 +15,7 @@ use chrono::{
 };
 use message::Message;
 use crate::collection::Collection;
-use crate::utils::Appearance;
+use crate::config::Appearance;
 
 #[derive(Debug, Clone)]
 pub struct App {

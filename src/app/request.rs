@@ -17,6 +17,7 @@ use unidecode::unidecode;
 
 use crate::app::Release;
 use crate::utils;
+use crate::CONFIG;
 
 #[derive(Debug, Clone)]
 pub enum ParseType {
@@ -183,7 +184,7 @@ pub fn parse_releases(parse: Rc<ParseType>, text: &str, from_file: bool) -> Resu
             //TODO: impl from for ParseResult
             let added_date = DateTime::parse_from_rfc3339(date_raw)
                 .unwrap_or(utils::get_utc_now()
-                .with_timezone(&utils::Config::timezone()));
+                .with_timezone(&CONFIG.timezone()));
             let info = entry.get("basic_information").unwrap();
 
             

@@ -3,7 +3,7 @@ use cursive::{
     view::SizeConstraint
 };
 
-use crate::utils::Config;
+use crate::CONFIG;
 use crate::app::database::query;
 
 pub fn build() -> ResizedView<Dialog> {
@@ -13,7 +13,7 @@ pub fn build() -> ResizedView<Dialog> {
     );
 
     let display_time = profile.registered
-    .with_timezone(&Config::timezone());
+    .with_timezone(&CONFIG.timezone());
 
     let content = String::from(format!("
     Username: {}

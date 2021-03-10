@@ -104,6 +104,7 @@ impl std::default::Default for Message {
 }
 
 pub mod msgbox {
+    #![allow(dead_code)]
     use cursive::theme::{Color, BaseColor as Bc};
 
     pub const ERROR: Color = Color::Dark(Bc::Red);
