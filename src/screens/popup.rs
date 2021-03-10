@@ -11,12 +11,12 @@ use cursive::{
 };
 
 use crate::utils;
-use crate::CONFIG;
+use crate::{CONFIG, APPEARANCE};
 use crate::app::{
     Release,
     ListenLogEntry,
+    database::{update, query},
 };
-use crate::app::database::update;
 
 /* 
 * Designated for providing views for any action that might require a popup.
@@ -56,6 +56,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     ));
 
     let title = release.title.clone();
+    let title2 = title.clone();
     let artist = release.artist.clone();
     let id = release.id;
 
@@ -67,6 +68,21 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             artist, title))
             .button("Ok", move |s| {
                 s.pop_layer();
+            })
+            .button("History", move |s| {
+                match query::listenlog_by_title(&title2) {
+                    Ok(log) => {
+                        s.add_fullscreen_layer(
+                            log.build_history_title()
+                        );
+                    }
+                    Err(e) => {
+                        s.call_on_name("messagebox", |view: &mut TextView| {
+                            view.set_content(e.to_string());
+                            view.set_style(APPEARANCE.error_col());
+                        });
+                    }
+                }
             })
             .button("Listen", move |s| {
                 let entry = ListenLogEntry {

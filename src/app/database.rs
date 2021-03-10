@@ -490,6 +490,26 @@ pub mod query {
         Ok(listenlog)
     }
 
+    pub fn listenlog_by_title(title: &str) -> Result<ListenLog, DBError> {
+        let conn = Connection::open(utils::database_file())?;
+
+        let mut stmt = conn.prepare(
+            "SELECT * FROM listenlog WHERE title=(?1)"
+        )?;
+
+        let results_iter = stmt.query_map(&[title], |row| {
+            let time: DateTime<Utc> = row.get(0)?;
+            let title: String = row.get(2)?;
+            Ok((time, title))
+        })?;
+        let mut listenlog = ListenLog::new();
+        for entry in results_iter {
+            let (time, title) = entry?;
+            listenlog.push(time, title);
+        }
+        Ok(listenlog)
+    }
+
     pub fn random() -> Result<Release, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(

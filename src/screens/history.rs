@@ -30,6 +30,16 @@ impl ListenLog { //wrapper around a BTreeMap
             Err(e) => panic!(e.to_string())
         }
     }
+    pub fn build_history_title(&self) -> Panel<
+            ResizedView<
+            ScrollView<
+            SelectView<String>>>> {
+        let list: Vec<String> = self.contents.iter().map(|(k, _v)| {
+            let nk = k.with_timezone(&CONFIG.timezone());
+            format!("{}", nk.format("%a %d %b %Y, %l:%M%P"))
+        }).rev().collect();
+        self.build_panel(list)
+    }
     pub fn build_history(&self) -> Panel<
             ResizedView<
             ScrollView<
@@ -38,15 +48,21 @@ impl ListenLog { //wrapper around a BTreeMap
             let nk = k.with_timezone(&CONFIG.timezone());
             format!("{} | {}", nk.format("%a %d %b %Y, %l:%M%P"), v)
         }).rev().collect();
-        let screen = Panel::new(ResizedView::new(
+        self.build_panel(list)
+    }
+
+    fn build_panel(&self, list: Vec<String>) -> Panel<
+            ResizedView<
+            ScrollView<
+            SelectView<String>>>> {
+        Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
                 SelectView::<String>::new()
                 .with_all_str(list)
             )
-        ));
-        screen
+        ))
     }
     pub fn build_sparkview(&self) -> Panel<
         ResizedView<
