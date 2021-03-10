@@ -148,13 +148,13 @@ impl App {
                         }
                     }
                     Command::UpdateID(_id) => {
-                        view_content = String::from("In-app id changes are not supported yet.");
+                        view_content = String::from("Id changes cannot be made from the TUI.");
                         view_style = self.appearance.hint_col();
                         //self.user_id = id;
                         self.modified = true;
                     }
                     Command::UpdateToken(_tk) => {
-                        view_content = String::from("In-app token changes are not supported yet.");
+                        view_content = String::from("Token changes cannot be made from the TUI.");
                         view_style = self.appearance.hint_col();
                         //self.token = format!("Discogs token={}", tk);
                         self.modified = true;
