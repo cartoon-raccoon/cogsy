@@ -273,7 +273,7 @@ pub mod update {
             &[
                 entry.time.to_rfc3339(),
                 entry.id.to_string(),
-                entry.title,
+                entry.title.into(),
             ]
         )?;
         Ok(())

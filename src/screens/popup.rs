@@ -71,7 +71,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             .button("Listen", move |s| {
                 let entry = ListenLogEntry {
                     id: id,
-                    title: title.clone(),
+                    title: &title,
                     time: utils::get_utc_now(),
                 };
 
@@ -115,7 +115,7 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
                     let time_now = utils::get_utc_now();
                     let entry = ListenLogEntry {
                         id: results[0].id,
-                        title: results[0].title.clone(),
+                        title: &results[0].title,
                         time: time_now,
                     };
                     match update::listenlog(entry) {

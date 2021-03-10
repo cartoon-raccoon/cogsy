@@ -39,9 +39,9 @@ pub struct Profile {
     pub average_rating: f64,
 }
 
-pub struct ListenLogEntry {
+pub struct ListenLogEntry<'a> {
     pub id: i64,
-    pub title: String,
+    pub title: &'a str,
     pub time: DateTime<Utc>,
 }
 

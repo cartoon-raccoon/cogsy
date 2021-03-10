@@ -154,7 +154,7 @@ fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
                 let time_now = utils::get_utc_now();
                 let entry = ListenLogEntry {
                     id: random.id,
-                    title: random.title.clone(),
+                    title: &random.title,
                     time: time_now,
                 };
                 match dbupdate::listenlog(entry) {
@@ -211,7 +211,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
                             let time_now = utils::get_utc_now();
                             let entry = ListenLogEntry {
                                 id: results[choice - 1].id,
-                                title: results[choice - 1].title.clone(),
+                                title: &results[choice - 1].title,
                                 time: time_now,
                             };
                             match dbupdate::listenlog(entry) {
@@ -235,7 +235,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
                     let time_now = utils::get_utc_now();
                     let entry = ListenLogEntry {
                         id: results[0].id,
-                        title: results[0].title.clone(),
+                        title: &results[0].title,
                         time: time_now,
                     };
                     match dbupdate::listenlog(entry) {

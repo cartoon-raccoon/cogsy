@@ -37,9 +37,9 @@ impl Config {
         ).unwrap_or_else(|e| {
             eprintln!("Config error: {}", e);
 
-            //todo: remove after upgrading to version 0.1.14
-            eprint!("{}", Message::hint("hint:"));
-            eprintln!("v0.1.13 marked a switch to a new config format.");
+            //todo: remove after upgrading to version 0.2.1
+            eprint!("{}", Message::hint("hint: "));
+            eprintln!("v0.2.0 marked a switch to a new config format.");
             eprintln!("See https://github.com/cartoon-raccoon/cogsy/blob/master/docs/usage.md");
             eprintln!("for more information.");
 

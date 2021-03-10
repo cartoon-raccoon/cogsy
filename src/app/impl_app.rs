@@ -166,7 +166,7 @@ impl App {
                                     let time_now = utils::get_utc_now();
                                     let entry = ListenLogEntry {
                                         id: random.id,
-                                        title: random.title.clone(),
+                                        title: &random.title,
                                         time: time_now,
                                     };
                                     match dbupdate::listenlog(entry) {
@@ -206,7 +206,7 @@ impl App {
                                     let time_now = utils::get_utc_now();
                                     let entry = ListenLogEntry {
                                         id: results[0].id,
-                                        title: results[0].title.clone(),
+                                        title: &results[0].title,
                                         time: time_now,
                                     };
                                     match dbupdate::listenlog(entry) {
