@@ -91,6 +91,11 @@ TODO:
   - [0.2.1] Changing username and token via command line
   - [0.2.1] Add date formatting as configurable
   - [0.2.2] Reading from a csv input file
+  - [0.2.2] 'database' subcommand, for database admin
+    Switches:
+      -r / --reset - (migrate from reset to this)
+      -o / --orphan - Performs orphan table removal
+      -c / --check - Performs database integrity check
   - [0.3.0] Price command
   - Implement different colours for folder list (not important)
 
