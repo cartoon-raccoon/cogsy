@@ -17,14 +17,24 @@ use cursive::{
 };
 use app::fromcli;
 use app::App;
-use config::Config;
+use config::{Config, Appearance};
 use commands::{Command};
 use screens::{
     collection, 
 };
 
 lazy_static! {
-    pub static ref CONFIG: Config = Config::load();
+    static ref CONFIG: Config = Config::load();
+    static ref APPEARANCE: Appearance = match CONFIG.appearance {
+        Some(ref appearance) => {
+            let mut appear = appearance.clone();
+            appear.resolve();
+            appear
+        }
+        None => {
+            Appearance::default()
+        }
+    };
 }
 
 fn main() {
