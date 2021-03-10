@@ -26,6 +26,7 @@ directories = "3.0.1"
 chrono = "0.4.15"
 unidecode = "0.3.0"
 ansi_term = "0.6.3"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 dirs = "3.0.1"
