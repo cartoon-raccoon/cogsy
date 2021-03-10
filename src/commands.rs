@@ -92,6 +92,9 @@ impl Command {
                 } else if strings.len() == 1 {
                     return Ok(Command::UpdateDB);
                 } else {
+                    if strings.len() == 2 {
+                        return Err(CommandError::NotEnoughArgs(first, 2))
+                    }
                     match strings[1] {
                         "-u" | "--username" => {
                             return Ok(Command::UpdateID(strings[2].to_string()));

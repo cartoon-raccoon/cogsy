@@ -13,10 +13,10 @@ use indicatif::{MultiProgress, ProgressBar};
 
 use crate::app::{
     {Release, Folders, Profile},
-    request::*,
     database::{admin, update, purge},
     message::{Message, MessageKind},
 };
+pub use crate::app::request::*;
 use crate::utils;
 
 pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Result<(), UpdateError> {

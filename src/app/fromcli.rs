@@ -13,7 +13,7 @@ use crate::app::{
     ListenLogEntry,
     Release,
     App,
-    update,
+    update::{self, UpdateError},
     database::{
         query::{self, QueryType},
         update as dbupdate,
@@ -124,6 +124,9 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             }
             Err(e) => {
                 eprintln!("\n{}", e);
+                if let UpdateError::DBWriteError(_) = e {
+                    db_error_msg();
+                }
                 return Some(2)
             }
         }
@@ -141,7 +144,8 @@ fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
                 println!("You should play `{}.`", random.title);
             }
             Err(e) => {
-                eprintln!("Oops: {}", e);
+                eprintln!("{}", e);
+                db_error_msg();
                 return Some(2)
             }
         }
@@ -162,7 +166,8 @@ fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
                         println!("You should play `{}`.", random.title);
                     }
                     Err(e) => {
-                        eprintln!("Oops: {}", e);
+                        eprintln!("{}", e);
+                        db_error_msg();
                         return Some(2)
                     }
                 }
@@ -221,6 +226,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
                                 }
                                 Err(e) => {
                                     eprintln!("Database error: {}", e);
+                                    db_error_msg();
                                     return Some(2)
                                 }
                             }
@@ -243,6 +249,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
                             results[0].title, results[0].artist);}
                         Err(e) => {
                             eprintln!("{}", e);
+                            db_error_msg();
                             return Some(2)
                         }
                     }
@@ -253,6 +260,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
             },
             Err(e) => {
                 eprintln!("{}", e);
+                db_error_msg();
                 return Some(2)
             }
         }  
@@ -261,61 +269,62 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
 
 fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
     let results: Vec<Release>;
-        let query: String;
-        let querytype: QueryType;
-        //TODO: Streamline this wet-ass code
-        if sub_m.is_present("wantlist") {
-            query = sub_m.value_of("wantlist")
-            .unwrap_or_else(|| {
-                println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
-                process::exit(1);
-            }).to_string()
-            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+    let query: String;
+    let querytype: QueryType;
+    //TODO: Streamline this wet-ass code
+    if sub_m.is_present("wantlist") {
+        query = sub_m.value_of("wantlist")
+        .unwrap_or_else(|| {
+            println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
+            process::exit(1);
+        }).to_string()
+        .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
-            querytype = QueryType::Wantlist;
-            println!("Querying wantlist for: {}", query);
-        } else {
-            query = sub_m.value_of("albumname")
-            .unwrap_or_else(|| {
-                println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
-                process::exit(1);
-            }).to_string()
-            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
+        querytype = QueryType::Wantlist;
+        println!("Querying wantlist for: {}", query);
+    } else {
+        query = sub_m.value_of("albumname")
+        .unwrap_or_else(|| {
+            println!("{} {}", Message::set("Error:", MessageKind::Error), "Album name is required.");
+            process::exit(1);
+        }).to_string()
+        .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
-            querytype = QueryType::Collection;
-            println!("Querying collection for: {}\n", query);
+        querytype = QueryType::Collection;
+        println!("Querying collection for: {}\n", query);
+    }
+    results = match query::release(
+        query.clone(), querytype
+    ) {
+        Ok(queryr) => queryr,
+        Err(e) => {
+            eprintln!("Database error: {}", e);
+            db_error_msg();
+            return Some(2)
         }
-        results = match query::release(
-            query.clone(), querytype
-        ) {
-            Ok(queryr) => queryr,
-            Err(e) => {
-                eprintln!("Database error: {}", e);
-                return Some(2)
-            }
-        };
-        if results.len() > 1 {
-            println!("Multiple results for `{}`:\n", query)
-        }
-        if results.is_empty() {
-            println!("Nothing found for `{}`.", query);
-            return Some(1)
-        }
-        for release in results {
-            let display_time = release.date_added
-            .with_timezone(&CONFIG.timezone());
+    };
+    if results.len() > 1 {
+        println!("Multiple results for `{}`:\n", query)
+    }
+    if results.is_empty() {
+        println!("Nothing found for `{}`.", query);
+        return Some(1)
+    }
+    for release in results {
+        let display_time = release.date_added
+        .with_timezone(&CONFIG.timezone());
 
-            println!(
-                "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
-                release.title,
-                release.artist,
-                release.year,
-                format_vec(&release.labels),
-                format_vec(&release.formats),
-                display_time.format("%A %d %m %Y %R"),
-            )
-        }
-        Some(0)
+        println!(
+            "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
+            release.title,
+            release.artist,
+            release.year,
+            format_vec(&release.labels),
+            format_vec(&release.formats),
+            display_time.format("%A %d %m %Y %R"),
+        )
+    }
+    Some(0)
 }
 
 pub fn handle_reset(config: &Config) -> Option<i32> {
@@ -327,6 +336,9 @@ pub fn handle_reset(config: &Config) -> Option<i32> {
                 Ok(()) => {}
                 Err(e) => {
                     println!("\n{}", e);
+                    if let UpdateError::DBWriteError(_) = e {
+                        db_error_msg();
+                    }
                     std::fs::remove_file(utils::database_file()).unwrap();
                     return Some(2)
                 }
@@ -339,4 +351,9 @@ pub fn handle_reset(config: &Config) -> Option<i32> {
             Some(2)
         }
     }
+}
+
+fn db_error_msg() {
+    eprintln!("This is a database error and is likely a bug.");
+    eprintln!("Please file an issue on GitHub with this error message.");
 }
