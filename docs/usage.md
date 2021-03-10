@@ -1,5 +1,5 @@
 ## Configuration
-Your new config.toml file will look something like this:
+On first install, your new config.toml file will look something like this:
 ```
 [user]
 username = cartoon-raccoon
@@ -11,12 +11,7 @@ You can add an additional `appearance` section with the following fields (contai
 [appearance]
 folders_width = 30
 selectcol = "yellow"
-messagecol = { 
-    default = "white", 
-    error = "red", 
-    success = "green",
-    hint = "yellow",
-}
+messagecol = { default = "white", error = "red", success = "green", hint = "yellow" }
 titlecol = "yellow"
 
 ```
@@ -24,7 +19,7 @@ titlecol = "yellow"
 
 `selectcol` is the colour of the text selected.
 
-`messagecol` is the colour of the text that appears in the message box.
+`messagecol` contains the colours of the text that appears in the message box.
 
 `commandcol` is the colour of the command line.
 
@@ -46,7 +41,7 @@ _What's New?_
 - The quit command
 - Even More Colour Customization
 
-Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it.
+Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it. You can quit the user interface by pressing `q` or issuing the `quit` command.
 
 Cogsy as an app with a user interface, has 4 main screens:
 1. **Collection**: 
@@ -54,7 +49,11 @@ This is the main screen that pops up when you start Cogsy. On the left are the f
 ![cogsy_main](../images/screenshots/cogsy_main.png)
 _Release Info Page_
 ![cogsy_info](../images/screenshots/cogsy_info.png)
-This the release info page. It contains more detailed information on the release, such as release year, artist name, format, etc. At the bottom right there is also the Listen button, which logs the album as a listening session.
+This the release info page. It contains more detailed information on the release, such as release year, artist name, format, etc. At the bottom right there are three buttons: Ok, History and Listen.
+
+- `Ok` takes you back to the main page.
+- `History` displays the listening history for that album only.
+- `Listen` logs a listening session and takes you back to the main screen.
 
 2. **Wantlist**: Pull this up by pressing 2. This displays the contents of your wantlist. Pressing Enter will pull up a screen displaying information on the selected album, and you can press Backspace to go back to the list.
 ![cogsy_wantlist](../images/screenshots/cogsy_wantlist.png)
@@ -71,7 +70,7 @@ _The history entries are quite sparse as I haven't had time to populate them._
 This is Cogsy's heart. All of Cogsy's features are run from here. Vim users will find this familiar, as you activate it by pressing `:`. From here, you can run Cogsy's core commands. At any time, you can cancel a command by pressing Esc.
 
 Cogsy has four core commands:
-- `update`: Pulls collection info from Discogs and updates the entire app database.
+- `update`: Pulls collection info from Discogs and updates the entire app database. There are also the `-u` and `-t` switches for updating the username and token respectively, but they don't do anything at the moment. The `-v` switch displays verbose output when run without the TUI.
 - `listen [album]`: Cogsy's core feature. Pass it an album name and it will log the album title and the current time as a listening session.
 - `query [album]`: Query the local database for information on an album. Use the `-w` or `--wantlist` switch to query the wantlist, otherwise it defaults to querying the collection.
 - `random`: Use this when you can't decide what to play. It also logs the selected album as a listening session, unless you pass it the `-n`/`--nolog` switch.

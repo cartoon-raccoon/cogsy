@@ -9,7 +9,7 @@ Cogsy is a curses-based command line app for tracking your Discogs collection. I
 
 For the uninformed, [Discogs](https://www.discogs.com) is a website/marketplace where music enthusiasts can collect and sell physical music media such as vinyl records and CDs.
 
-To see what's new, jump to the Usage section.
+**Cogsy has entered 0.2.0! To see what's new, jump to the Usage section.**
 
 **The final capabilities of this app are:**
 - Query the Discogs database using a user's username and app token. (OAuth integration is expected, but not a priority.)
@@ -26,8 +26,8 @@ Cogsy's target audience is admittedly, not very large. It is targeted at people 
 - `gcc` v10 or later (For linking, `rustc` does not do linking by itself)
 - A Discogs account (obviously)
     - Note: your Discogs collection has to have a folder named "All" in it. Not having it will break a lot of Cogsy's functionality.
-### The following C shared libraries are needed:
-- `libsqlite-dev` or its equivalent for your distro.
+### The following C shared libraries have to be preinstalled:
+- `libsqlite3` or its equivalent for your distro.
 - `openssl` (Should already exist)
 - `ncurses`
 
@@ -95,7 +95,9 @@ The config file contains the information you entered during first time startup.
 Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
 
 ## Usage
-See the [documentation](docs/usage.md).
+With v0.2.0, Cogsy has a whole lot of new features and fixes, with even more coming up. Since the list of features has gotten so large, it now has its own manual page.
+
+See the documentation [here](docs/usage.md).
 
 ## Issues and Bugs
 - **When running `update`, the app freezes up**
