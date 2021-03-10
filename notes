@@ -87,14 +87,11 @@ app structure:
     |_message.rs (message formatting)
 
 TODO:
-  - [0.2.0] History popup for each album
-  - [0.2.0] Additional config options
-      (x) Folder view width
-      Messagebox colours
-      (x) Command line colours
-      (x) Title colours
-  - [0.2.0] Verbose output (with indicatif)
-  - Reading from a csv input file
+  - [0.2.1] Progress bars with indicatif
+  - [0.2.1] Changing username and token via command line
+  - [0.2.1] Add date formatting as configurable
+  - [0.2.2] Reading from a csv input file
+  - [0.3.0] Price command
   - Implement different colours for folder list (not important)
 
 Future additions:
