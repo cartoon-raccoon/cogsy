@@ -13,6 +13,7 @@ folders_width = 30
 selectcol = "yellow"
 messagecol = { default = "white", error = "red", success = "green", hint = "yellow" }
 titlecol = "yellow"
+commandcol = "white"
 
 ```
 `folders_width` is the width of the folders element (left side) in the main view.
@@ -20,6 +21,8 @@ titlecol = "yellow"
 `selectcol` is the colour of the text selected.
 
 `messagecol` contains the colours of the text that appears in the message box.
+
+`titlecol` is the title of pop up screens such as album info.
 
 `commandcol` is the colour of the command line.
 
