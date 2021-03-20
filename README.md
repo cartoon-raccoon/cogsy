@@ -61,6 +61,18 @@ Cogsy can be installed from crates.io, the official Rust package registry:
 
 This command is also used to update Cogsy when a new version is released. Your data should remain intact.
 
+For Arch Linux users, Cogsy is now available on the AUR.
+
+```
+git clone https://aur.archlinux.org/cogsy.git
+cd cogsy
+makepkg -si
+```
+
+Or use your preferred AUR helper:
+
+`paru -S cogsy`
+
 To build from source (please don't do this, use cargo instead):
 ```
 git clone https://github.com/cartoon-raccoon/cogsy
