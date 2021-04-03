@@ -27,7 +27,7 @@ impl ListenLog { //wrapper around a BTreeMap
     pub fn init() -> Self {
         match query::listenlog() {
             Ok(listenlog) => listenlog,
-            Err(e) => panic!(e.to_string())
+            Err(e) => panic!("{}", e.to_string())
         }
     }
     pub fn build_history_title(&self) -> Panel<
