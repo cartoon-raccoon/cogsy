@@ -18,6 +18,7 @@ use crate::app::{
     Folders,
 };
 use crate::screens::popup;
+use crate::APPEARANCE;
 
 #[derive(Debug, Clone)]
 pub struct Collection {
@@ -46,7 +47,7 @@ impl Collection {
                             view.clear();
                             view.add_all(item.clone().into_iter()
                                 .map(|i| {
-                                    (i.title.clone(), i)
+                                    (i.format(&APPEARANCE.format.as_ref().unwrap()), i)
                                 })
                             )   
                         });
@@ -62,7 +63,7 @@ impl Collection {
                     .with_all(self.folders.contents
                         .values().next().unwrap_or(&Vec::new())
                         .clone().into_iter().map(|i| {
-                        (i.title.clone(), i)
+                        (i.format(&APPEARANCE.format.as_ref().unwrap()), i)
                     }))
                     .on_submit(|s, item| {
                         s.add_fullscreen_layer(

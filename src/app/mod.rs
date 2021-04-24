@@ -16,6 +16,7 @@ use chrono::{
 use message::Message;
 use crate::collection::Collection;
 use crate::config::Appearance;
+use crate::utils::{FormatTokenizer, FormatToken};
 
 #[derive(Debug, Clone)]
 pub struct App {
@@ -59,6 +60,32 @@ pub struct Release {
     pub labels: Vec<String>,
     pub formats: Vec<String>,
     pub date_added: DateTime<Utc>,
+}
+
+impl Release {
+    pub fn format(&self, format_str: &str) -> String {
+        use FormatToken::*;
+
+        let mut ret = String::from("");
+
+        let tokenizer = FormatTokenizer::new(format_str);
+
+        for token in tokenizer {
+            match token {
+                Artist => {ret.push_str(&self.artist)}
+                Title => {ret.push_str(&self.title)}
+                Id => {ret.push_str(&self.id.to_string())}
+                Year => {ret.push_str(&self.id.to_string())}
+                Labels => {ret.push_str(&self.labels.join(", "))}
+                Formats => {ret.push_str(&self.formats.join(", "))}
+                DateAdded => {ret.push_str(&self.date_added.to_string())}
+                RawStr(s) => {ret.push_str(s)}
+                Unknown => {}
+            }
+        }
+
+        ret
+    }
 }
 
 #[derive(Debug, Clone)]

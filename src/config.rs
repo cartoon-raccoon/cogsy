@@ -113,6 +113,7 @@ pub struct User {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Appearance {
+    pub format: Option<String>,
     pub folders_width: Option<u32>,
     // colours
     /// The selected text colour
@@ -128,6 +129,7 @@ pub struct Appearance {
 impl Default for Appearance {
     fn default() -> Self {
         Appearance {
+            format: Some(String::from("{artist} - {title}")),
             folders_width: Some(30),
             selectcol: Some(String::from("yellow")),
             messagecol: Some(gen_default_msg_cols()),
@@ -141,6 +143,10 @@ impl Appearance {
 
     /// Resolves all the empty (None) fields to a default colour
     pub fn resolve(&mut self) {
+        if let None = self.format {
+            self.format = Some(String::from("{artist} - {title}"));
+        }
+
         if let None = self.folders_width {
             self.folders_width = Some(30);
         }
