@@ -1,14 +1,21 @@
+# Cogsy usage and config
+
 ## Configuration
+
 On first install, your new config.toml file will look something like this:
-```
+
+```text
 [user]
 username = cartoon-raccoon
 token = <token>
 timezone = 8.0
 ```
+
 You can add an additional `appearance` section with the following fields (containing their default values):
-```
+
+```text
 [appearance]
+format = "{artist} - {title}"
 folders_width = 30
 selectcol = "yellow"
 messagecol = { default = "white", error = "red", success = "green", hint = "yellow" }
@@ -16,6 +23,9 @@ titlecol = "yellow"
 commandcol = "white"
 
 ```
+
+`format` is the format taken by the text displayed in the collection screen. Album attributes are enclosed in curly brackets and will be expanded into the album attributes when displayed; everything else will be displayed as is.
+
 `folders_width` is the width of the folders element (left side) in the main view.
 
 `selectcol` is the colour of the text selected.
@@ -27,6 +37,7 @@ commandcol = "white"
 `commandcol` is the colour of the command line.
 
 The possible values are the eight tty colours, or:
+
 - black
 - red
 - green
@@ -39,7 +50,9 @@ The possible values are the eight tty colours, or:
 To use their bright variants, prepend the colour with "br" (e.g. "bryellow"). This is not supported by the native Linux TTY, but is supported by almost all terminal emulators.
 
 ## Usage
+
 _What's New?_
+
 - Ok and History buttons on the album info page
 - The quit command
 - Even More Colour Customization
@@ -47,7 +60,8 @@ _What's New?_
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it. You can quit the user interface by pressing `q` or issuing the `quit` command.
 
 Cogsy as an app with a user interface, has 4 main screens:
-1. **Collection**: 
+
+1. **Collection**:
 This is the main screen that pops up when you start Cogsy. On the left are the folders in your collection, on the right are the contents of each folder. Pressing Enter on a selected album will bring up a screen with the album's information. This is also where you access the command line, which can be activated by pressing `:`. You can return to this screen from anywhere in the app by pressing 1.
 ![cogsy_main](../images/screenshots/cogsy_main.png)
 _Release Info Page_
