@@ -79,7 +79,7 @@ app structure:
     |_money.rs
     |_addlog.rs
    app/ (app logic)
-    |_mod.rs (declaration of app)
+    |_mod.rs (app and helper types)
     |_impl_app.rs (implementation block)
     |_database.rs (database handler functions)
     |_request.rs (api handler functions)
@@ -109,10 +109,11 @@ Issues:
   - Algorithm for generating sparkviews may not scale well
 
 Configuration:
-  Theme (WIP)
+  Theme
   Username
   Token
   Timezone
+  Display Format
 
   Two options for loading in the popup screens:
   1: Keep the screen data associated with the master app struct
