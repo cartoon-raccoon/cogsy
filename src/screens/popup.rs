@@ -144,17 +144,3 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
     );
     screen
 }
-
-pub fn format_vec(list: &Vec<String>) -> String {
-    let mut formatted_string = String::new();
-    if list.len() > 1 {
-        for item in &list[0..list.len()-1] {
-            formatted_string.push_str(item);
-            formatted_string.push_str(", ");
-        }
-        formatted_string.push_str(&list[list.len()-1]);
-    } else {
-        formatted_string.push_str(&list[0]);
-    }
-    formatted_string
-}

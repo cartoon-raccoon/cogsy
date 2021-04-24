@@ -21,7 +21,6 @@ use crate::app::{
     },
     message::{Message, MessageKind},
 };
-use crate::screens::popup::format_vec;
 
 pub fn init<'a>() -> Clap<'a, 'a> {
     Clap::new("cogsy")
@@ -196,7 +195,7 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
                             i + 1,
                             release.artist,
                             release.title,
-                            format_vec(&release.formats),
+                            release.formats.join(", "),
                         );
                     }
                     loop {
@@ -316,8 +315,8 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
             release.title,
             release.artist,
             release.year,
-            format_vec(&release.labels),
-            format_vec(&release.formats),
+            release.labels.join(", "),
+            release.labels.join(", "),
             display_time.format("%A %d %m %Y %R"),
         )
     }
