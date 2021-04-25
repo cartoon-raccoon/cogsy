@@ -56,7 +56,7 @@ Read the Arch Wiki article on Rust for more information.
 
 ## Installation
 
-#### macOS, Windows, and Linux**
+#### macOS, Windows, and Linux
 
 Cogsy is currently broken on Windows 10, due to an ncurses dependency. This bug is being worked on right now. Windows users could get around this problem by running it on Cygwin or WSL, but I don't have a way to test this yet.
 
@@ -117,13 +117,17 @@ After first time startup, a config.toml file will be created and can be found at
 
 The config file contains the information you entered during first time startup.
 
-Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not a top priority at the moment, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. For now, you will have to use your user token.
+Note: The Discogs API supports OAuth2, and OAuth2 integration for the app is being considered, but it's not likely to happen, and I felt like it doesn't fit the spirit of a small command-line app like this to use such a framework. You will have to use your user token for the foreseeable future.
 
 ## Usage
 
 With v0.2.0, Cogsy has a whole lot of new features and fixes, with even more coming up. Since the list of features has gotten so large, it now has its own manual page.
 
 See the documentation [here](docs/usage.md).
+
+## Contributing
+
+Please feel free to fork this repo and send a pull request. This whole project is currently a single person job, and I'll be happy to accept any contributions.
 
 ## Issues and Bugs
 
@@ -136,12 +140,14 @@ If there are any other bugs, please raise an issue and I will do my best to resp
 
 ## Future Additions
 
-- OAuth2 integration, eliminating the need for a user token.
+_None of these additions are guaranteed._
+
 - Adding a `price` command, allowing the user to set the price they paid for the album, and also a screen to display the increasing amount of money they spend on their music collection as a sparkview graph. The code to parse the command is already written, all that's left is to implement it.
 - An option to read user collection data from a CSV file (Discogs supports downloading collection data as CSV). This would prove to be useful for users with larger collections.
 - A popup in Listening history that shows the history for the album only.
+- OAuth2 integration (unlikely).
 
-## Credits
+## Acknowledgements
 
 [gyscos](https://github.com/gyscos) for the Cursive library that the user interface is built on. Thank you for this amazing crate, and for your assistance on Reddit.
 
