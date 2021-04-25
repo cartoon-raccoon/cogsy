@@ -8,6 +8,7 @@ use crate::app::{
     database::*,
 };
 use crate::screens::popup;
+use crate::APPEARANCE;
 
 //use crate::app::message::{Message, MessageKind};
 
@@ -19,7 +20,7 @@ pub struct Wantlist {
 impl Wantlist {
     pub fn init() -> Self {
         Wantlist{ //placeholder: will read from database
-            wantlist: query::wantlist().unwrap()
+            wantlist: query::wantlist(APPEARANCE.sort_by()).unwrap()
         }
     }
     pub fn build(&self) -> Panel< //long-ass return type declaration

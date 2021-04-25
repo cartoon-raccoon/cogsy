@@ -28,7 +28,7 @@ pub struct Collection {
 impl Collection {
     pub fn new() -> Self {
         Collection {
-            folders: query::collection()
+            folders: query::collection(APPEARANCE.sort_by())
                 .unwrap_or(Folders::new())
         }
     }

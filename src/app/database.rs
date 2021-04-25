@@ -388,9 +388,37 @@ pub mod query {
     ideally, admin::check() should properly ensure database integrity before starting the app.
     however, it cannot protect against the contents of the table itself.
     */
+
+    #[derive(Clone, Copy, Debug)]
     pub enum QueryType {
         Collection,
         Wantlist,
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    #[allow(dead_code)]
+    pub enum SortOrder {
+        Default,
+        Id,
+        Title,
+        Artist,
+        Year,
+        Date,
+    }
+
+    impl SortOrder {
+        pub fn as_str(self) -> &'static str {
+            use SortOrder::*;
+
+            match self {
+                Default => "",
+                Id => "ORDER BY id ASC",
+                Title => "ORDER BY title ASC",
+                Artist => "ORDER BY artist ASC",
+                Year => "ORDER BY year ASC",
+                Date => "ORDER BY date_added ASC"
+            }
+        }
     }
 
     pub fn profile() -> Result<Profile, DBError> {
@@ -413,20 +441,22 @@ pub mod query {
         Ok(profile)
     }
 
-    pub fn collection() -> Result<Folders, DBError> {
+    pub fn collection(order: SortOrder) -> Result<Folders, DBError> {
         let conn = Connection::open(utils::database_file())?;
 
+        
         let mut folder_names: Vec<String> = Vec::new();
         let mut stmt = conn.prepare("SELECT name FROM folders;")?;
         let folderquery = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
         for folder in folderquery {
             folder_names.push(folder?);
         }
-
+        
+        let sortby = order.as_str();
         let mut folders = Folders::new();
 
         for mut name in folder_names {
-            let mut stmt = conn.prepare(&format!("SELECT * FROM \"{}\"", name))?;
+            let mut stmt = conn.prepare(&format!("SELECT * FROM \"{}\" {};", name, sortby))?;
             let folder = get_releases(&mut stmt, QueryType::Collection)?;
             name.pop().unwrap();
             folders.push(name, folder);
@@ -434,9 +464,10 @@ pub mod query {
         Ok(folders)
     }
 
-    pub fn wantlist() -> Result<Vec<Release>, DBError> {
+    pub fn wantlist(order: SortOrder) -> Result<Vec<Release>, DBError> {
         let conn = Connection::open(utils::database_file())?;
-        let mut stmt = conn.prepare("SELECT * FROM wantlist;")?;
+        let sortby = order.as_str();
+        let mut stmt = conn.prepare(&format!("SELECT * FROM wantlist {};", sortby))?;
         let wantlist = get_releases(&mut stmt, QueryType::Wantlist)?;
         Ok(wantlist)
     }
@@ -449,7 +480,7 @@ pub mod query {
         };
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(&format!(
-            "SELECT * FROM {} WHERE search_string LIKE '%{}%'",
+            "SELECT * FROM {} WHERE search_string LIKE '%{}%' ORDER BY title ASC;",
             table_to_query, query
         ))?;
         let results = get_releases(&mut stmt, querytype)?;
@@ -460,7 +491,7 @@ pub mod query {
     pub fn all_titles() -> Result<Vec<String>, DBError> {
         let conn = Connection::open(utils::database_file())?;
         let mut stmt = conn.prepare(
-            "SELECT title FROM All_;"
+            "SELECT title FROM All_ ORDER BY title ASC;"
         )?;
         let titles = stmt.query_map(NO_PARAMS, |row| row.get(0))?;
         let mut titlevec = Vec::<String>::with_capacity(

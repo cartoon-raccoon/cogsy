@@ -22,7 +22,7 @@ use crate::app::{
         admin, 
         query,
         update as dbupdate, 
-        query::QueryType
+        query::QueryType,
     },
     message::{Message, MessageKind},
     update,
@@ -36,6 +36,7 @@ use crate::screens::{
 };
 use crate::collection::Collection;
 use crate::commands::{Command, CommandError};
+use crate::APPEARANCE;
 
 const DB_NOT_INIT_MSG: &str =
 "Database not initialized. Would you like to initialize it now? [Y/n]";
@@ -136,7 +137,7 @@ impl App {
                                                      false, false);
                         match updateres {
                             Ok(()) => {
-                                self.collection.folders = query::collection().unwrap();
+                                self.collection.folders = query::collection(APPEARANCE.sort_by()).unwrap();
                                 self.collection.refresh(s);
                                 view_content = "Database successfully updated.".to_string();
                                 view_style = self.appearance.success_col();

@@ -17,7 +17,10 @@ use cursive::theme::{
     PaletteColor::*,
     {BorderStyle, Palette, Theme}
 };
-use crate::app::message::Message;
+use crate::app::{
+    database::query::SortOrder,
+    message::Message,
+};
 use crate::utils;
 
 #[derive(Deserialize, Serialize)]
@@ -114,6 +117,7 @@ pub struct User {
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Appearance {
     pub format: Option<String>,
+    pub sort_by: Option<String>,
     pub folders_width: Option<u32>,
     // colours
     /// The selected text colour
@@ -130,6 +134,7 @@ impl Default for Appearance {
     fn default() -> Self {
         Appearance {
             format: Some(String::from("{artist} - {title}")),
+            sort_by: Some(String::from("default")),
             folders_width: Some(30),
             selectcol: Some(String::from("yellow")),
             messagecol: Some(gen_default_msg_cols()),
@@ -145,6 +150,10 @@ impl Appearance {
     pub fn resolve(&mut self) {
         if let None = self.format {
             self.format = Some(String::from("{artist} - {title}"));
+        }
+
+        if let None = self.sort_by {
+            self.sort_by = Some(String::from("default"));
         }
 
         if let None = self.folders_width {
@@ -260,6 +269,19 @@ impl Appearance {
 
     pub fn titlecol(&self) -> Color {
         parse_colour(self.titlecol.as_ref().unwrap())
+    }
+
+    pub fn sort_by(&self) -> SortOrder {
+        use SortOrder::*;
+        match self.sort_by.as_ref().unwrap().as_str() {
+            "default" => Default,
+            "id" => Id,
+            "title" => Title,
+            "artist" => Artist,
+            "year" => Year,
+            "date" => Date,
+            _ => Default,
+        }
     }
 }
 
