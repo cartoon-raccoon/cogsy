@@ -144,8 +144,11 @@ _None of these additions are guaranteed._
 
 - Adding a `price` command, allowing the user to set the price they paid for the album, and also a screen to display the increasing amount of money they spend on their music collection as a sparkview graph. The code to parse the command is already written, all that's left is to implement it.
 - An option to read user collection data from a CSV file (Discogs supports downloading collection data as CSV). This would prove to be useful for users with larger collections.
-- A popup in Listening history that shows the history for the album only.
+- A popup in Listening history that shows the history for the album only (currently implemented inside the album popup).
+- Alternative update algorithm.
 - OAuth2 integration (unlikely).
+
+_You may view the TODO section in [notes](notes) for a complete todo list._
 
 ## Acknowledgements
 
