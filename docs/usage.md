@@ -16,6 +16,7 @@ You can add an additional `appearance` section with the following fields (contai
 ```text
 [appearance]
 format = "{artist} - {title}"
+sort_by = "default"
 folders_width = 30
 selectcol = "yellow"
 messagecol = { default = "white", error = "red", success = "green", hint = "yellow" }
@@ -25,6 +26,15 @@ commandcol = "white"
 ```
 
 `format` is the format taken by the text displayed in the collection screen. Album attributes are enclosed in curly brackets and will be expanded into the album attributes when displayed; everything else will be displayed as is.
+
+`sort_by` is the the predicate by which listed items will be sorted. The possible values are:
+
+- `default` - No sorting is performed.
+- `id` - Sort by Discogs ID.
+- `title` - Sort by title.
+- `artist` - Sort by artist name.
+- `year` - Sort by release year.
+- `date` - Sort by date added.
 
 `folders_width` is the width of the folders element (left side) in the main view.
 
