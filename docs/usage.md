@@ -87,6 +87,7 @@ _The history entries are quite sparse as I haven't had time to populate them._
 This is Cogsy's heart. All of Cogsy's features are run from here. Vim users will find this familiar, as you activate it by pressing `:`. From here, you can run Cogsy's core commands. At any time, you can cancel a command by pressing Esc.
 
 Cogsy has four core commands:
+
 - `update`: Pulls collection info from Discogs and updates the entire app database. There are also the `-u` and `-t` switches for updating the username and token respectively, but they don't do anything at the moment. The `-v` switch displays verbose output when run without the TUI.
 - `listen [album]`: Cogsy's core feature. Pass it an album name and it will log the album title and the current time as a listening session.
 - `query [album]`: Query the local database for information on an album. Use the `-w` or `--wantlist` switch to query the wantlist, otherwise it defaults to querying the collection.
@@ -96,7 +97,11 @@ Cogsy can also be run as a terminal app, by passing it one of its core commands.
 
 For example, `cogsy update` will cause Cogsy to update its database and exit. `cogsy query [albumname]` will cause Cogsy to display all the matches for `[albumname]` and exit.
 
-Cogsy also has the `reset` command, only accessible as a subcommand. This command purges your database and then repopulates it, but your listening history will be gone. Use this if cogsy cannot start due to a database error. (Cogsy checks the database for the required tables on startup and will exit with an error if it cannot find them).
+Cogsy also has the `database` command, only accessible as a subcommand from the shell. This command enables the user to administrate the database. There are three options for the `database` command:
+
+- `--reset`: This purges the database and retrieves new data from Discogs. Note that this will also remove your listening history.
+- `--orphan`: This performs orphan table removal.
+- `--check`: This performs the database integrity check.
 
 Read the notes file for more information on the app, what it can do and how to use it.
 
@@ -106,10 +111,10 @@ This is a simple sqlite3 database and can be browsed with the sqlite3 browser pr
 
 On startup, Cogsy does a database check for the required folders. If the test does not pass (the required tables are absent), it exits with a database error.
 
-In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore cannot be accessed by Cogsy. This is detected by the database check on startup, and the relevant error message is shown. To remove orphan tables, you can run `cogsy reset`. Alternatively, if you want to preserve your listening history, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>`.
+In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore are not valid user folders to Cogsy. This is detected by the database check on startup, and the relevant error message is shown. To remove orphan tables, you can run `cogsy database --orphan`. Alternatively, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>;`.
 
 **Important Note on Updating:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not yet possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
 However, it might be possible to work out the URL of each page in advance and pull the info concurrently that way, but the app is still subject to Discogs' rate limiting and this would just make Cogsy hit the request limit faster. Users with extremely large collections will still see a performance hit.
 
-This algorithm may be possible to implement, and should appear in a future release.
+This algorithm may be possible to implement, and may appear in a future release.
