@@ -39,8 +39,8 @@ lazy_static! {
 
 fn main() {
     let clapapp = fromcli::init().get_matches();
-    if let Some(_) = clapapp.subcommand_matches("reset") {
-        exit(fromcli::handle_reset(&CONFIG).unwrap());
+    if let Some(sub_m) = clapapp.subcommand_matches("database") {
+        exit(fromcli::handle_database(sub_m).unwrap());
     }
     let mut app = App::initialize();
     

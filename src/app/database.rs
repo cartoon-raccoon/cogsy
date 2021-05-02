@@ -202,6 +202,57 @@ pub mod admin {
         }
         Ok(())
     }
+
+    // this was so cobbled together but i really can't be arsed to fix it.
+    pub fn remove_orphans() -> Result<(), DBError> {
+        let conn = Connection::open(utils::database_file())?;
+        let folders = { 
+            let mut stmt = conn.prepare("SELECT * FROM folders;")?;
+            
+            let collection_check = stmt.query_map(
+                NO_PARAMS, 
+                |row| row.get(0))?;
+            let mut folder_names: Vec<String> = Vec::new();
+            for folder in collection_check {
+                folder_names.push(folder?);
+            }
+            for folder in &folder_names {
+                let sqlcommand = format!("SELECT * FROM \"{}\"", folder);
+                match conn.prepare(&sqlcommand) {
+                    Ok(_) => {},
+                    Err(e) => return Err(format!("{}: {}", folder, e).as_str().into())
+                }
+            }
+            folder_names
+        };
+        let all_tables = {
+            let mut stmt = conn.prepare("SELECT name FROM sqlite_master
+            WHERE type ='table'
+            AND name NOT LIKE 'sqlite_%';")?;
+
+            let mut tables: Vec<String> = Vec::new();
+            for table in stmt.query_map(NO_PARAMS, |row| row.get(0))? {
+                tables.push(table?);
+            }
+            tables
+        };
+
+        if all_tables.len() - 4 != folders.len() {
+            for table in &all_tables {
+                if !is_core(table) && !folders.contains(table.into()) {
+                    conn.execute(&format!("DROP TABLE \"{}\"", table), NO_PARAMS)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn is_core(table: &str) -> bool {
+        table == "profile" ||
+        table == "wantlist" ||
+        table == "folders" ||
+        table == "listenlog"
+    }
 }
 
 pub mod update {

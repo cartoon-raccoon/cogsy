@@ -1,5 +1,4 @@
-use std::io;
-use std::process;
+use std::{io, process};
 use clap::{
     App as Clap,
     SubCommand,
@@ -7,7 +6,6 @@ use clap::{
     ArgMatches,
 };
 use crate::CONFIG;
-use crate::config::Config;
 use crate::utils;
 use crate::app::{
     ListenLogEntry,
@@ -15,6 +13,7 @@ use crate::app::{
     App,
     update::{self, UpdateError},
     database::{
+        admin,
         query::{self, QueryType},
         update as dbupdate,
         purge,
@@ -77,8 +76,26 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .help("The name of the album you want to query.")
             )
         )
-        .subcommand(SubCommand::with_name("reset")
-            .about("Reset the entire database.")
+        .subcommand(SubCommand::with_name("database")
+            .about("Options for database administration.")
+            .arg(Arg::with_name("reset")
+                .short("r")
+                .long("wantlist")
+                .takes_value(false)
+                .help("Performs database reset.")
+            )
+            .arg(Arg::with_name("orphan")
+                .short("o")
+                .long("orphan")
+                .takes_value(false)
+                .help("Performs orphan table removal.")
+            )
+            .arg(Arg::with_name("check")
+                .short("c")
+                .long("check")
+                .takes_value(false)
+                .help("Performs database integrity check.")
+            )
         )   
 }
 
@@ -181,86 +198,86 @@ fn handle_listen(sub_m: &ArgMatches) -> Option<i32> {
     let album = sub_m.value_of("albumname").unwrap().to_string()
         .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
-        match query::release(album.clone(), QueryType::Collection) {
-            Ok(results) => {
-                if results.len() > 1 {
-                    println!("{}",
-                        Message::info(
-                            &format!("Multiple results for `{}`, pick one:", album),
-                        )
+    match query::release(album.clone(), QueryType::Collection) {
+        Ok(results) => {
+            if results.len() > 1 {
+                println!("{}",
+                    Message::info(
+                        &format!("Multiple results for `{}`, pick one:", album),
+                    )
+                );
+                for (i, release) in results.iter().enumerate() {
+                    println!(
+                        "[{}]: {} - {} ({})",
+                        i + 1,
+                        release.artist,
+                        release.title,
+                        release.formats.join(", "),
                     );
-                    for (i, release) in results.iter().enumerate() {
-                        println!(
-                            "[{}]: {} - {} ({})",
-                            i + 1,
-                            release.artist,
-                            release.title,
-                            release.formats.join(", "),
+                }
+                loop {
+                    let mut answer = String::new();
+                    io::stdin().read_line(&mut answer)
+                        .expect("Oops, could not read line.");
+                    let choice: usize = match answer.trim().parse() {
+                        Ok(num) => num,
+                        Err(_) => {println!("{}",
+                            Message::set("Invalid input!", MessageKind::Error)
+                        ); continue}
+                    };
+                    if choice <= results.len() {
+                        let time_now = utils::get_utc_now();
+                        let entry = ListenLogEntry {
+                            id: results[choice - 1].id,
+                            title: &results[choice - 1].title,
+                            time: time_now,
+                        };
+                        match dbupdate::listenlog(entry) {
+                            Ok(()) => {println!("Listening to `{}` by {}", 
+                                results[choice - 1].title, 
+                                results[choice - 1].artist);
+                            }
+                            Err(e) => {
+                                eprintln!("Database error: {}", e);
+                                db_error_msg();
+                                return Some(2)
+                            }
+                        }
+                        break;
+                        } else {
+                        println!("{}",
+                            Message::set("Please select a valid choice.", MessageKind::Error)
                         );
                     }
-                    loop {
-                        let mut answer = String::new();
-                        io::stdin().read_line(&mut answer)
-                            .expect("Oops, could not read line.");
-                        let choice: usize = match answer.trim().parse() {
-                            Ok(num) => num,
-                            Err(_) => {println!("{}",
-                                Message::set("Invalid input!", MessageKind::Error)
-                            ); continue}
-                        };
-                        if choice <= results.len() {
-                            let time_now = utils::get_utc_now();
-                            let entry = ListenLogEntry {
-                                id: results[choice - 1].id,
-                                title: &results[choice - 1].title,
-                                time: time_now,
-                            };
-                            match dbupdate::listenlog(entry) {
-                                Ok(()) => {println!("Listening to `{}` by {}", 
-                                    results[choice - 1].title, 
-                                    results[choice - 1].artist);
-                                }
-                                Err(e) => {
-                                    eprintln!("Database error: {}", e);
-                                    db_error_msg();
-                                    return Some(2)
-                                }
-                            }
-                            break;
-                            } else {
-                            println!("{}",
-                                Message::set("Please select a valid choice.", MessageKind::Error)
-                            );
-                        }
+                }
+            } else if results.len() == 1 {
+                let time_now = utils::get_utc_now();
+                let entry = ListenLogEntry {
+                    id: results[0].id,
+                    title: &results[0].title,
+                    time: time_now,
+                };
+                match dbupdate::listenlog(entry) {
+                    Ok(()) => {println!("Listening to `{}` by {}", 
+                        results[0].title, results[0].artist);}
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        db_error_msg();
+                        return Some(2)
                     }
-                } else if results.len() == 1 {
-                    let time_now = utils::get_utc_now();
-                    let entry = ListenLogEntry {
-                        id: results[0].id,
-                        title: &results[0].title,
-                        time: time_now,
-                    };
-                    match dbupdate::listenlog(entry) {
-                        Ok(()) => {println!("Listening to `{}` by {}", 
-                            results[0].title, results[0].artist);}
-                        Err(e) => {
-                            eprintln!("{}", e);
-                            db_error_msg();
-                            return Some(2)
-                        }
-                    }
-                } else {
-                    println!("Unable to find results for `{}`", album);
-                    return Some(1)
-                }  
-            },
-            Err(e) => {
-                eprintln!("{}", e);
-                db_error_msg();
-                return Some(2)
-            }
-        }  
-        Some(0)
+                }
+            } else {
+                println!("Unable to find results for `{}`", album);
+                return Some(1)
+            }  
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+            db_error_msg();
+            return Some(2)
+        }
+    }  
+    Some(0)
 }
 
 fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
@@ -323,12 +340,34 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
     Some(0)
 }
 
-pub fn handle_reset(config: &Config) -> Option<i32> {
+pub fn handle_database(sub_m: &ArgMatches) -> Option<i32> {
+    if sub_m.is_present("reset") {
+        if sub_m.is_present("orphan") || sub_m.is_present("check") {
+            return database_arg_error()
+        }
+        return handle_reset()
+    } else if sub_m.is_present("orphan") {
+        if sub_m.is_present("reset") || sub_m.is_present("check") {
+            return database_arg_error()
+        }
+        return handle_orphans()
+    } else if sub_m.is_present("check") {
+        if sub_m.is_present("orphan") || sub_m.is_present("reset") {
+            return database_arg_error()
+        }
+        return handle_check()
+    } else {
+
+    }
+    Some(0)
+}
+
+fn handle_reset() -> Option<i32> {
     println!("{}", Message::set("Resetting database.", MessageKind::Info));
     match purge::complete() {
         Ok(_) => {
             println!("Database purged. Pulling data from Discogs...");
-            match update::full(&config.user.username, &config.user.token, true, false) {
+            match update::full(&CONFIG.user.username, &CONFIG.user.token, true, false) {
                 Ok(()) => {}
                 Err(e) => {
                     println!("\n{}", e);
@@ -349,7 +388,40 @@ pub fn handle_reset(config: &Config) -> Option<i32> {
     }
 }
 
+fn handle_check() -> Option<i32> {
+    println!("{}", Message::info("Performing database integrity check."));
+    match admin::check_integrity() {
+        Ok(_) => {
+            println!("{}", Message::success("No errors found."));
+            return Some(0)
+        }
+        Err(e) => {
+            eprintln!("error: {}", e);
+            return Some(2)
+        }
+    }
+}
+
+fn handle_orphans() -> Option<i32> {
+    println!("{}", Message::info("Removing orphan tables."));
+    match admin::remove_orphans() {
+        Ok(_) => {
+            println!("{}", Message::success("Removal successful."));
+            return Some(0)
+        }
+        Err(e) => {
+            eprintln!("error: {}", e);
+            return Some(2)
+        }
+    }
+}
+
+fn database_arg_error() -> Option<i32> {
+    eprintln!("error: too many commands");
+    Some(1)
+}
+
 fn db_error_msg() {
-    eprintln!("This is a database error and is likely a bug.");
+    eprintln!("This is a database error and may be a bug.");
     eprintln!("Please file an issue on GitHub with this error message.");
 }
