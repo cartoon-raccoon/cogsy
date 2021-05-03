@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Removed "reset" subcommand - replaced with "database" for general database administration
+- Specific handling for orphan table errors
 
 ## [0.2.0] - 2021-03-11
 ### Added
