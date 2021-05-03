@@ -110,6 +110,7 @@ For example, `cogsy update` will cause Cogsy to update its database and exit. `c
 Cogsy also has the `database` command, only accessible as a subcommand from the shell. This command enables the user to administrate the database. There are three options for the `database` command:
 
 - `--reset`: This purges the database and retrieves new data from Discogs. Note that this will also remove your listening history.
+_Note: Due to a typo, `--reset` was accidentally named `--wantlist`. You have to use the short version `-r` or `--wantlist` when you reset the database. This will be fixed in version 0.2.2._
 - `--orphan`: This performs orphan table removal.
 - `--check`: This performs the database integrity check.
 
