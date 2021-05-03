@@ -116,12 +116,13 @@ Cogsy also has the `database` command, only accessible as a subcommand from the 
 Read the notes file for more information on the app, what it can do and how to use it.
 
 ## Internals
+
 Cogsy stores all its data at (on Linux) `~/.local/share/cogsy/cogsy_data.db`.
 This is a simple sqlite3 database and can be browsed with the sqlite3 browser program.
 
 On startup, Cogsy does a database check for the required folders. If the test does not pass (the required tables are absent), it exits with a database error.
 
-In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folders and their names, and uses this table to access the database tables for each folder. Thus, it is possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore are not valid user folders to Cogsy. This is detected by the database check on startup, and the relevant error message is shown. To remove orphan tables, you can run `cogsy database --orphan`. Alternatively, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>;`.
+In order to keep track of user-defined folders, Cogsy uses a table called `folders` to store folder names, and uses this table to access the actual tables for each folder. Thus, it is (highly unlikely but) possible to have orphan tables - tables that exist in the database but don't have an entry in the `folders` table, and therefore are not valid user folders to Cogsy. This is detected by the database check on startup, and the relevant error message is shown. To remove orphan tables, you can run `cogsy database --orphan`. Alternatively, you can manually delete the orphan tables inside the sqlite3 browser with `drop table <folder name>;`.
 
 **Important Note on Updating:** The Discogs API limits HTTP requests to 60 per minute, and gives up to maximum 100 albums per (paginated) request. Users with extremely large collections (>5000 albums) will see extremely long download times, and the app itself may become unusable. In addition, the pagination of the responses means that pulling all the items in a folder concurrently is not yet possible. Multithreading is only implemented on a per-folder basis, and only users with a large amount of folders will see any improvement in their update times.
 
