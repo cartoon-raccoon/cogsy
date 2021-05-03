@@ -31,15 +31,16 @@ impl From<DBError> for UpdateError {
 }
 
 #[derive(Debug, Clone)]
-pub struct DBError {
-    error: String,
+pub enum DBError {
+    SQliteErr(String),
+    OrphanTableErr,
+    FileNotExistErr,
+    OtherErr(String)
 }
 
 impl From<&str> for DBError {
     fn from(from: &str) -> Self {
-        DBError {
-            error: from.into()
-        }
+        DBError::OtherErr(from.into())
     }
 }
 
@@ -47,15 +48,26 @@ impl std::error::Error for DBError {}
 
 impl std::fmt::Display for DBError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.error)
+        match self {
+            Self::SQliteErr(s) => {
+                write!(f, "{}", s)
+            }
+            Self::OrphanTableErr => {
+                write!(f, "error: orphan tables detected")
+            }
+            Self::FileNotExistErr => {
+                write!(f, "error: no such database file")
+            }
+            Self::OtherErr(s) => {
+                write!(f, "{}", s)
+            }
+        }
     }
 }
 
 impl From<rusqlite::Error> for DBError {
     fn from(error: rusqlite::Error) -> Self {
-        DBError {
-            error: error.to_string()
-        }
+        DBError::SQliteErr(error.to_string())
     }
 }
 
@@ -177,7 +189,7 @@ pub mod admin {
                 }
                 Ok(())
             },
-            Err(_) => return Err("database file does not exist".into())
+            Err(_) => return Err(DBError::FileNotExistErr)
         }
     }
 
@@ -198,7 +210,7 @@ pub mod admin {
             return Err("Integrity check: Missing core table(s)".into())
         }
         if tables.len() - 4 != folders.len() {
-            return Err("Integrity check: orphan tables".into())
+            return Err(DBError::OrphanTableErr)
         }
         Ok(())
     }
