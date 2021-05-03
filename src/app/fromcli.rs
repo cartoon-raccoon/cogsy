@@ -80,7 +80,7 @@ pub fn init<'a>() -> Clap<'a, 'a> {
             .about("Options for database administration.")
             .arg(Arg::with_name("reset")
                 .short("r")
-                .long("wantlist")
+                .long("reset")
                 .takes_value(false)
                 .help("Performs database reset.")
             )
