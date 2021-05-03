@@ -19,6 +19,7 @@ use crate::app::{
     },
     request::UpdateError,
     database::{
+        DBError,
         admin, 
         query,
         update as dbupdate, 
@@ -44,28 +45,43 @@ const DB_NOT_INIT_MSG: &str =
 const DB_INTEGRITY_FAIL_MSG: &str =
 "Database integrity check failed, would you like to re-initialize it now? [Y/n]";
 
-fn on_init_fail(username: &str, token: &str, integ_fail: bool) {
+const DB_ORPHAN_TABLES_MSG: &str =
+"Database contains orphan tables, would you like to clear them now? [Y/n]";
+
+fn on_init_fail(username: &str, token: &str, integ_fail: bool, orphan: bool) {
     let mut answer = String::new();
     print!(">>> "); io::stdout().flush().unwrap();
     io::stdin().read_line(&mut answer)
         .expect("Oops, could not read line.");
     match answer.to_lowercase().as_str().trim() {
         "y" | "yes" => {
-            println!("Beginning database initialization.");
-            match update::full(username, token, true, false) {
-                Ok(()) => {}
-                Err(e) => {
-                    println!("\n{}", e);
-                    if let UpdateError::DBWriteError(_) = e {
-                        fs::remove_file(utils::database_file()).unwrap();
+            if orphan {
+                match admin::remove_orphans() {
+                    Ok(()) => {}
+                    Err(e) => {
+                        eprintln!("\n{}", e);
+                        exit(1);
                     }
-                    exit(1);
+                }
+            } else {
+                println!("Beginning database initialization.");
+                match update::full(username, token, true, false) {
+                    Ok(()) => {}
+                    Err(e) => {
+                        eprintln!("\n{}", e);
+                        if let UpdateError::DBWriteError(_) = e {
+                            fs::remove_file(utils::database_file()).unwrap();
+                        }
+                        exit(1);
+                    }
                 }
             }
         },
         "n" | "no" => {
             if integ_fail {
                 println!("Run `cogsy reset` to reset your user database manually.")
+            } else if orphan {
+                println!("Run `cogsy database --orphan to remove orphan tables.")
             }
             exit(1);
         },
@@ -87,7 +103,7 @@ impl App {
 
         if !Path::new(&dbfilepath).exists() {
             println!("{}", Message::set(DB_NOT_INIT_MSG, MessageKind::Hint));
-            on_init_fail(&config.user.username, &token, false);
+            on_init_fail(&config.user.username, &token, false, false);
         }
         if !utils::usernames_match() {
             println!("{}", 
@@ -97,12 +113,17 @@ impl App {
                 )
             );
             println!("Would you like to use the new username? [Y/n]");
-            on_init_fail(&config.user.username, &token, false);
+            on_init_fail(&config.user.username, &token, false, false);
         }
         if let Err(e) = admin::check_integrity() {
             eprintln!("{}", Message::set(&e.to_string(), MessageKind::Error));
-            eprintln!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
-            on_init_fail(&config.user.username, &token, false);
+            if let DBError::OrphanTableErr = e {
+                eprintln!("{}", Message::set(DB_ORPHAN_TABLES_MSG, MessageKind::Hint));
+                on_init_fail(&config.user.username, &token, false, true);
+            } else {
+                eprintln!("{}", Message::set(DB_INTEGRITY_FAIL_MSG, MessageKind::Hint));
+                on_init_fail(&config.user.username, &token, true, false);
+            }
         }
 
         let mut app = App {
