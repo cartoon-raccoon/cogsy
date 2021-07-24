@@ -4,7 +4,7 @@
 
 On first install, your new config.toml file will look something like this:
 
-```text
+```toml
 [user]
 username = cartoon-raccoon
 token = <token>
@@ -13,7 +13,7 @@ timezone = 8.0
 
 You can add an additional `appearance` section with the following fields (containing their default values):
 
-```text
+```toml
 [appearance]
 format = "{artist} - {title}"
 sort_by = "default"
