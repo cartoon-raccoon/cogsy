@@ -94,6 +94,7 @@ TODO:
   - [0.2.2] Reading from a csv input file
   - [0.3.0] Price command
   - Implement different colours for folder list (not important)
+  - Refactor Release, implement display for user-facing types
 
 Future additions:
   - Option to read from csv instead of pulling from web
