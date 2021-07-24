@@ -128,9 +128,9 @@ impl App {
 
         let mut app = App {
             user_id: config.user.username.clone(),
-            token: token,
+            token,
             message: Message {
-                msg: String::from(format!("Cogsy v{}", env!("CARGO_PKG_VERSION"))),
+                msg: format!("Cogsy v{}", env!("CARGO_PKG_VERSION")),
                 kind: MessageKind::Info
             },
             collection: Collection::new(),
@@ -213,72 +213,83 @@ impl App {
                         };
                     }
                     Command::Price(_album, _price) => {
-                        view_content = format!("Sorry, the price command is not supported at this time.");
+                        view_content = "Sorry, the price command is not supported at this time.".to_string();
                     }
                     Command::Listen(album, _time) => {
-                        match query::release(album.clone(), QueryType::Collection) {
+                        match query::release(&album, QueryType::Collection) {
                             Ok(results) => {
-                                if results.len() > 1 {
-                                    view_content = format!("Multiple results for `{}`", album);
-                                    s.add_fullscreen_layer(
-                                        //listenlog gets logged internally here
-                                        popup::multiple_results(results, true)
-                                    );
-                                } else if results.len() == 1 {
-                                    let time_now = utils::get_utc_now();
-                                    let entry = ListenLogEntry {
-                                        id: results[0].id,
-                                        title: &results[0].title,
-                                        time: time_now,
-                                    };
-                                    match dbupdate::listenlog(entry) {
-                                        Ok(()) => {view_content = format!("Listening to `{}` by {}", 
-                                            results[0].title, 
-                                            results[0].artist,
-                                        );}
-                                        Err(e) => {view_content = e.to_string();}
+                                match results.len() {
+                                    1 => {
+                                        let time_now = utils::get_utc_now();
+                                        let entry = ListenLogEntry {
+                                            id: results[0].id,
+                                            title: &results[0].title,
+                                            time: time_now,
+                                        };
+                                        match dbupdate::listenlog(entry) {
+                                            Ok(()) => {view_content = format!("Listening to `{}` by {}", 
+                                                results[0].title, 
+                                                results[0].artist,
+                                            );}
+                                            Err(e) => {view_content = e.to_string();}
+                                        }
                                     }
-                                } else {
-                                    view_content = format!("Unable to find results for `{}`", album);
+                                    n if n > 1 => {
+                                        view_content = format!("Multiple results for `{}`", album);
+                                        s.add_fullscreen_layer(
+                                            //listenlog gets logged internally here
+                                            popup::multiple_results(results, true)
+                                        );
+                                    }
+                                    _ => {
+                                        view_content = format!("Unable to find results for `{}`", album);
+                                    }
                                 }
-
                             }
                             Err(e) => {view_content = format!("{}", e);}
                         }
                     }
                     Command::Query(album) => {
-                        match query::release(album.clone(), QueryType::Collection) {
+                        match query::release(&album, QueryType::Collection) {
                             Ok(results) => {
                                 view_content = format!("Querying collection for `{}`", album);
-                                if results.len() > 1 {
-                                    s.add_fullscreen_layer(
-                                        popup::multiple_results(results, false)
-                                    );
-                                } else if results.len() == 1 {
-                                    s.add_fullscreen_layer(
-                                        popup::albuminfo(&results[0])
-                                    );
-                                } else {
-                                    view_content = format!("Unable to find results for `{}`", album);
+                                match results.len() {
+                                    1 => {
+                                        s.add_fullscreen_layer(
+                                            popup::albuminfo(&results[0])
+                                        );
+                                    }
+                                    n if n > 1 => {
+                                        s.add_fullscreen_layer(
+                                            popup::multiple_results(results, false)
+                                        );
+                                    }
+                                    _ => {
+                                        view_content = format!("Unable to find results for `{}`", album);
+                                    }
                                 }
                             }
                             Err(e) => {view_content = format!("{}", e);}
                         }
                     }
                     Command::QueryWantlist(album) => {
-                        match query::release(album.clone(), QueryType::Wantlist) {
+                        match query::release(&album, QueryType::Wantlist) {
                             Ok(results) => {
                                 view_content = format!("Querying wantlist for `{}`", album);
-                                if results.len() > 1 {
-                                    s.add_fullscreen_layer(
-                                        popup::multiple_results(results, false)
-                                    );
-                                } else if results.len() == 1 {
-                                    s.add_fullscreen_layer(
-                                        popup::albuminfo(&results[0])
-                                    );
-                                } else {
-                                    view_content = format!("Unable to find results for `{}`", album);
+                                match results.len() {
+                                    1 => {
+                                        s.add_fullscreen_layer(
+                                            popup::albuminfo(&results[0])
+                                        );
+                                    }
+                                    n if n > 1 => {
+                                        s.add_fullscreen_layer(
+                                            popup::multiple_results(results, false)
+                                        );
+                                    }
+                                    _ => {
+                                        view_content = format!("Unable to find results for `{}`", album);
+                                    }
                                 }
                             }
                             Err(e) => {view_content = format!("{}", e);}
@@ -392,20 +403,13 @@ impl Folders { //wrapper around a BTreeMap<String, Vec<Release>>
     }
 
     pub fn pull(&mut self, name: &str) -> Option<Vec<Release>> {
-        
-        match self.contents.remove(name) {
-            None => None,
-            Some(releases) => Some(releases),
-        }
+        self.contents.remove(name)
     }
 
     pub fn push(&mut self, 
         folder: String, 
         contents: Vec<Release>) -> Option<Vec<Release>> {
         
-        match self.contents.insert(folder, contents) {
-            None => None,
-            Some(old_val) => Some(old_val)
-        }
+        self.contents.insert(folder, contents)
     }
 }

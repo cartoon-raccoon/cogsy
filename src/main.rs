@@ -58,7 +58,7 @@ fn main() {
 
     //building gui tree
     let message = TextContent::new(app.message.msg.clone());
-    let messagebox = TextView::new_with_content(message.clone())
+    let messagebox = TextView::new_with_content(message)
         .with_name("messagebox");
     
     let commandline = EditView::new()

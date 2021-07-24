@@ -189,7 +189,7 @@ pub mod admin {
                 }
                 Ok(())
             },
-            Err(_) => return Err(DBError::FileNotExistErr)
+            Err(_) => Err(DBError::FileNotExistErr)
         }
     }
 
@@ -251,7 +251,7 @@ pub mod admin {
 
         if all_tables.len() - 4 != folders.len() {
             for table in &all_tables {
-                if !is_core(table) && !folders.contains(table.into()) {
+                if !is_core(table) && !folders.contains(table) {
                     conn.execute(&format!("DROP TABLE \"{}\"", table), NO_PARAMS)?;
                 }
             }
@@ -329,7 +329,7 @@ pub mod update {
             purge::folders()?;
             for (name, folder) in collection.contents.iter_mut() {
                 let mut sanitized_name = name.clone();
-                sanitized_name.push_str("_");
+                sanitized_name.push('_');
                 self.conn.execute(
                     "INSERT INTO folders (name) VALUES (?1)",
                     &[&sanitized_name]
@@ -536,7 +536,7 @@ pub mod query {
     }
 
     //returns a vec of releases to support multiple results
-    pub fn release(query: String, querytype: QueryType) -> Result<Vec<Release>, DBError> {
+    pub fn release(query: &str, querytype: QueryType) -> Result<Vec<Release>, DBError> {
         let table_to_query: String = match querytype {
             QueryType::Collection => "All_".to_string(),
             QueryType::Wantlist => "wantlist".to_string()
@@ -649,8 +649,8 @@ pub mod query {
                     title: row.get(4)?,
                     artist: row.get(5)?,
                     year: row.get(6)?,
-                    labels: labels,
-                    formats: formats,
+                    labels,
+                    formats,
                     date_added: row.get(9)?,
                 })
             })?;

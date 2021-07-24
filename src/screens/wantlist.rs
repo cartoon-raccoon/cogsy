@@ -28,7 +28,7 @@ impl Wantlist {
             ScrollView<
             NamedView<
             SelectView<Release>>>>> {
-        let main_screen = Panel::new(ResizedView::new(
+        Panel::new(ResizedView::new(
             SizeConstraint::Full,
             SizeConstraint::Full,
             ScrollView::new(
@@ -45,8 +45,7 @@ impl Wantlist {
                     );
                 })
                 .with_name("wantlist"))
-        ));
-        main_screen
+        ))
     }
 }
 

@@ -58,7 +58,7 @@ impl Message {
     pub fn set(text: &str, kind: MessageKind) -> Self {
         Message {
             msg: text.to_string(),
-            kind: kind,
+            kind,
         }
     }
 

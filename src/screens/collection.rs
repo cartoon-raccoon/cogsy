@@ -29,7 +29,7 @@ impl Collection {
     pub fn new() -> Self {
         Collection {
             folders: query::collection(APPEARANCE.sort_by())
-                .unwrap_or(Folders::new())
+                .unwrap_or_else(|_| Folders::new())
         }
     }
     pub fn build(&self, folders_width: usize) -> NamedView<LinearLayout> {

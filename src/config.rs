@@ -84,7 +84,7 @@ impl Config {
                     continue;
                 }
             }
-            if timezone > 14.0 || timezone < -12.0 {
+            if !(-12.0..=14.0).contains(&timezone) {
                 println!("Please enter a valid timezone.")
             } else {
                 break;
@@ -94,13 +94,13 @@ impl Config {
             user: User { 
                 username: username.trim().to_string(),
                 token: token.trim().to_string(),
-                timezone: timezone,
+                timezone,
             },
             appearance: None,
         };
         if let Ok(new_config) = toml::to_string(&config) {
             match OpenOptions::new().create(true).write(true).open(&utils::config_file()) {
-                Ok(ref mut file) => {file.write(new_config.as_bytes()).unwrap();},
+                Ok(ref mut file) => {file.write_all(new_config.as_bytes()).unwrap();},
                 Err(_) => {panic!("Could not create config file!");}
             }
         }
@@ -148,23 +148,23 @@ impl Appearance {
 
     /// Resolves all the empty (None) fields to a default colour
     pub fn resolve(&mut self) {
-        if let None = self.format {
+        if self.format.is_none() {
             self.format = Some(String::from("{artist} - {title}"));
         }
 
-        if let None = self.sort_by {
+        if self.sort_by.is_none() {
             self.sort_by = Some(String::from("default"));
         }
 
-        if let None = self.folders_width {
+        if self.folders_width.is_none() {
             self.folders_width = Some(30);
         }
 
-        if let None = self.selectcol {
+        if self.selectcol.is_none() {
             self.selectcol = Some(String::from("yellow"));
         }
 
-        if let None = self.messagecol {
+        if self.messagecol.is_none() {
             self.messagecol = Some(gen_default_msg_cols());
         } else {
             // ensuring all values are strings
@@ -206,11 +206,11 @@ impl Appearance {
         }
         assert!(self.messagecol().len() == 4);
         
-        if let None = self.commandcol {
+        if self.commandcol.is_none() {
             self.commandcol = Some(String::from("white"));
         }
 
-        if let None = self.titlecol {
+        if self.titlecol.is_none() {
             self.titlecol = Some(String::from("yellow"));
         }
     }
@@ -375,11 +375,11 @@ pub fn palette_gen(colours: &mut Appearance) -> Palette {
 }
 
 pub fn theme_gen(colours: &mut Appearance) -> Theme {
-    let mut t = Theme::default();
-    t.shadow = false;
-    t.borders = BorderStyle::Simple;
-    t.palette = palette_gen(colours);
-    return t;
+    Theme {
+        shadow: false,
+        borders: BorderStyle::Simple,
+        palette: palette_gen(colours),
+    }
 }
 
 #[cfg(test)]

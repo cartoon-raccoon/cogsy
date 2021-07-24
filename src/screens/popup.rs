@@ -35,7 +35,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     let display_time = release.date_added
     .with_timezone(&CONFIG.timezone());
 
-    let content = String::from(format!("
+    let content = format!("
     Artist: {}
 
     Year Released: {}
@@ -53,14 +53,14 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
     formats.join(", "),
     display_time.format("%A %d %m %Y %R"),
     release.id,
-    ));
+    );
 
     let title = release.title.clone();
     let title2 = title.clone();
     let artist = release.artist.clone();
     let id = release.id;
 
-    let screen = ResizedView::new(
+    ResizedView::new(
         SizeConstraint::Full,
         SizeConstraint::Full,
         Dialog::text(content)
@@ -86,7 +86,7 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
             })
             .button("Listen", move |s| {
                 let entry = ListenLogEntry {
-                    id: id,
+                    id,
                     title: &title,
                     time: utils::get_utc_now(),
                 };
@@ -106,12 +106,11 @@ pub fn albuminfo(release: &Release) -> ResizedView<Dialog> {
                     }
                 }
             })
-    );
-    screen
+    )
 }
 
 pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView<Dialog> {
-    let screen = ResizedView::new(
+    ResizedView::new(
         SizeConstraint::Full,
         SizeConstraint::Full,
         Dialog::around(
@@ -134,13 +133,9 @@ pub fn multiple_results(results: Vec<Release>, from_listen: bool) -> ResizedView
                         title: &results[0].title,
                         time: time_now,
                     };
-                    match update::listenlog(entry) {
-                        Ok(()) => {}
-                        Err(_) => {}
-                    }
+                    update::listenlog(entry).unwrap_or_else(|_| {})
                 }
             })
         ).title("Multiple results for query")
-    );
-    screen
+    )
 }

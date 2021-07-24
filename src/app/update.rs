@@ -57,7 +57,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
     let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
-        Ok(wantlist(req_clone, owned_uname, from_cmd, verbose)?)
+        wantlist(req_clone, owned_uname, from_cmd, verbose)
     }).join() { //thread panics are caught here instead of crashing the entire app
         Ok(wantlist) => wantlist?,
         Err(_) => {return Err(UpdateError::ThreadPanicError);}

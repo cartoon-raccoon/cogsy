@@ -15,7 +15,7 @@ pub fn build() -> ResizedView<Dialog> {
     let display_time = profile.registered
     .with_timezone(&CONFIG.timezone());
 
-    let content = String::from(format!("
+    let content = format!("
     Username: {}
     Name: {}
 
@@ -35,7 +35,7 @@ pub fn build() -> ResizedView<Dialog> {
     profile.wantlist,
     profile.rated,
     profile.average_rating,
-    ));
+    );
 
     let screen = ResizedView::new(
         SizeConstraint::Full,

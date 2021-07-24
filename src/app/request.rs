@@ -88,24 +88,19 @@ impl From<std::io::Error> for UpdateError {
     }
 }
 
-pub fn query_discogs(requester: &Client, url: &String) -> Result<String, UpdateError> {
+pub fn query_discogs(requester: &Client, url: &str) -> Result<String, UpdateError> {
     match requester.get(url).send() {
         Ok(response) => {
             match response.status() {
-                StatusCode::NOT_FOUND => {
-                    return Err(UpdateError::NotFoundError)}
-                StatusCode::UNAUTHORIZED => {
-                    return Err(UpdateError::AuthorizationError)}
-                StatusCode::INTERNAL_SERVER_ERROR => {
-                    return Err(UpdateError::ServerError)}
-                StatusCode::OK => {
-                    return Ok(response.text().unwrap())
-                }
-                _ => {return Err(UpdateError::UnknownError)}
-            };
+                StatusCode::NOT_FOUND => Err(UpdateError::NotFoundError),
+                StatusCode::UNAUTHORIZED => Err(UpdateError::AuthorizationError),
+                StatusCode::INTERNAL_SERVER_ERROR => Err(UpdateError::ServerError),
+                StatusCode::OK => Ok(response.text().unwrap()),
+                _ => {Err(UpdateError::UnknownError)}
+            }
         }
         Err(_) => {
-            return Err(UpdateError::NetworkError)
+            Err(UpdateError::NetworkError)
         }
     }
 }
@@ -116,12 +111,11 @@ pub fn build_client(token: &str) -> Client {
     headers.insert(
         header::AUTHORIZATION,
         header::HeaderValue::from_str(token).unwrap());
-    let requester = Client::builder()
-                        .user_agent("cogsy")
-                        .default_headers(headers)
-                        .build()
-                        .unwrap();
-    requester
+    Client::builder()
+        .user_agent("cogsy")
+        .default_headers(headers)
+        .build()
+        .unwrap()
 }
 
 //builds a url based on its parsetype and user id
@@ -191,7 +185,7 @@ pub fn parse_releases(
                 .as_str().ok_or(UpdateError::ParseError)?;
             //TODO: impl from for ParseResult
             let added_date = DateTime::parse_from_rfc3339(date_raw)
-                .unwrap_or(utils::get_utc_now()
+                .unwrap_or_else(|_| utils::get_utc_now()
                 .with_timezone(&CONFIG.timezone()));
             let info = entry.get("basic_information").unwrap();
 
@@ -219,9 +213,9 @@ pub fn parse_releases(
                 if name == "Vinyl" {
                     qty.push_str("LP");
                 }
-                name.push_str(" ");
+                name.push(' ');
                 name.push_str(&qty);
-                if text.len() > 0 {
+                if !text.is_empty() {
                     name.push_str(&format!(" ({})", text));
                 }
                 formats.push(name);
@@ -240,13 +234,13 @@ pub fn parse_releases(
 
             releases.push(Release {
                 id: id_no as i64,
-                search_string: search_string,
-                title: title,
-                artist: artist,
+                search_string,
+                title,
+                artist,
                 year: info["year"].as_u64()
                     .ok_or(UpdateError::ParseError)? as u32,
                 labels: label_names,
-                formats: formats,
+                formats,
                 date_added: DateTime::<Utc>::from_utc(
                     added_date.naive_utc(), Utc
                 )

@@ -88,49 +88,53 @@ impl Command {
         match first.as_str() {
             "update" => {
                 if strings.len() > 3 {
-                    return Err(CommandError::TooManyArgs(first, 2))
+                    Err(CommandError::TooManyArgs(first, 2))
                 } else if strings.len() == 1 {
-                    return Ok(Command::UpdateDB);
+                    Ok(Command::UpdateDB)
                 } else {
                     if strings.len() == 2 {
                         return Err(CommandError::NotEnoughArgs(first, 2))
                     }
                     match strings[1] {
                         "-u" | "--username" => {
-                            return Ok(Command::UpdateID(strings[2].to_string()));
+                            Ok(Command::UpdateID(strings[2].to_string()))
                         },
                         "-t" | "--token" => {
-                            return Ok(Command::UpdateToken(strings[2].to_string()));
+                            Ok(Command::UpdateToken(strings[2].to_string()))
                         },
                         _ => {
-                            return Err(CommandError::InvalidSyntax(
+                            Err(CommandError::InvalidSyntax(
                                 first, 
-                                strings[1].to_string()));
+                                strings[1].to_string()))
                         }
                     }
                 }
             },
             "random" => {
-                if strings.len() > 2 {
-                    return Err(CommandError::TooManyArgs(first, 1))
-                } else if strings.len() == 2 {
-                    match strings[1] {
-                        "-n" | "--nolog" => {
-                            return Ok(Command::Random(true));
-                        }
-                        _ => {
-                            return Err(CommandError::InvalidSyntax(
-                                first,
-                                strings[1].to_string()));
-                        }
-                    } 
-                } else {
-                    return Ok(Command::Random(false));
+                match strings.len() {
+                    2 => {
+                        match strings[1] {
+                            "-n" | "--nolog" => {
+                                Ok(Command::Random(true))
+                            }
+                            _ => {
+                                Err(CommandError::InvalidSyntax(
+                                    first,
+                                    strings[1].to_string()))
+                            }
+                        } 
+                    }
+                    n if n > 2 => {
+                        Err(CommandError::TooManyArgs(first, 1))
+                    }
+                    _ => {
+                        Ok(Command::Random(false))
+                    }
                 }
             },
             "price" => {
                 if strings.len() == 1 {
-                    return Err(CommandError::NotEnoughArgs(first, 2));
+                    return Err(CommandError::NotEnoughArgs(first, 2))
                 }
                 let argv = splitter(input.trim());
                 match argv {
@@ -140,19 +144,19 @@ impl Command {
                         }
                         let extra_args: Vec<&str> = args[1].trim().split(' ').collect();
                         if extra_args.len() > 1 {
-                            return Err(CommandError::TooManyArgs(first, 2))
-                        } else if args[1] == "" {
-                            return Err(CommandError::NotEnoughArgs(first, 2))
+                            Err(CommandError::TooManyArgs(first, 2))
+                        } else if args[1].is_empty() {
+                            Err(CommandError::NotEnoughArgs(first, 2))
                         } else {
                             args[1].retain(|c| c != ' ');
                             let price = args[1].parse::<f64>();
-                        match price {
-                            Ok(price) => {
-                                return Ok(Command::Price(args[2].clone(), price));},
-                            Err(_e) => {
-                                return Err(CommandError::InvalidSyntax(
-                                    args[0].clone(), 
-                                    args[1].clone()));
+                            match price {
+                                Ok(price) => {
+                                    Ok(Command::Price(args[2].clone(), price))},
+                                Err(_e) => {
+                                    Err(CommandError::InvalidSyntax(
+                                        args[0].clone(), 
+                                        args[1].clone()))
                                 }
                             }
                         }
@@ -172,10 +176,10 @@ impl Command {
                         }
                         let extra_args: Vec<&str> = args[1].trim().split(' ').collect();
                         if extra_args.len() > 1 {
-                            return Err(CommandError::TooManyArgs(first, 2));
+                            Err(CommandError::TooManyArgs(first, 2))
                         } else {
                             args[1].retain(|c| c != ' ');
-                            return Ok(Command::Listen(args[2].clone(), args[1].clone()));
+                            Ok(Command::Listen(args[2].clone(), args[1].clone()))
                         }
                     }
                     None => Err(CommandError::InvalidAlbum)
@@ -195,14 +199,14 @@ impl Command {
                         let query = args[2]
                         .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
                         
-                        if args[1] != "" {
-                            return Err(CommandError::TooManyArgs(first, 1));
+                        if !args[1].is_empty() {
+                            Err(CommandError::TooManyArgs(first, 1))
                         } else if args.len() < 3 {
-                            return Err(CommandError::NotEnoughArgs(first, 1));
+                            Err(CommandError::NotEnoughArgs(first, 1))
                         } else if from_wantlist {
-                            return Ok(Command::QueryWantlist(query));
+                            Ok(Command::QueryWantlist(query))
                         } else {
-                            return Ok(Command::Query(query));
+                            Ok(Command::Query(query))
                         }
                     }
                     None => Err(CommandError::InvalidAlbum)
@@ -212,10 +216,10 @@ impl Command {
                 if strings.len() > 1 {
                     return Err(CommandError::TooManyArgs(first, 0))
                 }
-                return Ok(Command::Quit)
+                Ok(Command::Quit)
             }
             _ => {
-                return Err(CommandError::InvalidCommand(first));
+                Err(CommandError::InvalidCommand(first))
             },
         }
     }
