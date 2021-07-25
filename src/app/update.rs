@@ -42,7 +42,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     let requester = build_client(&token);
     
     if from_cmd {print!("Updating profile..."); io::stdout().flush().unwrap();}
-    let profile = profile(&requester, username)?;
+    let profile = get_profile(&requester, username)?;
     if from_cmd {
         print!("{}", Message::set("     Success!", MessageKind::Success));
         if verbose {
@@ -57,7 +57,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     let owned_uname = username.to_string();
     let req_clone = requester.clone();
     let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
-        wantlist(req_clone, owned_uname, from_cmd, verbose)
+        get_wantlist(req_clone, owned_uname, from_cmd, verbose)
     }).join() { //thread panics are caught here instead of crashing the entire app
         Ok(wantlist) => wantlist?,
         Err(_) => {return Err(UpdateError::ThreadPanicError);}
@@ -74,7 +74,7 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
         }
     }
     //threads are spawned from within the function
-    let collection = collection(requester, username, from_cmd, verbose)?;
+    let collection = get_collection(requester, username, from_cmd, verbose)?;
 
     if from_cmd {
         if verbose {
@@ -99,7 +99,77 @@ pub fn full(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Resul
     Ok(())
 }
 
-fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
+//todo: pretty output
+pub fn profile(username: &str, token: &str, from_cmd: bool) -> Result<(), UpdateError> {
+    admin::init_db()?;
+
+    //* pulling data from Discogs
+    let requester = build_client(&token);
+
+    if from_cmd {println!("Updating profile..."); io::stdout().flush().unwrap();}
+    let profile = get_profile(&requester, username)?;
+
+    //* committing data to db
+    let mut dbhandle = update::DBHandle::new()?;
+
+    if from_cmd {println!("Writing to database..")}
+
+    dbhandle.update_profile(profile)?;
+
+    //* final integrity check
+    Ok(admin::check_integrity()?)
+}
+
+pub fn wantlist(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Result<(), UpdateError> {
+    admin::init_db()?;
+
+    //* pulling data from Discogs
+    let requester = build_client(&token);
+
+    if from_cmd {println!("Updating wantlist...")}
+
+    //Spawning a synchronous thread to catch panics when parsing json
+    let owned_uname = username.to_string();
+    let req_clone = requester.clone();
+    let wantlist = match thread::spawn( move || -> Result<Vec<Release>, UpdateError> {
+        get_wantlist(req_clone, owned_uname, from_cmd, verbose)
+    }).join() { //thread panics are caught here instead of crashing the entire app
+        Ok(wantlist) => wantlist?,
+        Err(_) => {return Err(UpdateError::ThreadPanicError);}
+    };
+
+    //* committing data to db
+    let mut dbhandle = update::DBHandle::new()?;
+
+    if from_cmd {println!("Writing to database...")}
+
+    dbhandle.update_wantlist(wantlist)?;
+
+    //* final integrity check
+    Ok(admin::check_integrity()?)
+}
+
+pub fn collection(username: &str, token: &str, from_cmd: bool, verbose: bool) -> Result<(), UpdateError> {
+    admin::init_db()?;
+
+    //* pulling data from Discogs
+    let requester = build_client(&token);
+
+    //threads are spawned from within the function
+    let collection = get_collection(requester, username, from_cmd, verbose)?;
+
+    //* committing data to db
+    let mut dbhandle = update::DBHandle::new()?;
+
+    if from_cmd {println!("Writing to database...")}
+
+    dbhandle.update_collection(collection)?;
+
+    //* final integrity check
+    Ok(admin::check_integrity()?)
+}
+
+fn get_profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
     let profile_url = build_url(ParseType::Profile, username.to_string());
     let master_prof: Profile;
 
@@ -135,7 +205,7 @@ fn profile(requester: &Client, username: &str) -> Result<Profile, UpdateError> {
     Ok(master_prof)
 }
 
-fn wantlist(requester: Client, username: String, c: bool, v: bool) -> Result<Vec<Release>, UpdateError> {
+fn get_wantlist(requester: Client, username: String, c: bool, v: bool) -> Result<Vec<Release>, UpdateError> {
     let wantlist_url = build_url(ParseType::Wantlist, username);
     let pgb = if c {ProgressBar::new(60)} else {ProgressBar::hidden()};
     let master_wants = get_full(
@@ -148,7 +218,7 @@ fn wantlist(requester: Client, username: String, c: bool, v: bool) -> Result<Vec
     Ok(master_wants)
 }
 
-fn collection(requester: Client, username: &str, c: bool, v: bool) -> Result<Folders, UpdateError> {
+fn get_collection(requester: Client, username: &str, c: bool, v: bool) -> Result<Folders, UpdateError> {
     //* 1a: Enumerating folders
     let initial_url = build_url(ParseType::Initial, username.to_string());
     let folders_raw = query_discogs(&requester, &initial_url)?;

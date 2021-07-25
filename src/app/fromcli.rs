@@ -44,8 +44,22 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .long("token")
                 .takes_value(true)
                 .value_name("token")
-                .help("Updates the token")
-            )
+                .help("Updates the token"))
+            .arg(Arg::with_name("profile")
+                .short("P")
+                .long("profile")
+                .takes_value(false)
+                .help("Updates the profile only"))
+            .arg(Arg::with_name("wantlist")
+                .short("W")
+                .long("wantlist")
+                .takes_value(false)
+                .help("Updates the wantlist only"))
+            .arg(Arg::with_name("collection")
+                .short("C")
+                .long("collection")
+                .takes_value(false)
+                .help("Updates the collection only"))
         )
         .subcommand(SubCommand::with_name("random")
             .about("Select a random song to play.")
@@ -120,6 +134,7 @@ pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
 }
 
 fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
+    let verbose = sub_m.is_present("verbose");
     if sub_m.is_present("username") {
         println!("Sorry, in-app username updates are unsupported at this time.");
         return Some(3)
@@ -127,10 +142,42 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
         println!("Sorry, in-app token updates are unsupported at this time.");
         return Some(3)
     } else {
+        let mut ran_update = false;
+
+        if sub_m.is_present("profile") {
+            ran_update = true;
+            println!("{}",
+            Message::set("Beginning profile update.", MessageKind::Info)
+            );
+            if let Err(e) = update::profile(&app.user_id, &app.token, true) {
+                eprintln!("{}", e);
+                return Some(2)
+            }
+        }
+        if sub_m.is_present("wantlist") {
+            ran_update = true;
+            println!("{}",
+            Message::set("Beginning wantlist update.", MessageKind::Info)
+            );
+            if let Err(e) = update::wantlist(&app.user_id, &app.token, true, verbose) {
+                eprintln!("{}", e);
+                return Some(2)
+            }
+        }
+        if sub_m.is_present("collection") {
+            ran_update = true;
+            println!("{}",
+            Message::set("Beginning collection update.", MessageKind::Info)
+            );
+            if let Err(e) = update::collection(&app.user_id, &app.token, true, verbose) {
+                eprintln!("{}", e);
+                return Some(2)
+            }
+        }
+        if ran_update {return Some(0)}
         println!("{}",
             Message::set("Beginning full database update.", MessageKind::Info)
         );
-        let verbose = sub_m.is_present("verbose");
         match update::full(&app.user_id, &app.token, true, verbose) {
             Ok(()) => {
                 println!("{}", Message::success("Database update successful."));
