@@ -1,6 +1,6 @@
 [package]
 name = "cogsy"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["cartoon-raccoon <shaughn.chan@gmail.com>"]
 description = "A curses-based CLI Discogs client"
 readme = "README.md"
