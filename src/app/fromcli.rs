@@ -375,18 +375,7 @@ fn handle_query(sub_m: &ArgMatches) -> Option<i32> {
         return Some(1)
     }
     for release in results {
-        let display_time = release.date_added
-        .with_timezone(&CONFIG.timezone());
-
-        println!(
-            "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
-            release.title,
-            release.artist,
-            release.year,
-            release.labels.join(", "),
-            release.labels.join(", "),
-            display_time.format("%A %d %m %Y %R"),
-        )
+        println!("{}", release);
     }
     Some(0)
 }

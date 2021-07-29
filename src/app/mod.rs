@@ -8,12 +8,15 @@ pub mod fromcli;
 
 use std::collections::BTreeMap;
 use std::hash::Hash;
+use std::fmt;
 
 use chrono::{
     DateTime,
     Utc,
 };
 use message::Message;
+
+use crate::CONFIG;
 use crate::collection::Collection;
 use crate::config::Appearance;
 use crate::utils::{FormatTokenizer, FormatToken};
@@ -85,6 +88,21 @@ impl Release {
         }
 
         ret
+    }
+}
+
+impl fmt::Display for Release {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let display_time = self.date_added.with_timezone(&CONFIG.timezone());
+        write!(f,
+            "{} by {}:\nReleased: {}\nLabels: {}\nFormats: {}\nAdded: {}\n",
+            self.title,
+            self.artist,
+            self.year,
+            self.labels.join(", "),
+            self.labels.join(", "),
+            display_time.format("%A %d %m %Y %R"),
+        )
     }
 }
 
