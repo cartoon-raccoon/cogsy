@@ -106,7 +106,7 @@ pub fn profile(username: &str, token: &str, from_cmd: bool) -> Result<(), Update
     //* pulling data from Discogs
     let requester = build_client(&token);
 
-    if from_cmd {println!("Updating profile..."); io::stdout().flush().unwrap();}
+    if from_cmd {println!("Updating profile...")}
     let profile = get_profile(&requester, username)?;
 
     //* committing data to db
@@ -154,6 +154,8 @@ pub fn collection(username: &str, token: &str, from_cmd: bool, verbose: bool) ->
 
     //* pulling data from Discogs
     let requester = build_client(&token);
+
+    if from_cmd {println!("Updating collection...")}
 
     //threads are spawned from within the function
     let collection = get_collection(requester, username, from_cmd, verbose)?;
