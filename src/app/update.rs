@@ -180,29 +180,29 @@ fn get_profile(requester: &Client, username: &str) -> Result<Profile, UpdateErro
     let profile_raw: Value = serde_json::from_str(&response)
                 .unwrap_or(Value::Null);
     if let Value::Null = profile_raw {
-        return Err(UpdateError::ParseError)
+        return Err(UpdateError::JSONParseError)
     }
     master_prof = Profile {
         username: profile_raw["username"]
-            .as_str().ok_or(UpdateError::ParseError)?.to_string(),
+            .as_str().ok_or(UpdateError::JSONParseError)?.to_string(),
         real_name: profile_raw["name"]
-            .as_str().ok_or(UpdateError::ParseError)?.to_string(),
+            .as_str().ok_or(UpdateError::JSONParseError)?.to_string(),
         registered: DateTime::<Utc>::from_utc(
             DateTime::parse_from_rfc3339(
             profile_raw["registered"]
-            .as_str().ok_or(UpdateError::ParseError)?
+            .as_str().ok_or(UpdateError::JSONParseError)?
             ).unwrap().naive_utc(), Utc
         ),
         listings: profile_raw["num_for_sale"]
-            .as_u64().ok_or(UpdateError::ParseError)? as u32,
+            .as_u64().ok_or(UpdateError::JSONParseError)? as u32,
         collection: profile_raw["num_collection"]
-            .as_u64().ok_or(UpdateError::ParseError)? as u32,
+            .as_u64().ok_or(UpdateError::JSONParseError)? as u32,
         wantlist: profile_raw["num_wantlist"]
-            .as_u64().ok_or(UpdateError::ParseError)? as u32,
+            .as_u64().ok_or(UpdateError::JSONParseError)? as u32,
         rated: profile_raw["releases_rated"]
-            .as_u64().ok_or(UpdateError::ParseError)? as u32,
+            .as_u64().ok_or(UpdateError::JSONParseError)? as u32,
         average_rating: profile_raw["rating_avg"]
-            .as_f64().ok_or(UpdateError::ParseError)? as f64,
+            .as_f64().ok_or(UpdateError::JSONParseError)? as f64,
     };
     Ok(master_prof)
 }
@@ -230,7 +230,7 @@ fn get_collection(requester: Client, username: &str, c: bool, v: bool) -> Result
     let to_deserialize: Value = serde_json::from_str(&folders_raw)
         .unwrap_or(Value::Null);
     if let Value::Null = to_deserialize {
-        return Err(UpdateError::ParseError);
+        return Err(UpdateError::JSONParseError);
     }
     let folders_raw = to_deserialize.get("folders");
     if let Some(Value::Array(result)) = folders_raw {
@@ -238,14 +238,14 @@ fn get_collection(requester: Client, username: &str, c: bool, v: bool) -> Result
 
         for raw in folderlist.iter() {
             let foldername = raw.get("name")
-                .ok_or(UpdateError::ParseError)?.as_str()
-                .ok_or(UpdateError::ParseError)?.to_string();
+                .ok_or(UpdateError::JSONParseError)?.as_str()
+                .ok_or(UpdateError::JSONParseError)?.to_string();
             let folderurl = raw.get("resource_url")
-                .ok_or(UpdateError::ParseError)?.as_str()
-                .ok_or(UpdateError::ParseError)?.to_string();
+                .ok_or(UpdateError::JSONParseError)?.as_str()
+                .ok_or(UpdateError::JSONParseError)?.to_string();
             folders.insert(foldername, folderurl);
         } 
-    } else {return Err(UpdateError::ParseError);}
+    } else {return Err(UpdateError::JSONParseError);}
 
     let mut master_folders: Folders = Folders::new();
     let mut threads = Vec::new();
@@ -295,19 +295,19 @@ fn get_full(
         let total: u64;
         let response: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
         if let Value::Null = response { //guard clause to return immediately if cannot read
-            return Err(UpdateError::ParseError);
+            return Err(UpdateError::JSONParseError);
         }
         let pagination = response.get("pagination").unwrap_or(&Value::Null);
         if pagination == &Value::Null {
-            return Err(UpdateError::ParseError);
+            return Err(UpdateError::JSONParseError);
         }
         if let Value::Object(_) = pagination {
             total = pagination.get("items")
-                .ok_or(UpdateError::ParseError)?
+                .ok_or(UpdateError::JSONParseError)?
                 .as_u64()
-                .ok_or(UpdateError::ParseError)?;
+                .ok_or(UpdateError::JSONParseError)?;
         } else {
-            return Err(UpdateError::ParseError);
+            return Err(UpdateError::JSONParseError);
         }
         let mut releases = parse_releases(parse.clone(), &text, false, from_cli, &name)?; 
         master_vec.append(&mut releases);
@@ -320,7 +320,7 @@ fn get_full(
             //* on wantlist update, but is still risky nonetheless
             url = pagination["urls"]["next"]
                                 .as_str()
-                                .ok_or(UpdateError::ParseError)?
+                                .ok_or(UpdateError::JSONParseError)?
                                 .to_string();
         }
     }

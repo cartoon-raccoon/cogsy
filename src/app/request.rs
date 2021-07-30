@@ -34,11 +34,13 @@ pub enum ParseType {
 #[derive(Debug, Clone)]
 pub enum UpdateError {
     NetworkError,
+    IOError,
     ServerError,
     NotFoundError,
     AuthorizationError,
     UnknownError,
-    ParseError,
+    JSONParseError,
+    CSVParseError,
     ThreadPanicError,
     DBWriteError(String),
 }
@@ -50,6 +52,9 @@ impl std::fmt::Display for UpdateError {
         match self {
             UpdateError::NetworkError => {
                 write!(f, "A network error occurred. Check your internet and try again.")
+            }
+            UpdateError::IOError => {
+                write!(f, "An error occurred while reading from a file.")
             }
             UpdateError::ServerError => {
                 write!(f, "The Discogs server encountered an error. Try again later.")
@@ -63,8 +68,11 @@ impl std::fmt::Display for UpdateError {
             UpdateError::UnknownError => {
                 write!(f, "An unknown error occurred. Check the logs for more info.")
             }
-            UpdateError::ParseError => {
+            UpdateError::JSONParseError => {
                 write!(f, "Error: Could not parse data from Discogs. Please try updating again.")
+            }
+            UpdateError::CSVParseError => {
+                write!(f, "Error: Could not parse CSV data. Please check data is well-formed.")
             }
             UpdateError::ThreadPanicError => {
                 write!(f, "Error: Update thread panicked. Please try again.")
@@ -78,13 +86,13 @@ impl std::fmt::Display for UpdateError {
 
 impl From<serde_json::Error> for UpdateError {
     fn from(_error: serde_json::Error) -> Self {
-        UpdateError::ParseError
+        UpdateError::JSONParseError
     }
 }
 
 impl From<std::io::Error> for UpdateError {
     fn from(_error: std::io::Error) -> Self {
-        UpdateError::ParseError
+        UpdateError::IOError
     }
 }
 
@@ -170,19 +178,19 @@ pub fn parse_releases(
         _ => String::from("releases")
     };
 
-    let releases_raw = response.get(&to_index).ok_or(UpdateError::ParseError)?;
+    let releases_raw = response.get(&to_index).ok_or(UpdateError::JSONParseError)?;
     if let Value::Array(result) = releases_raw {
         let releaselist = result;
 
         //deserialization happens here
         for entry in releaselist {
             let id_no = entry.get("id")
-                .ok_or(UpdateError::ParseError)?
+                .ok_or(UpdateError::JSONParseError)?
                 .as_u64()
-                .ok_or(UpdateError::ParseError)?;
+                .ok_or(UpdateError::JSONParseError)?;
             let date_raw = entry.get("date_added")
-                .ok_or(UpdateError::ParseError)?
-                .as_str().ok_or(UpdateError::ParseError)?;
+                .ok_or(UpdateError::JSONParseError)?
+                .as_str().ok_or(UpdateError::JSONParseError)?;
             //TODO: impl from for ParseResult
             let added_date = DateTime::parse_from_rfc3339(date_raw)
                 .unwrap_or_else(|_| utils::get_utc_now()
@@ -193,21 +201,21 @@ pub fn parse_releases(
             //TODO: Figure out how to do this functionally
             let mut label_names = Vec::<String>::new();
             let labels = info["labels"].as_array()
-                .ok_or(UpdateError::ParseError)?;
+                .ok_or(UpdateError::JSONParseError)?;
             for label in labels {
                 label_names.push(label["name"].as_str()
-                    .ok_or(UpdateError::ParseError)?
+                    .ok_or(UpdateError::JSONParseError)?
                     .to_string());
             }
 
             let mut formats = Vec::<String>::new();
             let formatlist = info["formats"].as_array()
-                .ok_or(UpdateError::ParseError)?;
+                .ok_or(UpdateError::JSONParseError)?;
             for format in formatlist {
                 let mut name = format["name"].as_str()
-                    .ok_or(UpdateError::ParseError)?.to_string();
+                    .ok_or(UpdateError::JSONParseError)?.to_string();
                 let mut qty = format["qty"].as_str()
-                    .ok_or(UpdateError::ParseError)?.to_string();
+                    .ok_or(UpdateError::JSONParseError)?.to_string();
                 let text = format["text"].as_str()
                     .unwrap_or("").to_string();
                 if name == "Vinyl" {
@@ -221,9 +229,9 @@ pub fn parse_releases(
                 formats.push(name);
             }
             let title = info["title"].as_str()
-                .ok_or(UpdateError::ParseError)?.to_string();
+                .ok_or(UpdateError::JSONParseError)?.to_string();
             let artist = info["artists"][0]["name"].as_str()
-                .ok_or(UpdateError::ParseError)?
+                .ok_or(UpdateError::JSONParseError)?
                 .to_string();
             let search_string = unidecode(&title)
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
@@ -238,7 +246,7 @@ pub fn parse_releases(
                 title,
                 artist,
                 year: info["year"].as_u64()
-                    .ok_or(UpdateError::ParseError)? as u32,
+                    .ok_or(UpdateError::JSONParseError)? as u32,
                 labels: label_names,
                 formats,
                 date_added: DateTime::<Utc>::from_utc(
@@ -246,6 +254,6 @@ pub fn parse_releases(
                 )
             });
         }
-    } else {return Err(UpdateError::ParseError);}
+    } else {return Err(UpdateError::JSONParseError);}
     Ok(releases)
 }
