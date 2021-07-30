@@ -32,7 +32,7 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .short("v")
                 .long("verbose")
                 .takes_value(false)
-                .help("Toggle verbose output when updating."))
+                .help("Toggle verbose output when updating"))
             .arg(Arg::with_name("username")
                 .short("u")
                 .long("username")
@@ -43,8 +43,16 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .short("t")
                 .long("token")
                 .takes_value(true)
-                .value_name("token")
+                .value_name("TOKEN")
                 .help("Updates the token"))
+            .arg(Arg::with_name("csv")
+                .short("c")
+                .long("csv")
+                .takes_value(true)
+                .value_name("CSV")
+                .multiple(true)
+                .validator(validate_csv)
+                .help("Select which parts to read from a csv file"))
             .arg(Arg::with_name("profile")
                 .short("P")
                 .long("profile")
@@ -113,6 +121,21 @@ pub fn init<'a>() -> Clap<'a, 'a> {
         )   
 }
 
+// valid argument is: wantlist=<path> or collection=<path>
+// if the argument is not wantlist or collection, or no path is
+// provided, an error is returned
+fn validate_csv(s: String) -> Result<(), String> {
+    if s.starts_with("wantlist") || s.starts_with("collection") {
+        if s.split('=').count() != 2 {
+            Err(String::from("invalid number of argument values"))
+        } else {
+            Ok(())
+        }
+    } else {
+        Err(String::from("csv value must be `wantlist` or `collection`"))
+    }
+}
+
 //* CLI Mode Exit codes:
 //* 0: All good
 //* 1: Incorrect input from user
@@ -135,6 +158,11 @@ pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
 
 fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
     let verbose = sub_m.is_present("verbose");
+
+    let from_csv = sub_m.values_of("csv").map(|values| 
+        values.collect::<Vec<&str>>()
+    );
+
     if sub_m.is_present("username") {
         println!("Sorry, in-app username updates are unsupported at this time.");
         return Some(3)
@@ -149,6 +177,11 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning profile update.", MessageKind::Info)
             );
+            if let Some(csvs) = from_csv {
+                if csvs.contains(&"") {
+
+                }
+            }
             if let Err(e) = update::profile(&app.user_id, &app.token, true) {
                 eprintln!("{}", e);
                 return Some(2)
