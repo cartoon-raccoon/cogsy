@@ -16,12 +16,24 @@ macro_rules! validate {
     }
 }
 
+macro_rules! ok_or {
+    ($e:expr, $idx:expr) => {
+        $e.get($idx).ok_or(UpdateError::CSVParseError)
+    }
+}
+
 impl From<csv::Error> for UpdateError {
     fn from(error: csv::Error) -> UpdateError {
         match error.into_kind() {
             csv::ErrorKind::Io(_) => UpdateError::IOError,
             _ => UpdateError::CSVParseError,
         }
+    }
+}
+
+impl From<std::num::ParseIntError> for UpdateError {
+    fn from(_: std::num::ParseIntError) -> UpdateError {
+        UpdateError::CSVParseError
     }
 }
 
@@ -40,12 +52,41 @@ const MEDIA_COND:  usize = 10;
 const SLEEVE_COND: usize = 11;
 const COLL_NOTES:  usize = 12;
 
+impl Release {
+    pub fn from_stringrecord(record: &StringRecord) -> Result<Self, UpdateError> {
+        Ok(Self {
+            id: ok_or!(record, RELEASE_ID)?.parse()?,
+            search_string: unidecode(ok_or!(record, TITLE)?)
+            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], ""),
+            title: ok_or!(record, TITLE)?.to_string(),
+            artist: ok_or!(record, ARTIST)?.to_string(),
+            year: ok_or!(record, RELEASED)?.parse()?,
+            labels: vecify(ok_or!(record, LABEL)?),
+            formats: vecify(ok_or!(record, FORMAT)?),
+            date_added: {
+                let added_date = DateTime::parse_from_rfc3339(ok_or!(record, DATE_ADDED)?)
+                .unwrap_or_else(|_| utils::get_utc_now()
+                .with_timezone(&CONFIG.timezone()));
+
+                DateTime::<Utc>::from_utc(
+                    added_date.naive_utc(), Utc
+                )
+            }
+        })
+    }
+}
+
 pub fn parse_csv<P: AsRef<Path>>(path: P) -> Result<Vec<Release>, UpdateError> {
     let mut reader = Reader::from_path(path)?;
 
     validate_headers(reader.headers()?)?;
 
-    todo!()
+    let mut ret = Vec::new();
+    for record in reader.records() {
+        ret.push(Release::from_stringrecord(&record?)?)
+    }
+
+    Ok(ret)
 }
 
 fn validate_headers(headers: &StringRecord) -> Result<(), UpdateError> {
