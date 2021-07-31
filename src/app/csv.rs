@@ -4,7 +4,11 @@ use csv::{Reader, StringRecord};
 use unidecode::unidecode;
 use chrono::{DateTime, Utc};
 
-use crate::app::{request::UpdateError, Release, Folders};
+use crate::app::{
+    request::UpdateError, 
+    database::update::*,
+    Release, Folders
+};
 use crate::utils;
 use crate::CONFIG;
 
@@ -80,6 +84,33 @@ impl Release {
     pub fn from_wantlist_sr(record: &StringRecord) -> Result<Self, UpdateError> {
         todo!()
     }
+}
+
+pub fn full_update<P: AsRef<Path>>(wantlist: P, collection: P) -> Result<(), UpdateError> {
+    update_coll(collection)?;
+    update_want(wantlist)?;
+
+    Ok(())
+}
+
+pub fn update_coll<P: AsRef<Path>>(path: P) -> Result<(), UpdateError> {
+    let collection = parse_collection_csv(path)?;
+
+    let mut handle = DBHandle::new()?;
+
+    handle.update_collection(collection)?;
+
+    Ok(())
+}
+
+pub fn update_want<P: AsRef<Path>>(path: P) -> Result<(), UpdateError> {
+    let wantlist = parse_wantlist_csv(path)?;
+
+    let mut handle = DBHandle::new()?;
+
+    handle.update_wantlist(wantlist)?;
+
+    Ok(())
 }
 
 pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateError> {
