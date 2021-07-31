@@ -3,7 +3,6 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::process::exit;
 
-use std::collections::BTreeMap;
 use cursive::{
     Cursive,
     views::*,
@@ -12,8 +11,6 @@ use cursive::{
 use crate::app::{
     {
         App, 
-        Release, 
-        Folders, 
         ListenLogEntry,
         ListenLog,
     },
@@ -387,29 +384,4 @@ impl App {
     // pub fn colour(&self) -> Color {
     //     self.colour
     // }
-}
-
-#[allow(dead_code)]
-impl Folders { //wrapper around a BTreeMap<String, Vec<Release>>
-    pub fn new() -> Self {
-        let new_self: 
-            BTreeMap<String, Vec<Release>> = BTreeMap::new();
-        Folders {
-            contents: new_self,
-        }
-    }
-    pub fn contents(&mut self) -> BTreeMap<String, Vec<Release>> {
-        self.contents.clone()
-    }
-
-    pub fn pull(&mut self, name: &str) -> Option<Vec<Release>> {
-        self.contents.remove(name)
-    }
-
-    pub fn push(&mut self, 
-        folder: String, 
-        contents: Vec<Release>) -> Option<Vec<Release>> {
-        
-        self.contents.insert(folder, contents)
-    }
 }

@@ -111,3 +111,34 @@ impl fmt::Display for Release {
 pub struct Folders {
     pub contents: BTreeMap<String, Vec<Release>>,
 }
+
+#[allow(dead_code)]
+impl Folders { //wrapper around a BTreeMap<String, Vec<Release>>
+    pub fn new() -> Self {
+        let new_self: 
+            BTreeMap<String, Vec<Release>> = BTreeMap::new();
+        Folders {
+            contents: new_self,
+        }
+    }
+    pub fn contents(&mut self) -> BTreeMap<String, Vec<Release>> {
+        self.contents.clone()
+    }
+
+    pub fn pull(&mut self, name: &str) -> Option<Vec<Release>> {
+        self.contents.remove(name)
+    }
+
+    pub fn push(&mut self, 
+        folder: String, 
+        contents: Vec<Release>) -> Option<Vec<Release>> {
+        
+        self.contents.insert(folder, contents)
+    }
+
+    pub fn insert(&mut self, folder: String, release: Release) {
+        self.contents.entry(folder)
+            .and_modify(|v| v.push(release))
+            .or_insert(vec![]);
+    }
+}
