@@ -54,7 +54,7 @@ const SLEEVE_COND: usize = 11;
 const COLL_NOTES:  usize = 12;
 
 impl Release {
-    pub fn from_stringrecord(record: &StringRecord) -> Result<Self, UpdateError> {
+    pub fn from_collection_sr(record: &StringRecord) -> Result<Self, UpdateError> {
         Ok(Self {
             id: ok_or!(record, RELEASE_ID)?.parse()?,
             search_string: unidecode(ok_or!(record, TITLE)?)
@@ -65,9 +65,10 @@ impl Release {
             labels: vecify(ok_or!(record, LABEL)?),
             formats: vecify(ok_or!(record, FORMAT)?),
             date_added: {
-                let added_date = DateTime::parse_from_rfc3339(ok_or!(record, DATE_ADDED)?)
-                .unwrap_or_else(|_| utils::get_utc_now()
-                .with_timezone(&CONFIG.timezone()));
+                let added_date = DateTime::parse_from_rfc3339(
+                    ok_or!(record, DATE_ADDED)?)
+                    .unwrap_or_else(|_| utils::get_utc_now()
+                    .with_timezone(&CONFIG.timezone()));
 
                 DateTime::<Utc>::from_utc(
                     added_date.naive_utc(), Utc
@@ -75,16 +76,39 @@ impl Release {
             }
         })
     }
+
+    pub fn from_wantlist_sr(record: &StringRecord) -> Result<Self, UpdateError> {
+        todo!()
+    }
 }
 
-pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Vec<Release>, UpdateError> {
+pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateError> {
     let mut reader = Reader::from_path(path)?;
 
     validate_coll_headers(reader.headers()?)?;
 
+    let mut ret = Folders::new();
+    for record in reader.records() {
+        let record = record?;
+        let release = Release::from_collection_sr(&record)?;
+        ret.insert(
+            record.get(COL_FOLDER).ok_or(UpdateError::CSVParseError)?.into(),
+            release,
+        )
+    }
+
+    Ok(ret)
+}
+
+pub fn parse_wantlist_csv<P: AsRef<Path>>(path: P) -> Result<Vec<Release>, UpdateError> {
+    let mut reader = Reader::from_path(path)?;
+
+    validate_want_headers(reader.headers()?)?;
+
     let mut ret = Vec::new();
     for record in reader.records() {
-        ret.push(Release::from_stringrecord(&record?)?)
+        let record = record?;
+        ret.push(Release::from_wantlist_sr(&record)?);
     }
 
     Ok(ret)
@@ -129,6 +153,7 @@ fn vecify(s: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_csv_header_validation() {
         let mut reader = Reader::from_path("discogs_collection.csv").unwrap();
@@ -138,5 +163,17 @@ mod tests {
         let mut reader = Reader::from_path("discogs_wantlist.csv").unwrap();
 
         validate_want_headers(reader.headers().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn test_csv_parsing() {
+
+        let csv_folders = parse_collection_csv("discogs_collection.csv").unwrap();
+        
+        println!("{:#?}", csv_folders);
+
+        let csv_wantlist = parse_wantlist_csv("discogs_wantlist.csv").unwrap();
+
+        println!("{:#?}", csv_wantlist);
     }
 }
