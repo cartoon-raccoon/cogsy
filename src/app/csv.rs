@@ -148,13 +148,17 @@ pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateEr
     for record in reader.records() {
         let record = record?;
         let release = Release::from_collection_sr(&record)?;
+        // insert into its own folder
         ret.insert(
             record.get(COL_FOLDER)
                 .ok_or_else(|| 
                     UpdateError::CSVParseError(String::from("Missing column 8"))
                 )?.into(),
-            release,
-        )
+            release.clone(),
+        );
+        // insert into all
+        // ! this assumes the user has a collection folder called "All"
+        ret.insert(String::from("All"), release);
     }
 
     Ok(ret)
@@ -238,5 +242,10 @@ mod tests {
         let csv_wantlist = parse_wantlist_csv("discogs_wantlist.csv").unwrap();
 
         println!("{:#?}", csv_wantlist);
+    }
+
+    #[test]
+    fn test_csv_full_update() {
+        full_update("discogs_wantlist.csv", "discogs_collection.csv").unwrap();
     }
 }
