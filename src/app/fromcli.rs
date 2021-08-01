@@ -19,6 +19,7 @@ use crate::app::{
         purge,
     },
     message::{Message, MessageKind},
+    csv,
 };
 
 pub fn init<'a>() -> Clap<'a, 'a> {
@@ -52,6 +53,7 @@ pub fn init<'a>() -> Clap<'a, 'a> {
                 .value_name("CSV")
                 .multiple(true)
                 .validator(validate_csv)
+                .max_values(2)
                 .help("Select which parts to read from a csv file"))
             .arg(Arg::with_name("profile")
                 .short("P")
@@ -159,9 +161,11 @@ pub fn parse_and_execute(clapapp: ArgMatches, app: &App) -> Option<i32> {
 fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
     let verbose = sub_m.is_present("verbose");
 
-    let from_csv = sub_m.values_of("csv").map(|values| 
-        values.collect::<Vec<&str>>()
-    );
+    let (one, two) = get_csv(sub_m);
+    let csvs = CsvUpdate::from_tuple((
+        one.map(|s| UpdateType::from_arg(s)),
+        two.map(|s| UpdateType::from_arg(s)),
+    ));
 
     if sub_m.is_present("username") {
         println!("Sorry, in-app username updates are unsupported at this time.");
@@ -177,14 +181,8 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning profile update.", MessageKind::Info)
             );
-            if let Some(csvs) = from_csv {
-                if csvs.contains(&"") {
-
-                }
-            }
             if let Err(e) = update::profile(&app.user_id, &app.token, true) {
-                eprintln!("{}", e);
-                return Some(2)
+                Message::error(&e.to_string());
             }
         }
         if sub_m.is_present("wantlist") {
@@ -192,9 +190,15 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning wantlist update.", MessageKind::Info)
             );
-            if let Err(e) = update::wantlist(&app.user_id, &app.token, true, verbose) {
-                eprintln!("{}", e);
-                return Some(2)
+            if let Some(path) = csvs.wantlist {
+                println!("Updating wantlist from CSV file at path `{}`.", path);
+                if let Err(e) = csv::update_want(path) {
+                    Message::error(&e.to_string());
+                } else {
+                    println!("{}", Message::success("Update from CSV successful."));
+                }
+            } else if let Err(e) = update::wantlist(&app.user_id, &app.token, true, verbose) {
+                Message::error(&e.to_string());
             }
         }
         if sub_m.is_present("collection") {
@@ -202,9 +206,15 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning collection update.", MessageKind::Info)
             );
-            if let Err(e) = update::collection(&app.user_id, &app.token, true, verbose) {
-                eprintln!("{}", e);
-                return Some(2)
+            if let Some(path) = csvs.collection {
+                println!("Updating collection from CSV file at path `{}`.", path);
+                if let Err(e) = csv::update_coll(path) {
+                    Message::error(&e.to_string());
+                } else {
+                    println!("{}", Message::success("Update from CSV successful"));
+                }
+            } else if let Err(e) = update::collection(&app.user_id, &app.token, true, verbose) {
+                Message::error(&e.to_string());
             }
         }
         if ran_update {return Some(0)}
@@ -226,6 +236,94 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
     }
     Some(0)
 }
+
+// ! Warning: spaghetti code ahead
+
+/// enum type used when csv updating is required.
+#[derive(Clone, Copy, Debug)]
+enum UpdateType<'a> {
+    Collection(&'a str),
+    Wantlist(&'a str),
+}
+
+impl<'a> UpdateType<'a> {
+    fn from_arg(arg: &'a str) -> Self {
+        let mut split = arg.split('=');
+
+        let place = split.next();
+
+        if place == Some("wantlist") {
+            Self::Wantlist(split.next().expect("No value provided"))
+        } else if place == Some("collection") {
+            Self::Collection(split.next().expect("No value provided"))
+        } else {
+            unreachable!("invalid arg should've be caught by Clap")
+        }
+    }
+
+    fn as_str(&self) -> &str {
+        match self {
+            Self::Collection(s) => s,
+            Self::Wantlist(s) => s,
+        }
+    }
+
+    fn is_collection(&self) -> bool {
+        matches!(self, Self::Collection(_))
+    }
+
+    fn is_wantlist(&self) -> bool {
+        matches!(self, Self::Wantlist(_))
+    }
+}
+
+#[derive(Clone, Debug)]
+struct CsvUpdate {
+    wantlist: Option<String>,
+    collection: Option<String>,
+}
+
+impl CsvUpdate {
+    fn from_tuple(
+        tup: (Option<UpdateType>, Option<UpdateType>)
+    ) -> Self {
+        Self {
+            wantlist: if let Some(udt) = tup.0 {
+                if udt.is_wantlist() {
+                    Some(udt.as_str().into())
+                } else if udt.is_collection() {
+                    if let Some(udt) = tup.1 {
+                        if udt.is_wantlist() {
+                            Some(udt.as_str().into())
+                        } else {None}
+                    } else {None}
+                } else {None}
+            } else {None},
+            collection: if let Some(udt) = tup.1 {
+                if udt.is_collection() {
+                    Some(udt.as_str().into())
+                } else if udt.is_wantlist() {
+                    if let Some(udt) = tup.0 {
+                        if udt.is_collection() {
+                            Some(udt.as_str().into())
+                        } else {None}
+                    } else {None}
+                } else {None}
+            } else {None},
+        }
+    }
+}
+
+// returns in the sequence: wantlist, collection
+fn get_csv<'a>(sub_m: &'a ArgMatches) -> (Option<&'a str>, Option<&'a str>) {
+    if let Some(mut vals) = sub_m.values_of("csv") {
+        (vals.next(), vals.next())
+    } else {
+        (None, None)
+    }
+}
+
+//* End of spaghetti code
 
 fn handle_random(sub_m: &ArgMatches) -> Option<i32> {
     if sub_m.is_present("nolog") {
