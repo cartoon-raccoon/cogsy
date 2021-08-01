@@ -237,7 +237,7 @@ pub fn parse_releases(
             .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], "");
 
             if c {
-                println!("'[{}] {}' by {}", Message::info(&name), title, artist)
+                println!("'[{}] {}' by {}", Message::info(name), title, artist)
             }
 
             releases.push(Release {

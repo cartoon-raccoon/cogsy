@@ -55,35 +55,35 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn set(text: &str, kind: MessageKind) -> Self {
+    pub fn set<S: Into<String>>(text: S, kind: MessageKind) -> Self {
         Message {
-            msg: text.to_string(),
+            msg: text.into(),
             kind,
         }
     }
 
-    pub fn success(text: &str) -> Self {
+    pub fn success<S: Into<String>>(text: S) -> Self {
         Message {
             msg: text.into(),
             kind: MessageKind::Success,
         }
     }
 
-    pub fn hint(text: &str) -> Self {
+    pub fn hint<S: Into<String>>(text: S) -> Self {
         Message {
             msg: text.into(),
             kind: MessageKind::Hint,
         }
     }
 
-    pub fn info(text: &str) -> Self {
+    pub fn info<S: Into<String>>(text: S) -> Self {
         Message {
             msg: text.into(),
             kind: MessageKind::Info,
         }
     }
 
-    pub fn error(text: &str) -> ! {
+    pub fn error<S: Into<String>>(text: S) -> ! {
         let msg = Message {
             msg: text.into(),
             kind: MessageKind::Error,
