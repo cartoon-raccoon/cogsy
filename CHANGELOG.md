@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Additional `update` subcommand options for selective updates
+- Added the ability to update from a CSV file
 
 ### Changes
 - Internal refactoring
