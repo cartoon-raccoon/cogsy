@@ -63,9 +63,7 @@ To use their bright variants, prepend the colour with "br" (e.g. "bryellow"). Th
 
 _What's New?_
 
-- Ok and History buttons on the album info page
-- The quit command
-- Even More Colour Customization
+- CSV updates! You can now update your collection from a CSV file downloaded from Discogs. When passed the `--csv` option, Cogsy will pull the data from the specified CSV file instead of from Discogs.
 
 Cogsy can be run as a TUI text-based interface or as a command line app, depending on what arguments you pass it. You can quit the user interface by pressing `q` or issuing the `quit` command.
 
@@ -92,29 +90,71 @@ To display history as a list of discrete entries, press `h`.
 ![cogsy_history](../images/screenshots/cogsy_history.png)
 _The history entries are quite sparse as I haven't had time to populate them._
 
-**The Command Line**
+### The Command Line
 
 This is Cogsy's heart. All of Cogsy's features are run from here. Vim users will find this familiar, as you activate it by pressing `:`. From here, you can run Cogsy's core commands. At any time, you can cancel a command by pressing Esc.
 
 Cogsy has four core commands:
 
-- `update`: Pulls collection info from Discogs and updates the entire app database. There are also the `-u` and `-t` switches for updating the username and token respectively, but they don't do anything at the moment. The `-v` switch displays verbose output when run without the TUI.
+- `update`: Pulls collection info from Discogs and updates the entire app database. There are also the `-u` and `-t` switches for updating the username and token respectively, but they don't do anything at the moment. The `-v` switch displays verbose output when run from the CLI.
 - `listen [album]`: Cogsy's core feature. Pass it an album name and it will log the album title and the current time as a listening session.
 - `query [album]`: Query the local database for information on an album. Use the `-w` or `--wantlist` switch to query the wantlist, otherwise it defaults to querying the collection.
 - `random`: Use this when you can't decide what to play. It also logs the selected album as a listening session, unless you pass it the `-n`/`--nolog` switch.
 
-Cogsy can also be run as a terminal app, by passing it one of its core commands. Running Cogsy without any arguments will bring up the user interface.
+### Running from the CLI
+
+Cogsy can also be run as a CLI app, by passing it one of its core commands. Running Cogsy without any arguments will bring up the user interface.
 
 For example, `cogsy update` will cause Cogsy to update its database and exit. `cogsy query [albumname]` will cause Cogsy to display all the matches for `[albumname]` and exit.
 
-Cogsy also has the `database` command, only accessible as a subcommand from the shell. This command enables the user to administrate the database. There are three options for the `database` command:
+Only accessible from the CLI is the `--csv` option for the `update` subcommand. See below for details.
+
+Cogsy also has the `database` command, only accessible as a subcommand from the CLI. This command enables the user to administer the database. There are three options for the `database` command:
 
 - `--reset`: This purges the database and retrieves new data from Discogs. Note that this will also remove your listening history.
-_Note: Due to a typo, `--reset` was accidentally named `--wantlist`. You have to use the short version `-r` or `--wantlist` when you reset the database. This will be fixed in version 0.2.2._
 - `--orphan`: This performs orphan table removal.
 - `--check`: This performs the database integrity check.
 
 Read the notes file for more information on the app, what it can do and how to use it.
+
+## Selective and CSV Updates
+
+Cogsy can also do selective updates of your profile, wantlist, or collection, or any subset of the three. This is done through the `-P`, `-W` and `-C` flags.
+
+_Usage_:
+
+```shell
+# Update profile only
+cogsy update -P
+
+#or
+cogsy update --profile
+
+# Update wantlist and collection only
+cogsy update -WC
+
+#or
+cogsy update --wantlist --collection
+```
+
+The `update` subcommand also has the `--csv` option. When used, Cogsy will pull data from a CSV file at the specified path and use that to update the database. This CSV has to be exported from Discogs under your user profile; Cogsy cannot understand any other format. Currently, Discogs only exports wantlist and collection data as CSV; your user profile can only be updated directly from Discogs.
+
+The `--csv` option accepts up to two arguments, prefaced with either `wantlist=` or `collection=`. Any text after the `=` will be treated as the path of the CSV file.
+
+_Usage_:
+
+```shell
+# Full update but update wantlist with data from discogs_wantlist.csv
+cogsy update --csv wantlist=discogs_wantlist.csv
+
+# Selectively update collection with data from discogs_collection.csv
+cogsy update -C --csv collection=discogs_collection.csv
+
+# Selectively update collection and wantlist, both from csv
+cogsy update -WC --csv \
+    wantlist=discogs_wantlist.csv \
+    collection=discogs_collection.csv
+```
 
 ## Internals
 
