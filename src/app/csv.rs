@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use csv::{Reader, StringRecord};
+use csv::{ReaderBuilder, StringRecord};
 use unidecode::unidecode;
 use chrono::{DateTime, Utc};
 
@@ -82,7 +82,27 @@ impl Release {
     }
 
     pub fn from_wantlist_sr(record: &StringRecord) -> Result<Self, UpdateError> {
-        todo!()
+        Ok(Self {
+            id: ok_or!(record, RELEASE_ID)?.parse()?,
+            search_string: unidecode(ok_or!(record, TITLE)?)
+            .replace(&['(', ')', ',', '*', '\"', '.', ':', '!', '?', ';', '\''][..], ""),
+            title: ok_or!(record, TITLE)?.to_string(),
+            artist: ok_or!(record, ARTIST)?.to_string(),
+            year: ok_or!(record, RELEASED)?.parse()?,
+            labels: vecify(ok_or!(record, LABEL)?),
+            formats: vecify(ok_or!(record, FORMAT)?),
+            date_added: {
+                let added_date = DateTime::parse_from_rfc3339(
+                    ok_or!(record, 9)?)
+                    .unwrap_or_else(|_| utils::get_utc_now()
+                    .with_timezone(&CONFIG.timezone())
+                );
+
+                DateTime::<Utc>::from_utc(
+                    added_date.naive_utc(), Utc
+                )
+            }
+        })
     }
 }
 
@@ -114,7 +134,9 @@ pub fn update_want<P: AsRef<Path>>(path: P) -> Result<(), UpdateError> {
 }
 
 pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateError> {
-    let mut reader = Reader::from_path(path)?;
+    let mut reader = ReaderBuilder::new()   
+        .flexible(true)
+        .from_path(path)?;
 
     validate_coll_headers(reader.headers()?)?;
 
@@ -132,7 +154,9 @@ pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateEr
 }
 
 pub fn parse_wantlist_csv<P: AsRef<Path>>(path: P) -> Result<Vec<Release>, UpdateError> {
-    let mut reader = Reader::from_path(path)?;
+    let mut reader = ReaderBuilder::new()
+        .flexible(true)
+        .from_path(path)?;
 
     validate_want_headers(reader.headers()?)?;
 
@@ -184,6 +208,7 @@ fn vecify(s: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use csv::Reader;
 
     #[test]
     fn test_csv_header_validation() {
