@@ -211,7 +211,7 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
                 if let Err(e) = csv::update_coll(path) {
                     Message::error(&e.to_string());
                 } else {
-                    println!("{}", Message::success("Update from CSV successful"));
+                    println!("{}", Message::success("Update from CSV successful."));
                 }
             } else if let Err(e) = update::collection(&app.user_id, &app.token, true, verbose) {
                 Message::error(&e.to_string());
