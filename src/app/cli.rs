@@ -190,7 +190,7 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning wantlist update.", MessageKind::Info)
             );
-            if let Some(path) = csvs.wantlist {
+            if let Some(path) = csvs.wantlist.as_ref() {
                 println!("Updating wantlist from CSV file at path `{}`.", path);
                 if let Err(e) = csv::update_want(path) {
                     Message::error(&e.to_string());
@@ -206,7 +206,7 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
             println!("{}",
             Message::set("Beginning collection update.", MessageKind::Info)
             );
-            if let Some(path) = csvs.collection {
+            if let Some(path) = csvs.collection.as_ref() {
                 println!("Updating collection from CSV file at path `{}`.", path);
                 if let Err(e) = csv::update_coll(path) {
                     Message::error(&e.to_string());
@@ -221,16 +221,66 @@ fn handle_update(sub_m: &ArgMatches, app: &App) -> Option<i32> {
         println!("{}",
             Message::set("Beginning full database update.", MessageKind::Info)
         );
-        match update::full(&app.user_id, &app.token, true, verbose) {
-            Ok(()) => {
-                println!("{}", Message::success("Database update successful."));
+        let updates = (csvs.wantlist.as_ref(), csvs.collection.as_ref());
+
+        // if either is to be updated from CSV
+        if csvs.wantlist.is_some() || csvs.collection.is_some() {
+            if let Err(e) = update::profile(&app.user_id, &app.token, true) {
+                Message::error(&e.to_string())
             }
-            Err(e) => {
-                eprintln!("\n{}", e);
-                if let UpdateError::DBWriteError(_) = e {
-                    db_error_msg();
+            println!("{}\n", Message::success("Profile update successful."));
+        }
+
+        match updates {
+            (Some(s1), Some(s2)) => {
+                println!("{}", Message::info(
+                    format!(
+                        "Updating wantlist and collection from CSV files at:\n - {}\n - {}",
+                        s1, s2
+                    )
+                ));
+                if let Err(e) = csv::full_update(s1, s2) {
+                    Message::error(&e.to_string());
                 }
-                return Some(2)
+                println!("{}", Message::success("Full CSV update successful."));
+            }
+            (Some(s), None) => {
+                println!("{}", Message::info(format!("Updating wantlist from CSV file at {}.", s)));
+                if let Err(e) = csv::update_want(s) {
+                    Message::error(&e.to_string());
+                }
+                println!("{}\n", Message::success("Wantlist update successful."));
+                println!("{}", Message::info("Updating collection from Discogs."));
+                if let Err(e) = update::collection(&app.user_id, &app.token, true, verbose) {
+                    Message::error(&e.to_string());
+                }
+                println!("{}", Message::success("Collection update successful."))
+            }
+            (None, Some(s)) => {
+                println!("{}", Message::info("Updating wantlist from Discogs."));
+                if let Err(e) = update::wantlist(&app.user_id, &app.token, true, verbose) {
+                    Message::error(&e.to_string());
+                }
+                println!("{}\n", Message::success("Wantlist update successful."));
+                println!("{}", Message::info(format!("Updating collection from CSV file at {}", s)));
+                if let Err(e) = csv::update_coll(s) {
+                    Message::error(&e.to_string());
+                }
+                println!("{}", Message::success("Collection update from CSV successful."))
+            }
+            (None, None) => {
+                match update::full(&app.user_id, &app.token, true, verbose) {
+                    Ok(()) => {
+                        println!("{}", Message::success("Database update successful."));
+                    }
+                    Err(e) => {
+                        eprintln!("\n{}", e);
+                        if let UpdateError::DBWriteError(_) = e {
+                            db_error_msg();
+                        }
+                        return Some(2)
+                    }
+                }
             }
         }
     }
@@ -298,6 +348,10 @@ impl CsvUpdate {
                         } else {None}
                     } else {None}
                 } else {None}
+            } else if let Some(udt) = tup.1 {
+                if udt.is_wantlist() {
+                    Some(udt.as_str().into())
+                } else {None}
             } else {None},
             collection: if let Some(udt) = tup.1 {
                 if udt.is_collection() {
@@ -308,6 +362,10 @@ impl CsvUpdate {
                             Some(udt.as_str().into())
                         } else {None}
                     } else {None}
+                } else {None}
+            } else if let Some(udt) = tup.0 {
+                if udt.is_collection() {
+                    Some(udt.as_str().into())
                 } else {None}
             } else {None},
         }
