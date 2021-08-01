@@ -5,7 +5,7 @@ pub mod request;
 pub mod message;
 pub mod response;
 pub mod update;
-pub mod fromcli;
+pub mod cli;
 
 use std::collections::BTreeMap;
 use std::hash::Hash;

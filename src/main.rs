@@ -15,7 +15,7 @@ use cursive::{
     views::*,
     event::{Event, Key},
 };
-use app::fromcli;
+use app::cli;
 use app::App;
 use config::{Config, Appearance};
 use commands::{Command};
@@ -38,13 +38,13 @@ lazy_static! {
 }
 
 fn main() {
-    let clapapp = fromcli::init().get_matches();
+    let clapapp = cli::init().get_matches();
     if let Some(sub_m) = clapapp.subcommand_matches("database") {
-        exit(fromcli::handle_database(sub_m).unwrap());
+        exit(cli::handle_database(sub_m).unwrap());
     }
     let mut app = App::initialize();
     
-    if let Some(status) = fromcli::parse_and_execute(clapapp, &app) {
+    if let Some(status) = cli::parse_and_execute(clapapp, &app) {
         exit(status);
     }
     
