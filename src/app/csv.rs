@@ -16,28 +16,32 @@ macro_rules! validate {
     ($headers:expr, $idx:expr, $targ:expr) => {
         $headers.get($idx)
         .and_then(|s| if s == $targ {Some(())} else {None})
-        .ok_or(UpdateError::CSVParseError)?;
+        .ok_or_else(|| 
+            UpdateError::CSVParseError(format!("Missing column {}", $idx))
+        )?;
     }
 }
 
 macro_rules! ok_or {
     ($e:expr, $idx:expr) => {
-        $e.get($idx).ok_or(UpdateError::CSVParseError)
+        $e.get($idx).ok_or_else(||
+            UpdateError::CSVParseError(format!("Missing column {}", $idx))
+        )
     }
 }
 
 impl From<csv::Error> for UpdateError {
     fn from(error: csv::Error) -> UpdateError {
-        match error.into_kind() {
+        match error.kind() {
             csv::ErrorKind::Io(_) => UpdateError::IOError,
-            _ => UpdateError::CSVParseError,
+            _ => UpdateError::CSVParseError(error.to_string()),
         }
     }
 }
 
 impl From<std::num::ParseIntError> for UpdateError {
-    fn from(_: std::num::ParseIntError) -> UpdateError {
-        UpdateError::CSVParseError
+    fn from(error: std::num::ParseIntError) -> UpdateError {
+        UpdateError::CSVParseError(error.to_string())
     }
 }
 
@@ -145,7 +149,10 @@ pub fn parse_collection_csv<P: AsRef<Path>>(path: P) -> Result<Folders, UpdateEr
         let record = record?;
         let release = Release::from_collection_sr(&record)?;
         ret.insert(
-            record.get(COL_FOLDER).ok_or(UpdateError::CSVParseError)?.into(),
+            record.get(COL_FOLDER)
+                .ok_or_else(|| 
+                    UpdateError::CSVParseError(String::from("Missing column 8"))
+                )?.into(),
             release,
         )
     }

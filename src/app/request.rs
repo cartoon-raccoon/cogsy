@@ -40,7 +40,7 @@ pub enum UpdateError {
     AuthorizationError,
     UnknownError,
     JSONParseError,
-    CSVParseError,
+    CSVParseError(String),
     ThreadPanicError,
     DBWriteError(String),
 }
@@ -71,8 +71,8 @@ impl std::fmt::Display for UpdateError {
             UpdateError::JSONParseError => {
                 write!(f, "Error: Could not parse data from Discogs. Please try updating again.")
             }
-            UpdateError::CSVParseError => {
-                write!(f, "Error: Could not parse CSV data. Please check data is well-formed.")
+            UpdateError::CSVParseError(s) => {
+                write!(f, "Error: Could not parse CSV data: {}", s)
             }
             UpdateError::ThreadPanicError => {
                 write!(f, "Error: Update thread panicked. Please try again.")
