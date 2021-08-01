@@ -1,8 +1,8 @@
 CC=cargo
 TARG=cogsy
-clean:
-	$(CC) build --release
 
-install:
-	$(CC) build --release
-	sudo cp target/release/$(TARG) /usr/bin/$(TARG)
+build:
+	$(CC) build --release --locked --target-dir target
+
+install: build
+	install -DmT755 target/release/$(TARG) /usr/bin/$(TARG)
